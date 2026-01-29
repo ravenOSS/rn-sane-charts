@@ -1,3 +1,5 @@
+/// <reference path="./types/d3.d.ts" />
+
 export * from "./model/types";
 
 export * from "./validate/validateSeries";
