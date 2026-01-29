@@ -2,6 +2,7 @@
   "name": "@rn-sane-charts/rn",
   "version": "0.1.0",
   "description": "React Native charting library with sane defaults",
+  "react-native": "./src/index.tsx",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/rn/src/index.d.ts",
   "exports": {
@@ -158,6 +159,6 @@
     "version": "0.57.0"
   },
   "dependencies": {
-    "@shopify/react-native-skia": "^2.4.14"
+    "@shopify/react-native-skia": "~2.4.14"
   }
 }

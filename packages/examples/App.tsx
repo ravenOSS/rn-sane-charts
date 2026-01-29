@@ -1,10 +1,9 @@
 // packages/examples/App.tsx
 import React from "react";
-import { View } from "react-native";
-import { useFont } from "@shopify/react-native-skia";
+import { Platform, View } from "react-native";
+import { matchFont } from "@shopify/react-native-skia";
 
-import { Chart, LineSeries } from "@rn-sane-charts/rn";
-import { makeSkiaMeasureText } from "@rn-sane-charts/rn/src/skia/measureTextAdapter"; // until you export it nicely
+import { Chart, LineSeries, makeSkiaMeasureText } from "@rn-sane-charts/rn";
 import type { Series } from "@rn-sane-charts/core";
 
 const data: Series[] = [
@@ -18,7 +17,17 @@ const data: Series[] = [
 ];
 
 export default function App() {
-  const font = useFont(require("./assets/Inter-Regular.ttf"), 12);
+  /**
+   * We intentionally use a system font here (via `matchFont`) instead of bundling a .ttf asset.
+   *
+   * Why:
+   * - Keeps this repo lightweight (no binary font files).
+   * - Avoids Metro resolution errors when the font asset is missing.
+   *
+   * If you want brand-accurate typography later, add a real .ttf and switch to `useFont`.
+   */
+  const fontFamily = Platform.select({ ios: "Helvetica", default: "sans-serif" });
+  const font = React.useMemo(() => matchFont({ fontFamily, fontSize: 12 }), [fontFamily]);
 
   if (!font) return null;
 
@@ -34,10 +43,10 @@ export default function App() {
         subtitle="Last 50 days"
         fonts={{
           measureText,
-          xTickFont: { size: 12, family: "Inter" },
-          yTickFont: { size: 12, family: "Inter" },
-          titleFont: { size: 16, family: "Inter", weight: "semibold" },
-          subtitleFont: { size: 12, family: "Inter" },
+          xTickFont: { size: 12, family: fontFamily },
+          yTickFont: { size: 12, family: fontFamily },
+          titleFont: { size: 16, family: fontFamily, weight: "semibold" },
+          subtitleFont: { size: 12, family: fontFamily },
         }}
       >
         <LineSeries series={data[0]} />
