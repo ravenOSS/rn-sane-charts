@@ -2,12 +2,12 @@
   "name": "@rn-sane-charts/rn",
   "version": "0.1.0",
   "description": "React Native charting library with sane defaults",
-  "react-native": "./src/index.tsx",
+  "react-native": "./src/index.ts",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/rn/src/index.d.ts",
   "exports": {
     ".": {
-      "source": "./src/index.tsx",
+      "source": "./src/index.ts",
       "types": "./lib/typescript/rn/src/index.d.ts",
       "default": "./lib/module/index.js"
     },

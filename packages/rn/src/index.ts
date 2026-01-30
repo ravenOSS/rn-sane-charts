@@ -1,4 +1,4 @@
-// packages/rn/src/index.tsx
+// packages/rn/src/index.ts
 export { Chart } from "./Chart";
 export { LineSeries } from "./series/LineSeries";
 

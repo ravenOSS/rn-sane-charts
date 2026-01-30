@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@rn-sane-charts/rn": ["./src/index.tsx"],
+      "@rn-sane-charts/rn": ["src/index.ts"],
       "@rn-sane-charts/core": ["../core/src/index.ts"]
     },
     "allowUnreachableCode": false,
