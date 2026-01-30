@@ -33,6 +33,25 @@ The **rn** package contains no layout math beyond rendering decisions.
 
 ---
 
+## Monorepo Layout (Current)
+
+This repo is a pnpm workspace. The current top-level package layout is:
+
+```md
+packages/
+  core/       (@rn-sane-charts/core — pure logic; no React/Skia)
+  rn/         (@rn-sane-charts/rn — RN + Skia renderer)
+  examples/   (Expo app used for development + UX validation)
+```
+
+Notes:
+
+- `packages/rn/example/` exists because `@rn-sane-charts/rn` was bootstrapped from a RN library template.
+- `packages/examples/` is the primary example/gallery app for this monorepo.
+- `packages/examples/` targets **Expo SDK 55** (New Architecture only). **Expo Go may be incompatible** during SDK 55 preview/beta; use a development build (`expo-dev-client`) when needed.
+
+---
+
 ## Data Flow Pipeline
 
 Every chart follows the same conceptual pipeline:
@@ -57,9 +76,9 @@ Interaction Layer (hit testing, tooltips)
 
 Each stage is deliberately separated so it can be:
 
-* Tested independently
-* Documented clearly
-* Extended without breaking others
+- Tested independently
+- Documented clearly
+- Extended without breaking others
 
 ---
 
@@ -73,26 +92,26 @@ This package is framework-agnostic and contains deterministic logic.
 
 Defines canonical data shapes used internally.
 
-* Series
-* Datum
-* Axis config
+- Series
+- Datum
+- Axis config
 
 #### `scales/`
 
 Wraps D3 scale modules to convert domain values into pixel space.
 
-* Linear scale
-* Time scale
-* Band scale
-* Tick generation
+- Linear scale
+- Time scale
+- Band scale
+- Tick generation
 
 #### `transforms/`
 
 Pure functions that reshape or derive data.
 
-* Stack series (area, bar)
-* Histogram binning
-* Downsampling (future)
+- Stack series (area, bar)
+- Histogram binning
+- Downsampling (future)
 
 #### `layout/`
 
@@ -100,11 +119,10 @@ Computes chart geometry *before* rendering.
 
 Responsible for:
 
-* Plot area
-* Axis regions
-* Title/subtitle space
-* Legend placement
-* Label collision resolution
+- Plot area
+- Axis regions
+- Title/subtitle space
+- Label collision resolution
 
 This is where **axis label rotation and tick skipping** are determined.
 
@@ -112,9 +130,9 @@ This is where **axis label rotation and tick skipping** are determined.
 
 Algorithms for avoiding overlap:
 
-* Tick label rotation
-* Tick skipping
-* Bounding box math
+- Tick label rotation
+- Tick skipping
+- Bounding box math
 
 These algorithms must be thoroughly documented.
 
@@ -122,9 +140,9 @@ These algorithms must be thoroughly documented.
 
 Math for hit testing:
 
-* Nearest point (line)
-* Spatial bucketing (scatter)
-* Bar hit regions
+- Nearest point (line)
+- Spatial bucketing (scatter)
+- Bar hit regions
 
 No UI code here — only geometry logic.
 
@@ -136,11 +154,11 @@ This is the React Native + Skia layer.
 
 ### Responsibilities
 
-* Rendering primitives
-* React components
-* Gesture handling
-* Tooltip state
-* Theme tokens
+- Rendering primitives
+- React components
+- Gesture handling
+- Tooltip state
+- Theme tokens
 
 ### Rendering Model
 
@@ -164,16 +182,16 @@ Layout is computed in **core** and consumed in **rn**.
 
 This avoids:
 
-* UI components doing layout math
-* Hidden side effects
-* Inconsistent spacing
+- UI components doing layout math
+- Hidden side effects
+- Inconsistent spacing
 
 Layout determines:
 
-* Margins
-* Axis label positions
-* Legend region
-* Title/subtitle region
+- Margins
+- Axis label positions
+- Legend region
+- Title/subtitle region
 
 Renderers only draw within the provided layout box.
 
@@ -224,11 +242,11 @@ These are **internal seams**, not public APIs.
 
 ## Why This Architecture Works
 
-* Core is pure → easy to test
-* RN layer is thin → easy to maintain
-* Layout centralized → consistent visuals
-* Interaction math separated → performance friendly
-* Documentation-first → safe OSS collaboration
+- Core is pure → easy to test
+- RN layer is thin → easy to maintain
+- Layout centralized → consistent visuals
+- Interaction math separated → performance friendly
+- Documentation-first → safe OSS collaboration
 
 ---
 
@@ -236,9 +254,9 @@ These are **internal seams**, not public APIs.
 
 If your change:
 
-* touches geometry → it belongs in **core**
-* touches drawing → it belongs in **rn**
-* touches gestures → split math (core) and UI (rn)
+- touches geometry → it belongs in **core**
+- touches drawing → it belongs in **rn**
+- touches gestures → split math (core) and UI (rn)
 
 When in doubt, ask before adding abstraction.
 

@@ -82,6 +82,18 @@ Design principle: readability > density.
 
 ---
 
+## Example App & Dev Workflow (Current)
+
+The monorepo includes an Expo example app under `packages/examples/`.
+
+Current constraints:
+
+* The example app targets **Expo SDK 55** (New Architecture only).
+* During SDK 55 preview/beta, **Expo Go on physical devices may lag** and be incompatible.
+* Use a **development build** (`expo-dev-client`) for reliable on-device testing.
+
+---
+
 ## 📦 Data Input Model
 
 rn-sane-charts **does not fetch, parse, or stream data**.
