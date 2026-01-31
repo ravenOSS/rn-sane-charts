@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "keywords": ["charting", "library"],
   "author": "David Richards",
