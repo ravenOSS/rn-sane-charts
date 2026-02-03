@@ -1,2 +1,9 @@
 packages:
   - packages/*
+
+ignoredBuiltDependencies:
+  - lefthook
+
+onlyBuiltDependencies:
+  - '@shopify/react-native-skia'
+  - esbuild

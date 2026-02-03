@@ -1,1 +1,13 @@
 node_modules
+
+# macOS
+.DS_Store
+
+# Build outputs
+dist
+lib
+
+# Expo / RN generated native projects (kept out of git in this monorepo)
+.expo
+ios
+android
