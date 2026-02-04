@@ -1,13 +1,14 @@
-node_modules
+node_modules/
 
 # macOS
 .DS_Store
 
-# Build outputs
-dist
-lib
+# build outputs
+dist/
+packages/*/dist/
+lib/
 
 # Expo / RN generated native projects (kept out of git in this monorepo)
-.expo
-ios
-android
+.expo/
+ios/
+android/

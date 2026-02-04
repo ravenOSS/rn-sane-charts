@@ -13,7 +13,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mtnkoder.examples"
+      "bundleIdentifier": "com.mtnkoder.examples",
+      "deploymentTarget": "16.0"
     },
     "android": {
       "adaptiveIcon": {
