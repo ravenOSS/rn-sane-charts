@@ -6,9 +6,11 @@
     "start": "expo start",
     "start:dev-client": "expo start --dev-client",
     "android": "expo run:android",
-    "ios": "expo run:ios -d \"DJR_16ProMax\"",
+    "ios": "expo run:ios",
+    "ios:clean": "rm -rf ios .expo",
+    "ios:rebuild": "pnpm run ios:clean && expo run:ios",
     "web": "expo start --web",
-    "run:ios": "expo run:ios -d \"DJR_16ProMax\"",
+    "run:ios": "expo run:ios",
     "run:android": "expo run:android"
   },
   "dependencies": {
