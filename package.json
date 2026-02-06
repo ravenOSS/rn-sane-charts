@@ -6,7 +6,9 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "ios:start": "bash ./scripts/ios-start.sh",
+    "sync:primary": "bash ./scripts/sync-primary.sh"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8"
