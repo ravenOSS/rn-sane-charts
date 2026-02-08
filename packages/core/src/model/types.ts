@@ -59,6 +59,16 @@ export type LinePath = {
   d: string;
 };
 
+export type AreaPath = {
+  /**
+   * SVG-style closed path string representing the area fill polygon.
+   *
+   * The path starts at the first valid top-line point, traces the upper curve,
+   * returns along the baseline, and closes with `Z`.
+   */
+  d: string;
+};
+
 export type Tick = {
   value: unknown;
   label: string;
