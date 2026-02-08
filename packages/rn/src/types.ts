@@ -1,4 +1,4 @@
-import type { FontSpec, MeasureTextFn } from "@rn-sane-charts/core";
+import type { FontSpec, MeasureTextFn } from '@rn-sane-charts/core';
 
 export type SaneChartTheme = {
   background: string;

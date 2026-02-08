@@ -1,5 +1,9 @@
-import type { SkFont } from "@shopify/react-native-skia";
-import type { MeasureTextFn, TextMeasureInput, TextMeasureResult } from "@rn-sane-charts/core";
+import type { SkFont } from '@shopify/react-native-skia';
+import type {
+  MeasureTextFn,
+  TextMeasureInput,
+  TextMeasureResult,
+} from '@rn-sane-charts/core';
 
 /**
  * Create a core-compatible `measureText` function using a Skia font instance.

@@ -1,8 +1,8 @@
-import React from "react";
-import { Path, Skia } from "@shopify/react-native-skia";
-import type { Series } from "@rn-sane-charts/core";
-import { buildLinePath } from "@rn-sane-charts/core";
-import { useChartContext } from "../context";
+import React from 'react';
+import { Path, Skia } from '@shopify/react-native-skia';
+import type { Series } from '@rn-sane-charts/core';
+import { buildLinePath } from '@rn-sane-charts/core';
+import { useChartContext } from '../context';
 
 export type LineSeriesProps = {
   series: Series;
@@ -20,8 +20,14 @@ export type LineSeriesProps = {
 export function LineSeries(props: LineSeriesProps) {
   const { scales, theme } = useChartContext();
 
-  const { d } = React.useMemo(() => buildLinePath(props.series, scales), [props.series, scales]);
-  const skPath = React.useMemo(() => (d ? Skia.Path.MakeFromSVGString(d) : null), [d]);
+  const { d } = React.useMemo(
+    () => buildLinePath(props.series, scales),
+    [props.series, scales]
+  );
+  const skPath = React.useMemo(
+    () => (d ? Skia.Path.MakeFromSVGString(d) : null),
+    [d]
+  );
 
   if (!skPath) return null;
 

@@ -1,12 +1,12 @@
-import React from "react";
-import { View } from "react-native";
-import { Canvas, Group, Rect as SkRect } from "@shopify/react-native-skia";
+import React from 'react';
+import { View } from 'react-native';
+import { Canvas, Group, Rect as SkRect } from '@shopify/react-native-skia';
 
-import type { Series } from "@rn-sane-charts/core";
-import { buildTimeSeriesPlan } from "@rn-sane-charts/core";
-import type { SaneChartFonts, SaneChartTheme } from "./types";
-import { defaultTheme } from "./theme/defaultTheme";
-import { ChartContext } from "./context";
+import type { Series } from '@rn-sane-charts/core';
+import { buildTimeSeriesPlan } from '@rn-sane-charts/core';
+import type { SaneChartFonts, SaneChartTheme } from './types';
+import { defaultTheme } from './theme/defaultTheme';
+import { ChartContext } from './context';
 
 export type ChartProps = {
   width: number;
@@ -37,13 +37,16 @@ export type ChartProps = {
  * - Pluggable composition systems
  */
 export function Chart(props: ChartProps) {
-  const theme: SaneChartTheme = {
-    ...defaultTheme,
-    ...props.theme,
-    axis: { ...defaultTheme.axis, ...(props.theme?.axis ?? {}) },
-    grid: { ...defaultTheme.grid, ...(props.theme?.grid ?? {}) },
-    series: { ...defaultTheme.series, ...(props.theme?.series ?? {}) },
-  };
+  const theme: SaneChartTheme = React.useMemo(
+    () => ({
+      ...defaultTheme,
+      ...props.theme,
+      axis: { ...defaultTheme.axis, ...(props.theme?.axis ?? {}) },
+      grid: { ...defaultTheme.grid, ...(props.theme?.grid ?? {}) },
+      series: { ...defaultTheme.series, ...(props.theme?.series ?? {}) },
+    }),
+    [props.theme]
+  );
 
   const plan = React.useMemo(() => {
     return buildTimeSeriesPlan({
@@ -70,7 +73,14 @@ export function Chart(props: ChartProps) {
       },
       yIncludeZero: false,
     });
-  }, [props.series, props.width, props.height, props.title, props.subtitle, props.fonts]);
+  }, [
+    props.series,
+    props.width,
+    props.height,
+    props.title,
+    props.subtitle,
+    props.fonts,
+  ]);
 
   const ctxValue = React.useMemo(
     () => ({
@@ -86,7 +96,13 @@ export function Chart(props: ChartProps) {
     <View style={{ width: props.width, height: props.height }}>
       <Canvas style={{ width: props.width, height: props.height }}>
         {/* Background */}
-        <SkRect x={0} y={0} width={props.width} height={props.height} color={theme.background} />
+        <SkRect
+          x={0}
+          y={0}
+          width={props.width}
+          height={props.height}
+          color={theme.background}
+        />
 
         {/* Clip series rendering to plot bounds */}
         <Group
@@ -97,7 +113,9 @@ export function Chart(props: ChartProps) {
             height: plan.layout.plot.height,
           }}
         >
-          <ChartContext.Provider value={ctxValue}>{props.children}</ChartContext.Provider>
+          <ChartContext.Provider value={ctxValue}>
+            {props.children}
+          </ChartContext.Provider>
         </Group>
 
         {/* TODO (next): Axes + ticks + labels in non-clipped layer */}
