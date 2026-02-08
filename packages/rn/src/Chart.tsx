@@ -1,6 +1,13 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Canvas, Group, Rect as SkRect } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  Group,
+  Line,
+  matchFont,
+  Rect as SkRect,
+  Text,
+} from '@shopify/react-native-skia';
 
 import type { Series } from '@rn-sane-charts/core';
 import { buildTimeSeriesPlan } from '@rn-sane-charts/core';
@@ -92,6 +99,41 @@ export function Chart(props: ChartProps) {
     [plan.layout, plan.scales, theme, props.fonts]
   );
 
+  const skiaFonts = React.useMemo(
+    () => ({
+      xTick: matchFont(toSkiaFontStyle(props.fonts.xTickFont)),
+      yTick: matchFont(toSkiaFontStyle(props.fonts.yTickFont)),
+      title: matchFont(toSkiaFontStyle(props.fonts.titleFont)),
+      subtitle: matchFont(toSkiaFontStyle(props.fonts.subtitleFont)),
+    }),
+    [
+      props.fonts.xTickFont,
+      props.fonts.yTickFont,
+      props.fonts.titleFont,
+      props.fonts.subtitleFont,
+    ]
+  );
+
+  const axisGeometry = React.useMemo(
+    () =>
+      buildAxisGeometry({
+        layout: plan.layout,
+        xTicks: plan.ticks.x,
+        yTicks: plan.ticks.y,
+        title: props.title,
+        subtitle: props.subtitle,
+        fonts: props.fonts,
+      }),
+    [
+      plan.layout,
+      plan.ticks.x,
+      plan.ticks.y,
+      props.title,
+      props.subtitle,
+      props.fonts,
+    ]
+  );
+
   return (
     <View style={{ width: props.width, height: props.height }}>
       <Canvas style={{ width: props.width, height: props.height }}>
@@ -118,8 +160,240 @@ export function Chart(props: ChartProps) {
           </ChartContext.Provider>
         </Group>
 
-        {/* TODO (next): Axes + ticks + labels in non-clipped layer */}
+        {/* Header text */}
+        {props.title ? (
+          <Text
+            text={props.title}
+            font={skiaFonts.title}
+            x={plan.layout.header.x}
+            y={axisGeometry.titleBaselineY}
+            color={theme.axis.tick.color}
+          />
+        ) : null}
+        {props.subtitle ? (
+          <Text
+            text={props.subtitle}
+            font={skiaFonts.subtitle}
+            x={plan.layout.header.x}
+            y={axisGeometry.subtitleBaselineY}
+            color={theme.axis.tick.color}
+          />
+        ) : null}
+
+        {/* Axes */}
+        <Line
+          p1={{ x: axisGeometry.yAxisX, y: plan.layout.plot.y }}
+          p2={{
+            x: axisGeometry.yAxisX,
+            y: plan.layout.plot.y + plan.layout.plot.height,
+          }}
+          color={theme.axis.line.stroke}
+          strokeWidth={theme.axis.line.strokeWidth}
+        />
+        <Line
+          p1={{ x: plan.layout.plot.x, y: axisGeometry.xAxisY }}
+          p2={{
+            x: plan.layout.plot.x + plan.layout.plot.width,
+            y: axisGeometry.xAxisY,
+          }}
+          color={theme.axis.line.stroke}
+          strokeWidth={theme.axis.line.strokeWidth}
+        />
+
+        {/* Y ticks + labels */}
+        {plan.ticks.y.map((tick, index) => (
+          <Group key={`y-${index}-${tick.value}`}>
+            <Line
+              p1={{ x: axisGeometry.yAxisX - AXIS_TICK_SIZE_PX, y: tick.y }}
+              p2={{ x: axisGeometry.yAxisX, y: tick.y }}
+              color={theme.axis.line.stroke}
+              strokeWidth={theme.axis.line.strokeWidth}
+            />
+            <Text
+              text={tick.label}
+              font={skiaFonts.yTick}
+              x={axisGeometry.yLabels[index]?.x ?? axisGeometry.yAxisX}
+              y={axisGeometry.yLabels[index]?.baselineY ?? tick.y}
+              color={theme.axis.tick.color}
+            />
+          </Group>
+        ))}
+
+        {/* X ticks + labels. Rotation follows core's collision decision. */}
+        {plan.ticks.x.map((tick, index) => (
+          <Group key={`x-${index}-${String(tick.value)}`}>
+            <Line
+              p1={{ x: tick.x, y: axisGeometry.xAxisY }}
+              p2={{ x: tick.x, y: axisGeometry.xAxisY + AXIS_TICK_SIZE_PX }}
+              color={theme.axis.line.stroke}
+              strokeWidth={theme.axis.line.strokeWidth}
+            />
+            <Group
+              origin={{
+                x: tick.x,
+                y: axisGeometry.xLabelTopY,
+              }}
+              transform={[{ rotate: axisGeometry.xLabelAngleRad }]}
+            >
+              <Text
+                text={tick.label}
+                font={skiaFonts.xTick}
+                x={axisGeometry.xLabels[index]?.x ?? tick.x}
+                y={
+                  axisGeometry.xLabels[index]?.baselineY ?? axisGeometry.xAxisY
+                }
+                color={theme.axis.tick.color}
+              />
+            </Group>
+          </Group>
+        ))}
       </Canvas>
     </View>
   );
+}
+
+const AXIS_TICK_SIZE_PX = 4;
+const AXIS_LABEL_GAP_PX = 6;
+
+/**
+ * Build concrete coordinates for RN/Skia axis rendering from core decisions.
+ *
+ * Why keep this separate from JSX:
+ * - Makes chart rendering declarative while keeping geometry math isolated.
+ * - Ensures all text placement is computed once and reused by draw calls.
+ *
+ * Important invariants:
+ * - `core` decides which ticks and x-label angle are safe to show.
+ * - RN renderer only translates those decisions into concrete pixel positions.
+ */
+function buildAxisGeometry(input: {
+  layout: ReturnType<typeof buildTimeSeriesPlan>['layout'];
+  xTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['x'];
+  yTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['y'];
+  title?: string;
+  subtitle?: string;
+  fonts: SaneChartFonts;
+}) {
+  const xAxisY = input.layout.xAxis.y;
+  const yAxisX = input.layout.yAxis.x + input.layout.yAxis.width;
+  const xLabelTopY = xAxisY + AXIS_TICK_SIZE_PX + AXIS_LABEL_GAP_PX;
+
+  const xLabelAngleDeg = input.layout.decisions.xAxis.labelAngle;
+  const xLabelAngleRad = (xLabelAngleDeg * Math.PI) / 180;
+
+  const xLabels = input.xTicks.map((tick) => {
+    const measured = input.fonts.measureText({
+      text: tick.label,
+      font: input.fonts.xTickFont,
+      angle: 0,
+    });
+    const x = tick.x - measured.width / 2;
+    const baselineY =
+      xLabelTopY - estimateAscentFromTop(input.fonts.xTickFont.size);
+    return { x, baselineY };
+  });
+
+  const yLabels = input.yTicks.map((tick) => {
+    const measured = input.fonts.measureText({
+      text: tick.label,
+      font: input.fonts.yTickFont,
+      angle: 0,
+    });
+    const x = yAxisX - AXIS_TICK_SIZE_PX - AXIS_LABEL_GAP_PX - measured.width;
+    const topY = tick.y - measured.height / 2;
+    const baselineY = topY - estimateAscentFromTop(input.fonts.yTickFont.size);
+    return { x, baselineY };
+  });
+
+  const titleHeight = input.title
+    ? input.fonts.measureText({
+        text: input.title,
+        font: input.fonts.titleFont,
+        angle: 0,
+      }).height
+    : 0;
+  const titleTopY = input.layout.header.y;
+  const titleBaselineY =
+    titleTopY - estimateAscentFromTop(input.fonts.titleFont.size);
+
+  const subtitleTopY =
+    titleTopY + titleHeight + (input.title && input.subtitle ? 4 : 0);
+  const subtitleBaselineY =
+    subtitleTopY - estimateAscentFromTop(input.fonts.subtitleFont.size);
+
+  return {
+    xAxisY,
+    yAxisX,
+    xLabelTopY,
+    xLabelAngleRad,
+    xLabels,
+    yLabels,
+    titleBaselineY,
+    subtitleBaselineY,
+  };
+}
+
+/**
+ * Convert core font specs into Skia's `matchFont()` style input.
+ *
+ * We normalize custom semantic weights (e.g. `semibold`) so the same
+ * token can be used for layout and render without leaking Skia-specific
+ * font APIs into core.
+ */
+function toSkiaFontStyle(font: SaneChartFonts['xTickFont']) {
+  return {
+    fontFamily: font.family,
+    fontSize: font.size,
+    fontStyle: font.style,
+    fontWeight: normalizeFontWeight(font.weight),
+  };
+}
+
+function normalizeFontWeight(
+  weight: SaneChartFonts['xTickFont']['weight']
+): SkiaFontWeight {
+  if (weight === undefined) return '400';
+  if (typeof weight === 'number') {
+    const normalized = String(weight) as SkiaFontWeight;
+    const supportedWeights: SkiaFontWeight[] = [
+      '100',
+      '200',
+      '300',
+      '400',
+      '500',
+      '600',
+      '700',
+      '800',
+      '900',
+    ];
+    return supportedWeights.includes(normalized) ? normalized : '400';
+  }
+  if (weight === 'semibold') return '600';
+  if (weight === 'medium') return '500';
+  if (weight === 'bold') return '700';
+  return '400';
+}
+
+type SkiaFontWeight =
+  | 'normal'
+  | 'bold'
+  | '100'
+  | '200'
+  | '300'
+  | '400'
+  | '500'
+  | '600'
+  | '700'
+  | '800'
+  | '900';
+
+/**
+ * Conservative ascent estimate when we don't have renderer font metrics.
+ *
+ * Skia text APIs position glyphs by baseline (`y`), while core layout
+ * budgets by box height. A stable ascent heuristic keeps labels vertically
+ * centered and avoids clipping without coupling layout to renderer internals.
+ */
+function estimateAscentFromTop(fontSize: number) {
+  return -Math.round(fontSize * 0.8);
 }
