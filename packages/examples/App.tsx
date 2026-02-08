@@ -41,12 +41,16 @@ export default function App() {
         series={data}
         title="Revenue"
         subtitle="Last 50 days"
+        xAxisTitle="Date"
+        yAxisTitle="USD"
         fonts={{
           measureText,
           xTickFont: { size: 12, family: fontFamily },
           yTickFont: { size: 12, family: fontFamily },
           titleFont: { size: 16, family: fontFamily, weight: "semibold" },
           subtitleFont: { size: 12, family: fontFamily },
+          xAxisTitleFont: { size: 12, family: fontFamily, weight: "medium" },
+          yAxisTitleFont: { size: 12, family: fontFamily, weight: "medium" },
         }}
       >
         <LineSeries series={data[0]} />

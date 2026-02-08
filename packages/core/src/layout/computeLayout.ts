@@ -69,7 +69,10 @@ export function computeLayout(input: LayoutInput): LayoutOutput {
     height: headerHeight,
   };
 
-  const yAxisWidth = input.yAxis.show === false ? 0 : measureYAxisWidth(input.measureText, input.yAxis, input.yTicks);
+  const yAxisWidth =
+    input.yAxis.show === false
+      ? 0
+      : measureYAxisWidth(input.measureText, input.yAxis, input.yTicks);
 
   const resolvedXAxis =
     input.xAxis.show === false
@@ -80,8 +83,15 @@ export function computeLayout(input: LayoutInput): LayoutOutput {
           minLabelGapPx: input.xAxis.minTickLabelGapPx,
         });
 
-  // Axis baseline/padding: leave a bit of vertical room even for short labels.
-  const xAxisHeight = input.xAxis.show === false ? 0 : Math.ceil(resolvedXAxis.requiredBottomMarginPx + 12);
+  // Axis baseline/padding: leave room for ticks/labels and optional axis title.
+  const xAxisHeight =
+    input.xAxis.show === false
+      ? 0
+      : Math.ceil(
+          resolvedXAxis.requiredBottomMarginPx +
+            12 +
+            measureXAxisTitleHeight(input.measureText, input.xAxis)
+        );
 
   const plotX = pad.left + yAxisWidth;
   const plotY = pad.top + headerHeight;
@@ -149,7 +159,7 @@ function measureHeaderHeight(measureText: MeasureTextFn, text: ChartTextSpec): n
 }
 
 function measureYAxisWidth(measureText: MeasureTextFn, yAxis: AxisSpec, yTicks: YTick[]): number {
-  if (yTicks.length === 0) return 0;
+  if (yTicks.length === 0) return measureYAxisTitleWidth(measureText, yAxis);
 
   let maxW = 0;
   for (const t of yTicks) {
@@ -157,6 +167,42 @@ function measureYAxisWidth(measureText: MeasureTextFn, yAxis: AxisSpec, yTicks: 
     if (w > maxW) maxW = w;
   }
 
-  // Leave room for a small tick mark + gap between labels and plot.
-  return Math.ceil(maxW + 10);
+  /**
+   * Width budget = optional y-axis title band + tick label band.
+   *
+   * Human reasoning:
+   * - y-axis title is typically vertical; we reserve its rotated AABB width.
+   * - keep a small visual gap between title and tick labels so they don't merge.
+   */
+  const titleBand = measureYAxisTitleWidth(measureText, yAxis);
+  const titleGap = titleBand > 0 ? 8 : 0;
+
+  // Tick label band includes room for a small tick mark + gap next to the plot.
+  const tickBand = maxW + 10;
+  return Math.ceil(titleBand + titleGap + tickBand);
+}
+
+/**
+ * Reserve vertical space for an optional x-axis title.
+ *
+ * We add a small separation gap so title and rotated tick labels stay distinct.
+ */
+function measureXAxisTitleHeight(measureText: MeasureTextFn, xAxis: AxisSpec): number {
+  if (!xAxis.title) return 0;
+  const font = xAxis.titleFont ?? xAxis.tickFont;
+  const m = measureText({ text: xAxis.title, font, angle: 0 });
+  return Math.ceil(m.height + 6);
+}
+
+/**
+ * Reserve horizontal space for an optional y-axis title.
+ *
+ * We measure with a 90deg rotation because the renderer draws this title
+ * vertically in MVP.
+ */
+function measureYAxisTitleWidth(measureText: MeasureTextFn, yAxis: AxisSpec): number {
+  if (!yAxis.title) return 0;
+  const font = yAxis.titleFont ?? yAxis.tickFont;
+  const m = measureText({ text: yAxis.title, font, angle: 90 });
+  return Math.ceil(m.width);
 }

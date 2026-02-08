@@ -23,6 +23,8 @@ export type ChartProps = {
 
   title?: string;
   subtitle?: string;
+  xAxisTitle?: string;
+  yAxisTitle?: string;
 
   fonts: SaneChartFonts;
   theme?: Partial<SaneChartTheme>;
@@ -44,6 +46,9 @@ export type ChartProps = {
  * - Pluggable composition systems
  */
 export function Chart(props: ChartProps) {
+  const xAxisTitleFont = props.fonts.xAxisTitleFont ?? props.fonts.subtitleFont;
+  const yAxisTitleFont = props.fonts.yAxisTitleFont ?? props.fonts.subtitleFont;
+
   const theme: SaneChartTheme = React.useMemo(
     () => ({
       ...defaultTheme,
@@ -70,11 +75,15 @@ export function Chart(props: ChartProps) {
         },
         xAxis: {
           show: true,
+          title: props.xAxisTitle,
           tickFont: props.fonts.xTickFont,
+          titleFont: xAxisTitleFont,
         },
         yAxis: {
           show: true,
+          title: props.yAxisTitle,
           tickFont: props.fonts.yTickFont,
+          titleFont: yAxisTitleFont,
         },
         measureText: props.fonts.measureText,
       },
@@ -86,6 +95,10 @@ export function Chart(props: ChartProps) {
     props.height,
     props.title,
     props.subtitle,
+    props.xAxisTitle,
+    props.yAxisTitle,
+    xAxisTitleFont,
+    yAxisTitleFont,
     props.fonts,
   ]);
 
@@ -105,12 +118,16 @@ export function Chart(props: ChartProps) {
       yTick: matchFont(toSkiaFontStyle(props.fonts.yTickFont)),
       title: matchFont(toSkiaFontStyle(props.fonts.titleFont)),
       subtitle: matchFont(toSkiaFontStyle(props.fonts.subtitleFont)),
+      xAxisTitle: matchFont(toSkiaFontStyle(xAxisTitleFont)),
+      yAxisTitle: matchFont(toSkiaFontStyle(yAxisTitleFont)),
     }),
     [
       props.fonts.xTickFont,
       props.fonts.yTickFont,
       props.fonts.titleFont,
       props.fonts.subtitleFont,
+      xAxisTitleFont,
+      yAxisTitleFont,
     ]
   );
 
@@ -122,6 +139,8 @@ export function Chart(props: ChartProps) {
         yTicks: plan.ticks.y,
         title: props.title,
         subtitle: props.subtitle,
+        xAxisTitle: props.xAxisTitle,
+        yAxisTitle: props.yAxisTitle,
         fonts: props.fonts,
       }),
     [
@@ -130,6 +149,8 @@ export function Chart(props: ChartProps) {
       plan.ticks.y,
       props.title,
       props.subtitle,
+      props.xAxisTitle,
+      props.yAxisTitle,
       props.fonts,
     ]
   );
@@ -178,6 +199,32 @@ export function Chart(props: ChartProps) {
             y={axisGeometry.subtitleBaselineY}
             color={theme.axis.tick.color}
           />
+        ) : null}
+        {props.xAxisTitle ? (
+          <Text
+            text={props.xAxisTitle}
+            font={skiaFonts.xAxisTitle}
+            x={axisGeometry.xAxisTitleX}
+            y={axisGeometry.xAxisTitleBaselineY}
+            color={theme.axis.tick.color}
+          />
+        ) : null}
+        {props.yAxisTitle ? (
+          <Group
+            transform={[
+              { translateX: axisGeometry.yAxisTitleCenterX },
+              { translateY: axisGeometry.yAxisTitleCenterY },
+              { rotate: -Math.PI / 2 },
+            ]}
+          >
+            <Text
+              text={props.yAxisTitle}
+              font={skiaFonts.yAxisTitle}
+              x={axisGeometry.yAxisTitleLocalX}
+              y={axisGeometry.yAxisTitleBaselineOffset}
+              color={theme.axis.tick.color}
+            />
+          </Group>
         ) : null}
 
         {/* Axes */}
@@ -273,6 +320,8 @@ function buildAxisGeometry(input: {
   yTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['y'];
   title?: string;
   subtitle?: string;
+  xAxisTitle?: string;
+  yAxisTitle?: string;
   fonts: SaneChartFonts;
 }) {
   const xAxisY = input.layout.xAxis.y;
@@ -280,7 +329,7 @@ function buildAxisGeometry(input: {
   const xLabelTopY = xAxisY + AXIS_TICK_SIZE_PX + AXIS_LABEL_GAP_PX;
 
   const xLabelAngleDeg = input.layout.decisions.xAxis.labelAngle;
-  const xLabelAngleRad = (xLabelAngleDeg * Math.PI) / 180;
+  const xLabelAngleRad = (-xLabelAngleDeg * Math.PI) / 180;
 
   const xLabels = input.xTicks.map((tick) => {
     const measured = input.fonts.measureText({
@@ -288,7 +337,18 @@ function buildAxisGeometry(input: {
       font: input.fonts.xTickFont,
       angle: 0,
     });
-    const localX = -(measured.width / 2) * Math.cos(xLabelAngleRad);
+    const isHorizontal = Math.abs(xLabelAngleDeg) < 0.001;
+    /**
+     * Anchor strategy:
+     * - 0deg labels are centered on the tick.
+     * - Rotated labels are end-aligned so the label's right edge sits on the tick.
+     *
+     * Why:
+     * - Keeps every rotated label starting from a consistent axis offset line.
+     * - Places the most specific date token (usually day numeral at string end)
+     *   closest to the axis, improving scanability.
+     */
+    const localX = isHorizontal ? -measured.width / 2 : -measured.width;
     const baselineOffset = baselineOffsetFromTop(input.fonts.xTickFont.size);
     return { localX, baselineOffset };
   });
@@ -339,6 +399,54 @@ function buildAxisGeometry(input: {
       (input.layout.header.width - (subtitleMeasured?.width ?? 0)) / 2
     );
 
+  const xAxisTitleFont = input.fonts.xAxisTitleFont ?? input.fonts.subtitleFont;
+  const yAxisTitleFont = input.fonts.yAxisTitleFont ?? input.fonts.subtitleFont;
+
+  const xAxisTitleMeasured = input.xAxisTitle
+    ? input.fonts.measureText({
+        text: input.xAxisTitle,
+        font: xAxisTitleFont,
+        angle: 0,
+      })
+    : null;
+  /**
+   * Keep chart heading and x-axis title aligned to the same visual center datum.
+   *
+   * Why:
+   * - Header text is centered within `layout.header` (full chart width minus padding).
+   * - If x-axis title centers on `layout.plot`, it shifts right whenever y-axis labels
+   *   consume left-side width, which feels unbalanced.
+   */
+  const xAxisTitleX =
+    input.layout.header.x +
+    Math.max(0, (input.layout.header.width - (xAxisTitleMeasured?.width ?? 0)) / 2);
+  const xAxisTitleTopY =
+    input.layout.xAxis.y +
+    Math.max(0, input.layout.xAxis.height - (xAxisTitleMeasured?.height ?? 0));
+  const xAxisTitleBaselineY =
+    xAxisTitleTopY + baselineOffsetFromTop(xAxisTitleFont.size);
+
+  const yAxisTitleMeasured = input.yAxisTitle
+    ? input.fonts.measureText({
+        text: input.yAxisTitle,
+        font: yAxisTitleFont,
+        angle: 0,
+      })
+    : null;
+  const yAxisTitleBandWidth = input.yAxisTitle
+    ? input.fonts.measureText({
+        text: input.yAxisTitle,
+        font: yAxisTitleFont,
+        angle: 90,
+      }).width
+    : 0;
+  const yAxisTitleCenterX = input.layout.yAxis.x + yAxisTitleBandWidth / 2;
+  const yAxisTitleCenterY = input.layout.plot.y + input.layout.plot.height / 2;
+  const yAxisTitleLocalX = -((yAxisTitleMeasured?.width ?? 0) / 2);
+  const yAxisTitleBaselineOffset =
+    -((yAxisTitleMeasured?.height ?? 0) / 2) +
+    baselineOffsetFromTop(yAxisTitleFont.size);
+
   return {
     xAxisY,
     yAxisX,
@@ -350,6 +458,12 @@ function buildAxisGeometry(input: {
     titleBaselineY,
     subtitleX,
     subtitleBaselineY,
+    xAxisTitleX,
+    xAxisTitleBaselineY,
+    yAxisTitleCenterX,
+    yAxisTitleCenterY,
+    yAxisTitleLocalX,
+    yAxisTitleBaselineOffset,
   };
 }
 

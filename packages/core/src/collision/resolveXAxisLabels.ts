@@ -221,10 +221,20 @@ function measureLabelBoxes(
   const measured = ticks.map((t) => {
     const m = measureText({ text: t.label, font, angle });
 
-    // Center alignment assumption: label is centered at tick.x horizontally.
-    // For non-zero angles, the measureText contract already returns the AABB size.
-    const xMin = t.x - m.width / 2;
-    const xMax = t.x + m.width / 2;
+    /**
+     * Anchor policy:
+     * - 0° labels are centered on tick.x (standard horizontal axis labeling).
+     * - Rotated labels anchor their near-axis edge at tick.x and extend rightward.
+     *
+     * Why:
+     * - Produces a stable imaginary offset line from the axis (non-jagged look).
+     * - Better matches common 45°/90° business chart conventions.
+     * - Allows 45° to pass collision checks in situations where center anchoring
+     *   would force an unnecessary jump to 90°.
+     */
+    const isHorizontal = Math.abs(angle) < 0.001;
+    const xMin = isHorizontal ? t.x - m.width / 2 : t.x;
+    const xMax = isHorizontal ? t.x + m.width / 2 : t.x + m.width;
 
     // For x-axis labels we typically place text below axis line; y bounds are relative.
     // The layout engine uses height to allocate bottom margin.

@@ -1,6 +1,7 @@
 // packages/core/src/scales/domain.ts
 
 import type { DomainNumber, DomainDate, Series } from "../model/types";
+import { tickStep } from "d3-array";
 
 /**
  * Compute numeric y-domain across all series.
@@ -37,7 +38,35 @@ export function computeYDomain(series: Series[], opts?: { includeZero?: boolean 
     return [min - pad, max + pad];
   }
 
-  return [min, max];
+  /**
+   * Add visual headroom/footroom and snap to "nice" bounds.
+   *
+   * Why:
+   * - If we use the raw [min,max], top ticks can sit at/below the highest point.
+   * - Nice bounds make axis values more readable and avoid line/axis overlap.
+   *
+   * Heuristic:
+   * - 8% padding on each side
+   * - Snap to a 5-tick-friendly step
+   * - Guarantee upper bound is strictly above observed max
+   */
+  const span = max - min;
+  const paddedMin = min - span * 0.08;
+  const paddedMax = max + span * 0.08;
+
+  const step = tickStep(paddedMin, paddedMax, 5);
+  const niceMin = Math.floor(paddedMin / step) * step;
+  let niceMax = Math.ceil(paddedMax / step) * step;
+
+  if (niceMax <= max) {
+    niceMax += step;
+  }
+
+  if (includeZero) {
+    return [Math.min(niceMin, 0), Math.max(niceMax, 0)];
+  }
+
+  return [niceMin, niceMax];
 }
 
 /**
@@ -69,5 +98,39 @@ export function computeXDomainTime(series: Series[]): DomainDate {
     return [new Date(min - 43_200_000), new Date(max + 43_200_000)];
   }
 
-  return [new Date(min), new Date(max)];
+  return makeNiceTimeDomain([min, max]);
+}
+
+/**
+ * Expand and "nice" a time domain so boundary ticks can land outside raw data.
+ *
+ * Why:
+ * - Raw [min,max] often puts the first/last point directly on axis boundaries.
+ * - A small pad plus step snapping yields cleaner charts and typically produces
+ *   a boundary tick beyond the observed data range.
+ *
+ * Invariant:
+ * - Returned max is strictly greater than observed max.
+ * - Returned min is strictly less than observed min.
+ */
+function makeNiceTimeDomain(rawMsDomain: [number, number]): DomainDate {
+  const [rawMin, rawMax] = rawMsDomain;
+  const span = Math.max(1, rawMax - rawMin);
+
+  // A light 4% pad keeps the domain visually honest while reducing edge crowding.
+  const paddedMin = rawMin - span * 0.04;
+  const paddedMax = rawMax + span * 0.04;
+
+  const step = tickStep(paddedMin, paddedMax, 6);
+  let niceMin = Math.floor(paddedMin / step) * step;
+  let niceMax = Math.ceil(paddedMax / step) * step;
+
+  if (niceMin >= rawMin) {
+    niceMin -= step;
+  }
+  if (niceMax <= rawMax) {
+    niceMax += step;
+  }
+
+  return [new Date(niceMin), new Date(niceMax)];
 }

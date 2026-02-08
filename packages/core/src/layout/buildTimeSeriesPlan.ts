@@ -37,6 +37,16 @@ export function buildTimeSeriesPlan(args: {
 }) {
   const diagnostics = validateSeriesInput(args.series);
 
+  const xTickCount = args.tickCounts?.x ?? estimateTimeXTickCount(args.layoutInput.width);
+
+  /**
+   * Domain order is intentional:
+   * - We pick an x tick budget first (screen-width dependent),
+   * - then build ticks from a padded/nice time domain.
+   *
+   * This keeps boundary ticks stable and gives the collision resolver a
+   * predictable candidate set for 0°/45°/90° label decisions.
+   */
   const xDomain = computeXDomainTime(args.series);
   const yDomain = computeYDomain(args.series, { includeZero: args.yIncludeZero ?? false });
 
@@ -47,7 +57,7 @@ export function buildTimeSeriesPlan(args: {
   const xTicks1 = makeTimeXTicks({
     xDomain,
     xScale: roughScales.x,
-    count: args.tickCounts?.x,
+    count: xTickCount,
     formatX: args.formatX,
   });
 
@@ -66,7 +76,7 @@ export function buildTimeSeriesPlan(args: {
   const xTicks2 = makeTimeXTicks({
     xDomain,
     xScale: scales.x,
-    count: args.tickCounts?.x,
+    count: xTickCount,
     formatX: args.formatX,
   });
 
@@ -86,4 +96,21 @@ export function buildTimeSeriesPlan(args: {
     ticks: { x: layout2.resolvedXAxis.ticks, y: yTicks2 },
     layout: layout2,
   };
+}
+
+/**
+ * Estimate a readable x-tick count from chart width.
+ *
+ * Why:
+ * - Fixed tick counts can over-densify narrow mobile charts and force 90° labels.
+ * - A width-based heuristic gives collision resolver a better starting point
+ *   so 0°/45° labels remain viable more often.
+ *
+ * Heuristic:
+ * - Budget ~72px per tick label slot on mobile.
+ * - Clamp to a practical range for business charts.
+ */
+function estimateTimeXTickCount(chartWidthPx: number): number {
+  const estimated = Math.floor(chartWidthPx / 72);
+  return Math.max(4, Math.min(8, estimated));
 }

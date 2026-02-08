@@ -30,4 +30,13 @@ export type SaneChartFonts = {
   yTickFont: FontSpec;
   titleFont: FontSpec;
   subtitleFont: FontSpec;
+
+  /**
+   * Optional axis title fonts.
+   *
+   * If omitted, Chart falls back to `subtitleFont` so callers can adopt
+   * axis titles without adding more required font config.
+   */
+  xAxisTitleFont?: FontSpec;
+  yAxisTitleFont?: FontSpec;
 };
