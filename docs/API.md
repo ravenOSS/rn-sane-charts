@@ -107,22 +107,28 @@ Notes:
 
 ### Area (including stacked)
 
-Status: `Planned (MVP)`
+Status: `Partially Implemented (single-series area)`
 
 Data shape:
 - Same `Series[]` contract as line charts.
 - Stacked mode expects multiple compatible series with aligned `x` semantics.
 
-Planned component direction:
+Current component:
 
 ```ts
 type AreaSeriesProps = {
   series: Series;
-  color?: string;
+  fillColor?: string;
   fillOpacity?: number;
-  stacked?: boolean;
+  strokeColor?: string;
+  strokeWidth?: number;
+  baselineY?: number;
 };
 ```
+
+Notes:
+- `AreaSeries` is implemented for single-series area rendering.
+- Stacked area behavior remains planned.
 
 ---
 

@@ -3,7 +3,12 @@ import React from "react";
 import { Platform, View } from "react-native";
 import { matchFont } from "@shopify/react-native-skia";
 
-import { Chart, LineSeries, makeSkiaMeasureText } from "@rn-sane-charts/rn";
+import {
+  AreaSeries,
+  Chart,
+  LineSeries,
+  makeSkiaMeasureText,
+} from "@rn-sane-charts/rn";
 import type { Series } from "@rn-sane-charts/core";
 import {
   createExampleChartFonts,
@@ -66,6 +71,13 @@ export default function App() {
         fonts={chartFonts}
         theme={exampleChartTheme}
       >
+        <AreaSeries
+          series={data[0]}
+          fillColor={exampleSeriesColors.revenue}
+          fillOpacity={0.16}
+          strokeColor={exampleSeriesColors.revenue}
+          strokeWidth={2}
+        />
         <LineSeries series={data[0]} color={exampleSeriesColors.revenue} />
         <LineSeries series={data[1]} color={exampleSeriesColors.forecast} />
         <LineSeries series={data[2]} color={exampleSeriesColors.target} />

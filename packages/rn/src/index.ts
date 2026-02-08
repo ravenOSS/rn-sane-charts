@@ -1,6 +1,7 @@
 // packages/rn/src/index.ts
 export { Chart } from './Chart';
 export { LineSeries } from './series/LineSeries';
+export { AreaSeries } from './series/AreaSeries';
 
 export { defaultTheme } from './theme/defaultTheme';
 
