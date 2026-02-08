@@ -165,7 +165,7 @@ export function Chart(props: ChartProps) {
           <Text
             text={props.title}
             font={skiaFonts.title}
-            x={plan.layout.header.x}
+            x={axisGeometry.titleX}
             y={axisGeometry.titleBaselineY}
             color={theme.axis.tick.color}
           />
@@ -174,7 +174,7 @@ export function Chart(props: ChartProps) {
           <Text
             text={props.subtitle}
             font={skiaFonts.subtitle}
-            x={plan.layout.header.x}
+            x={axisGeometry.subtitleX}
             y={axisGeometry.subtitleBaselineY}
             color={theme.axis.tick.color}
           />
@@ -229,18 +229,19 @@ export function Chart(props: ChartProps) {
               strokeWidth={theme.axis.line.strokeWidth}
             />
             <Group
-              origin={{
-                x: tick.x,
-                y: axisGeometry.xLabelTopY,
-              }}
-              transform={[{ rotate: axisGeometry.xLabelAngleRad }]}
+              transform={[
+                { translateX: tick.x },
+                { translateY: axisGeometry.xLabelTopY },
+                { rotate: axisGeometry.xLabelAngleRad },
+              ]}
             >
               <Text
                 text={tick.label}
                 font={skiaFonts.xTick}
-                x={axisGeometry.xLabels[index]?.x ?? tick.x}
+                x={axisGeometry.xLabels[index]?.localX ?? 0}
                 y={
-                  axisGeometry.xLabels[index]?.baselineY ?? axisGeometry.xAxisY
+                  axisGeometry.xLabels[index]?.baselineOffset ??
+                  baselineOffsetFromTop(props.fonts.xTickFont.size)
                 }
                 color={theme.axis.tick.color}
               />
@@ -287,10 +288,9 @@ function buildAxisGeometry(input: {
       font: input.fonts.xTickFont,
       angle: 0,
     });
-    const x = tick.x - measured.width / 2;
-    const baselineY =
-      xLabelTopY - estimateAscentFromTop(input.fonts.xTickFont.size);
-    return { x, baselineY };
+    const localX = -(measured.width / 2) * Math.cos(xLabelAngleRad);
+    const baselineOffset = baselineOffsetFromTop(input.fonts.xTickFont.size);
+    return { localX, baselineOffset };
   });
 
   const yLabels = input.yTicks.map((tick) => {
@@ -301,25 +301,43 @@ function buildAxisGeometry(input: {
     });
     const x = yAxisX - AXIS_TICK_SIZE_PX - AXIS_LABEL_GAP_PX - measured.width;
     const topY = tick.y - measured.height / 2;
-    const baselineY = topY - estimateAscentFromTop(input.fonts.yTickFont.size);
+    const baselineY = topY + baselineOffsetFromTop(input.fonts.yTickFont.size);
     return { x, baselineY };
   });
 
-  const titleHeight = input.title
+  const titleMeasured = input.title
     ? input.fonts.measureText({
         text: input.title,
         font: input.fonts.titleFont,
         angle: 0,
-      }).height
-    : 0;
+      })
+    : null;
+  const subtitleMeasured = input.subtitle
+    ? input.fonts.measureText({
+        text: input.subtitle,
+        font: input.fonts.subtitleFont,
+        angle: 0,
+      })
+    : null;
+
+  const titleHeight = titleMeasured?.height ?? 0;
   const titleTopY = input.layout.header.y;
   const titleBaselineY =
-    titleTopY - estimateAscentFromTop(input.fonts.titleFont.size);
+    titleTopY + baselineOffsetFromTop(input.fonts.titleFont.size);
+  const titleX =
+    input.layout.header.x +
+    Math.max(0, (input.layout.header.width - (titleMeasured?.width ?? 0)) / 2);
 
   const subtitleTopY =
     titleTopY + titleHeight + (input.title && input.subtitle ? 4 : 0);
   const subtitleBaselineY =
-    subtitleTopY - estimateAscentFromTop(input.fonts.subtitleFont.size);
+    subtitleTopY + baselineOffsetFromTop(input.fonts.subtitleFont.size);
+  const subtitleX =
+    input.layout.header.x +
+    Math.max(
+      0,
+      (input.layout.header.width - (subtitleMeasured?.width ?? 0)) / 2
+    );
 
   return {
     xAxisY,
@@ -328,7 +346,9 @@ function buildAxisGeometry(input: {
     xLabelAngleRad,
     xLabels,
     yLabels,
+    titleX,
     titleBaselineY,
+    subtitleX,
     subtitleBaselineY,
   };
 }
@@ -394,6 +414,6 @@ type SkiaFontWeight =
  * budgets by box height. A stable ascent heuristic keeps labels vertically
  * centered and avoids clipping without coupling layout to renderer internals.
  */
-function estimateAscentFromTop(fontSize: number) {
-  return -Math.round(fontSize * 0.8);
+function baselineOffsetFromTop(fontSize: number) {
+  return Math.round(fontSize * 0.8);
 }
