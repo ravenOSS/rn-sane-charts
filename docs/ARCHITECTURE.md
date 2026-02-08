@@ -48,7 +48,8 @@ Notes:
 
 - `packages/rn/example/` exists because `@rn-sane-charts/rn` was bootstrapped from a RN library template.
 - `packages/examples/` is the primary example/gallery app for this monorepo.
-- `packages/examples/` targets **Expo SDK 55** (New Architecture only). **Expo Go may be incompatible** during SDK 55 preview/beta; use a development build (`expo-dev-client`) when needed.
+- `packages/examples/` targets **Expo SDK 55** (New Architecture only) and is the active development path.
+- `packages/ExamplesBare/` is used only for isolated runtime validation and is maintained on a separate branch so it does not affect mainline iteration.
 
 ---
 

@@ -90,7 +90,8 @@ Current constraints:
 
 * The example app targets **Expo SDK 55** (New Architecture only).
 * During SDK 55 preview/beta, **Expo Go on physical devices may lag** and be incompatible.
-* Use a **development build** (`expo-dev-client`) for reliable on-device testing.
+* Primary local workflow is the managed app in `packages/examples/` (`expo start`, `expo run:ios`, `expo run:android`).
+* The bare RN validation app (`packages/ExamplesBare`) is intentionally kept on a separate branch and is not part of mainline development.
 
 ---
 

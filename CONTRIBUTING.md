@@ -76,6 +76,15 @@ If you’d like to propose a future feature, open a discussion first.
 4. Add or update documentation where needed
 5. Submit a PR with a clear description
 
+### Branch Policy for Runtime Experiments
+
+Runtime validation tracks (for example, a temporary bare React Native app used to isolate infrastructure issues) should stay on dedicated branches and must not be merged into `main` unless they become part of the intended development workflow.
+
+Current policy:
+
+* `main` focuses on `packages/examples/` as the active app surface.
+* `ExamplesBare` validation work remains isolated to its own branch.
+
 ---
 
 ## Definition of Done
