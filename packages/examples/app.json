@@ -13,8 +13,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mtnkoder.examples",
-      "deploymentTarget": "16.0"
+      "bundleIdentifier": "com.mtnkoder.examples"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +25,16 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0"
+          }
+        }
+      ]
+    ]
   }
 }
