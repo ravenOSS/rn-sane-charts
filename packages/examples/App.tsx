@@ -5,6 +5,11 @@ import { matchFont } from "@shopify/react-native-skia";
 
 import { Chart, LineSeries, makeSkiaMeasureText } from "@rn-sane-charts/rn";
 import type { Series } from "@rn-sane-charts/core";
+import {
+  createExampleChartFonts,
+  exampleChartTheme,
+  exampleSeriesColors,
+} from "./chartConfig";
 
 const data: Series[] = [
   {
@@ -12,6 +17,20 @@ const data: Series[] = [
     data: Array.from({ length: 50 }, (_, i) => ({
       x: new Date(2026, 0, i + 1),
       y: 20 + Math.sin(i / 5) * 6 + i * 0.1,
+    })),
+  },
+  {
+    id: "Forecast",
+    data: Array.from({ length: 50 }, (_, i) => ({
+      x: new Date(2026, 0, i + 1),
+      y: 19 + Math.sin((i + 3) / 6) * 5 + i * 0.12,
+    })),
+  },
+  {
+    id: "Target",
+    data: Array.from({ length: 50 }, (_, i) => ({
+      x: new Date(2026, 0, i + 1),
+      y: 22 + Math.sin((i - 4) / 7) * 3 + i * 0.08,
     })),
   },
 ];
@@ -32,6 +51,7 @@ export default function App() {
   if (!font) return null;
 
   const measureText = makeSkiaMeasureText(font);
+  const chartFonts = createExampleChartFonts({ fontFamily, measureText });
 
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -43,17 +63,12 @@ export default function App() {
         subtitle="Last 50 days"
         xAxisTitle="Date"
         yAxisTitle="USD"
-        fonts={{
-          measureText,
-          xTickFont: { size: 12, family: fontFamily },
-          yTickFont: { size: 12, family: fontFamily },
-          titleFont: { size: 16, family: fontFamily, weight: "semibold" },
-          subtitleFont: { size: 12, family: fontFamily },
-          xAxisTitleFont: { size: 12, family: fontFamily, weight: "medium" },
-          yAxisTitleFont: { size: 12, family: fontFamily, weight: "medium" },
-        }}
+        fonts={chartFonts}
+        theme={exampleChartTheme}
       >
-        <LineSeries series={data[0]} />
+        <LineSeries series={data[0]} color={exampleSeriesColors.revenue} />
+        <LineSeries series={data[1]} color={exampleSeriesColors.forecast} />
+        <LineSeries series={data[2]} color={exampleSeriesColors.target} />
       </Chart>
     </View>
   );

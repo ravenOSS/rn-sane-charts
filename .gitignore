@@ -12,3 +12,6 @@ lib/
 .expo/
 ios/
 android/
+
+# local working notes
+docs/notes.txt
