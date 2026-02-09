@@ -7,10 +7,16 @@ export { BarSeries } from './series/BarSeries';
 export { GroupedBarSeries } from './series/GroupedBarSeries';
 export { StackedBarSeries } from './series/StackedBarSeries';
 export { HistogramSeries } from './series/HistogramSeries';
+export type { MarkerStyle, MarkerSymbol } from './series/markerSymbol';
 
 export { darkTheme, defaultTheme, lightTheme } from './theme/defaultTheme';
 
-export type { ChartColorScheme, SaneChartTheme, SaneChartFonts } from './types';
+export type {
+  ChartColorScheme,
+  ChartInteraction,
+  SaneChartTheme,
+  SaneChartFonts,
+} from './types';
 
 export { makeSkiaMeasureText } from './skia/measureTextAdaptor';
 

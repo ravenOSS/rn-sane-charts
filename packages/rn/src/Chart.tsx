@@ -11,7 +11,12 @@ import {
 
 import type { Series } from '@rn-sane-charts/core';
 import { buildTimeSeriesPlan } from '@rn-sane-charts/core';
-import type { ChartColorScheme, SaneChartFonts, SaneChartTheme } from './types';
+import type {
+  ChartColorScheme,
+  ChartInteraction,
+  SaneChartFonts,
+  SaneChartTheme,
+} from './types';
 import { darkTheme, lightTheme } from './theme/defaultTheme';
 import { ChartContext } from './context';
 
@@ -34,6 +39,8 @@ export type ChartProps = {
   legend?: {
     show?: boolean;
     position?: 'auto' | 'right' | 'bottom';
+    interactive?: boolean;
+    interactionMode?: 'toggle' | 'isolate';
     items?: Array<{
       id: string;
       label?: string;
@@ -43,6 +50,7 @@ export type ChartProps = {
 
   fonts: SaneChartFonts;
   colorScheme?: ChartColorScheme;
+  interaction?: ChartInteraction;
   theme?: Partial<SaneChartTheme>;
 
   /** Children are series components, axes, etc. */
@@ -80,6 +88,27 @@ export function Chart(props: ChartProps) {
       ),
     [resolvedColorScheme, props.theme]
   );
+
+  const [hiddenSeriesIds, setHiddenSeriesIds] = React.useState<string[]>([]);
+  const hiddenSeriesIdSet = React.useMemo(
+    () => new Set(hiddenSeriesIds),
+    [hiddenSeriesIds]
+  );
+  const legendInteractive = props.legend?.interactive ?? false;
+  const legendInteractionMode = props.legend?.interactionMode ?? 'toggle';
+
+  React.useEffect(() => {
+    const knownSeriesIds = new Set(props.series.map((series) => series.id));
+    setHiddenSeriesIds((prev) =>
+      prev.filter((seriesId) => knownSeriesIds.has(seriesId))
+    );
+  }, [props.series]);
+
+  const visibleSeries = React.useMemo(
+    () => props.series.filter((series) => !hiddenSeriesIdSet.has(series.id)),
+    [props.series, hiddenSeriesIdSet]
+  );
+  const seriesForPlan = visibleSeries.length > 0 ? visibleSeries : props.series;
 
   const legendLayout = React.useMemo(() => {
     const fallbackLegendColor = '#2563EB';
@@ -162,7 +191,7 @@ export function Chart(props: ChartProps) {
 
   const plan = React.useMemo(() => {
     return buildTimeSeriesPlan({
-      series: props.series,
+      series: seriesForPlan,
       layoutInput: {
         width: props.width,
         height: props.height,
@@ -200,7 +229,7 @@ export function Chart(props: ChartProps) {
       formatY: props.formatY,
     });
   }, [
-    props.series,
+    seriesForPlan,
     props.width,
     props.height,
     props.title,
@@ -225,9 +254,10 @@ export function Chart(props: ChartProps) {
       layout: plan.layout,
       theme,
       fonts: props.fonts,
+      hiddenSeriesIds: hiddenSeriesIdSet,
       scales: plan.scales,
     }),
-    [plan.layout, plan.scales, theme, props.fonts]
+    [plan.layout, plan.scales, theme, props.fonts, hiddenSeriesIdSet]
   );
 
   const skiaFonts = React.useMemo(
@@ -275,8 +305,197 @@ export function Chart(props: ChartProps) {
     ]
   );
 
+  const interactionEnabled = props.interaction?.enabled ?? false;
+  const crosshairMode = props.interaction?.crosshair ?? 'x';
+  const snapMode = props.interaction?.snap ?? 'nearest';
+  const showTooltip = props.interaction?.tooltip ?? true;
+  const responderEnabled = interactionEnabled || (legendInteractive && legendLayout.show);
+
+  const interactiveSeriesPoints = React.useMemo(() => {
+    const fallbackColor = '#2563EB';
+    const points: InteractivePoint[] = [];
+    const legendColorBySeriesId = new Map(
+      legendLayout.items.map((item) => [item.id, item.color] as const)
+    );
+    const sourceSeriesIndexById = new Map(
+      props.series.map((series, index) => [series.id, index] as const)
+    );
+
+    seriesForPlan.forEach((series, seriesIndex) => {
+      const sourceIndex =
+        sourceSeriesIndexById.get(series.id) ?? seriesIndex;
+      const color =
+        legendColorBySeriesId.get(series.id) ??
+        theme.series.palette[sourceIndex % theme.series.palette.length] ??
+        fallbackColor;
+      series.data.forEach((datum, datumIndex) => {
+        const px = plan.scales.x(datum.x as any);
+        const py = plan.scales.y(datum.y);
+        if (!Number.isFinite(px) || !Number.isFinite(py)) return;
+        if (!isInsidePlot(px, py, plan.layout.plot)) return;
+
+        points.push({
+          seriesId: series.id,
+          seriesIndex,
+          datumIndex,
+          xValue: datum.x,
+          yValue: datum.y,
+          x: px,
+          y: py,
+          color,
+          xLabel: formatInteractiveXLabel(datum.x, props.formatX),
+          yLabel: formatInteractiveYLabel(datum.y, props.formatY),
+        });
+      });
+    });
+
+    return points;
+  }, [
+    seriesForPlan,
+    plan.scales,
+    plan.layout.plot,
+    props.series,
+    props.formatX,
+    props.formatY,
+    theme.series.palette,
+    legendLayout.items,
+  ]);
+
+  const indexedXAnchors = React.useMemo(() => {
+    const anchors = new Set<number>();
+    for (const point of interactiveSeriesPoints) anchors.add(point.x);
+    return Array.from(anchors).sort((a, b) => a - b);
+  }, [interactiveSeriesPoints]);
+
+  const [interactionState, setInteractionState] =
+    React.useState<InteractionState | null>(null);
+
+  const legendItemBoxes = React.useMemo(
+    () =>
+      computeLegendItemBoxes({
+        chartWidth: props.width,
+        chartHeight: props.height,
+        layout: plan.layout,
+        legend: legendLayout,
+      }),
+    [props.width, props.height, plan.layout, legendLayout]
+  );
+
+  const toggleSeriesByLegendId = React.useCallback(
+    (seriesId: string) => {
+      if (!legendInteractive) return;
+      const known = new Set(props.series.map((series) => series.id));
+      if (!known.has(seriesId)) return;
+
+      setHiddenSeriesIds((prev) => {
+        if (legendInteractionMode === 'isolate') {
+          const visibleIds = props.series
+            .map((series) => series.id)
+            .filter((id) => !prev.includes(id));
+          const alreadyIsolated =
+            visibleIds.length === 1 && visibleIds[0] === seriesId;
+
+          // Tap again on an already-isolated series restores all.
+          if (alreadyIsolated) return [];
+
+          // Hide everything except the selected legend item.
+          return props.series
+            .map((series) => series.id)
+            .filter((id) => id !== seriesId);
+        }
+
+        const next = new Set(prev);
+        if (next.has(seriesId)) {
+          next.delete(seriesId);
+          return Array.from(next);
+        }
+
+        const visibleCount = props.series.filter((series) => !next.has(series.id)).length;
+        if (visibleCount <= 1) return prev;
+        next.add(seriesId);
+        return Array.from(next);
+      });
+    },
+    [legendInteractive, legendInteractionMode, props.series]
+  );
+
+  const handleTouch = React.useCallback(
+    (x: number, y: number) => {
+      if (!interactionEnabled || interactiveSeriesPoints.length === 0) return;
+      if (!isInsidePlot(x, y, plan.layout.plot)) {
+        setInteractionState(null);
+        return;
+      }
+
+      if (snapMode === 'index') {
+        const targetX = findNearestNumeric(indexedXAnchors, x);
+        if (!Number.isFinite(targetX)) {
+          setInteractionState(null);
+          return;
+        }
+
+        const grouped = collectPointsAtAnchor(interactiveSeriesPoints, targetX);
+        if (grouped.length === 0) {
+          setInteractionState(null);
+          return;
+        }
+
+        const anchor = findNearestPoint(grouped, x, y) ?? grouped[0];
+        setInteractionState({
+          crosshairX: targetX,
+          crosshairY: anchor?.y ?? y,
+          anchorXLabel: anchor?.xLabel ?? '',
+          points: grouped,
+        });
+        return;
+      }
+
+      const nearest = findNearestPoint(interactiveSeriesPoints, x, y);
+      if (!nearest) {
+        setInteractionState(null);
+        return;
+      }
+
+      setInteractionState({
+        crosshairX: nearest.x,
+        crosshairY: nearest.y,
+        anchorXLabel: nearest.xLabel,
+        points: [nearest],
+      });
+    },
+    [
+      interactionEnabled,
+      interactiveSeriesPoints,
+      plan.layout.plot,
+      snapMode,
+      indexedXAnchors,
+    ]
+  );
+
   return (
-    <View style={{ width: props.width, height: props.height }}>
+    <View
+      style={{ width: props.width, height: props.height }}
+      onStartShouldSetResponder={() => responderEnabled}
+      onMoveShouldSetResponder={() => interactionEnabled}
+      onResponderGrant={(event) => {
+        const x = event.nativeEvent.locationX;
+        const y = event.nativeEvent.locationY;
+        const legendHit = legendInteractive
+          ? findLegendHit(legendItemBoxes, x, y)
+          : null;
+        if (legendHit) {
+          toggleSeriesByLegendId(legendHit.id);
+          setInteractionState(null);
+          return;
+        }
+        handleTouch(x, y);
+      }}
+      onResponderMove={(event) =>
+        handleTouch(event.nativeEvent.locationX, event.nativeEvent.locationY)
+      }
+      onResponderRelease={() => setInteractionState(null)}
+      onResponderTerminate={() => setInteractionState(null)}
+    >
       <Canvas style={{ width: props.width, height: props.height }}>
         {/* Background */}
         <SkRect
@@ -427,6 +646,52 @@ export function Chart(props: ChartProps) {
           </Group>
         ))}
 
+        {interactionEnabled && interactionState ? (
+          <Group>
+            {crosshairMode === 'x' || crosshairMode === 'xy' ? (
+              <Line
+                p1={{
+                  x: interactionState.crosshairX,
+                  y: plan.layout.plot.y,
+                }}
+                p2={{
+                  x: interactionState.crosshairX,
+                  y: plan.layout.plot.y + plan.layout.plot.height,
+                }}
+                color={theme.axis.line.stroke}
+                opacity={0.75}
+                strokeWidth={1}
+              />
+            ) : null}
+            {crosshairMode === 'xy' ? (
+              <Line
+                p1={{
+                  x: plan.layout.plot.x,
+                  y: interactionState.crosshairY,
+                }}
+                p2={{
+                  x: plan.layout.plot.x + plan.layout.plot.width,
+                  y: interactionState.crosshairY,
+                }}
+                color={theme.axis.line.stroke}
+                opacity={0.6}
+                strokeWidth={1}
+              />
+            ) : null}
+            {showTooltip
+              ? renderTooltip({
+                  active: interactionState,
+                  chartWidth: props.width,
+                  chartHeight: props.height,
+                  plot: plan.layout.plot,
+                  fonts: props.fonts,
+                  skiaFont: skiaFonts.yTick,
+                  colorScheme: resolvedColorScheme,
+                })
+              : null}
+          </Group>
+        ) : null}
+
         {legendLayout.show
           ? renderLegend({
               chartWidth: props.width,
@@ -436,6 +701,8 @@ export function Chart(props: ChartProps) {
               font: skiaFonts.legend,
               fontSize: props.fonts.yTickFont.size,
               textColor: theme.axis.tick.color,
+              hiddenSeriesIds: hiddenSeriesIdSet,
+              interactive: legendInteractive,
             })
           : null}
       </Canvas>
@@ -488,6 +755,31 @@ type LegendMeasuredItem = LegendItem & {
   textWidth: number;
   textHeight: number;
   rowWidth: number;
+};
+type LegendItemBox = {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+type InteractivePoint = {
+  seriesId: string;
+  seriesIndex: number;
+  datumIndex: number;
+  xValue: unknown;
+  yValue: number;
+  x: number;
+  y: number;
+  color: string;
+  xLabel: string;
+  yLabel: string;
+};
+type InteractionState = {
+  crosshairX: number;
+  crosshairY: number;
+  anchorXLabel: string;
+  points: InteractivePoint[];
 };
 
 /**
@@ -800,7 +1092,74 @@ function renderLegend(input: {
   font: ReturnType<typeof matchFont>;
   fontSize: number;
   textColor: string;
+  hiddenSeriesIds: Set<string>;
+  interactive: boolean;
 }) {
+  const itemBoxes = computeLegendItemBoxes(input);
+
+  return (
+    <Group>
+      {input.legend.items.map((item, index) => {
+        const box = itemBoxes[index];
+        if (!box) return null;
+        const hidden = input.hiddenSeriesIds.has(item.id);
+        const opacity = hidden ? 0.35 : 1;
+        const swatchY = box.y + Math.max(0, (box.height - LEGEND_SWATCH_SIZE_PX) / 2);
+        const textX = box.x + LEGEND_SWATCH_SIZE_PX + LEGEND_SWATCH_TEXT_GAP_PX;
+        const textY = box.y + baselineOffsetFromTop(input.fontSize);
+        return (
+          <Group key={`legend-${item.id}-${index}`}>
+            <SkRect
+              x={box.x}
+              y={swatchY}
+              width={LEGEND_SWATCH_SIZE_PX}
+              height={LEGEND_SWATCH_SIZE_PX}
+              color={item.color}
+              opacity={opacity}
+            />
+            <Text
+              text={item.label}
+              font={input.font}
+              x={textX}
+              y={textY}
+              color={input.textColor}
+              opacity={opacity}
+            />
+            {input.interactive ? (
+              <SkRect
+                x={box.x - 2}
+                y={box.y - 2}
+                width={box.width + 4}
+                height={box.height + 4}
+                color={input.textColor}
+                opacity={0.12}
+                style="stroke"
+                strokeWidth={hidden ? 0.75 : 0.5}
+              />
+            ) : null}
+          </Group>
+        );
+      })}
+    </Group>
+  );
+}
+
+function computeLegendItemBoxes(input: {
+  chartWidth: number;
+  chartHeight: number;
+  layout: ReturnType<typeof buildTimeSeriesPlan>['layout'];
+  legend: {
+    show: boolean;
+    items: LegendMeasuredItem[];
+    position: 'right' | 'bottom';
+    orientation: 'vertical' | 'horizontal';
+    width: number;
+    height: number;
+    rowHeight?: number;
+  };
+}): LegendItemBox[] {
+  if (!input.legend.show || input.legend.items.length === 0) return [];
+
   const rowHeight = input.legend.rowHeight ?? LEGEND_SWATCH_SIZE_PX;
   const startX =
     input.legend.position === 'right'
@@ -812,48 +1171,247 @@ function renderLegend(input: {
       ? input.layout.plot.y + LEGEND_OUTER_MARGIN_PX
       : input.chartHeight - input.legend.height - LEGEND_OUTER_MARGIN_PX;
 
+  return input.legend.items.map((item, index) => {
+    const topY =
+      input.legend.orientation === 'horizontal'
+        ? startY + LEGEND_PADDING_PX
+        : startY + LEGEND_PADDING_PX + index * (rowHeight + LEGEND_ITEM_GAP_PX);
+
+    const leftX =
+      input.legend.orientation === 'horizontal'
+        ? startX +
+          LEGEND_PADDING_PX +
+          input.legend.items
+            .slice(0, index)
+            .reduce((acc, current) => acc + current.rowWidth, 0) +
+          index * LEGEND_ITEM_GAP_PX
+        : startX + LEGEND_PADDING_PX;
+
+    return {
+      id: item.id,
+      x: leftX,
+      y: topY,
+      width: item.rowWidth,
+      height: rowHeight,
+    };
+  });
+}
+
+function findLegendHit(
+  boxes: LegendItemBox[],
+  x: number,
+  y: number
+): LegendItemBox | null {
+  for (const box of boxes) {
+    if (
+      x >= box.x &&
+      x <= box.x + box.width &&
+      y >= box.y &&
+      y <= box.y + box.height
+    ) {
+      return box;
+    }
+  }
+  return null;
+}
+
+function renderTooltip(input: {
+  active: InteractionState;
+  chartWidth: number;
+  chartHeight: number;
+  plot: ReturnType<typeof buildTimeSeriesPlan>['layout']['plot'];
+  fonts: SaneChartFonts;
+  skiaFont: ReturnType<typeof matchFont>;
+  colorScheme: 'light' | 'dark';
+}) {
+  const padding = 8;
+  const lineGap = 4;
+  const rowPrefixGap = 6;
+  const swatchSize = 8;
+  const headerFont = input.fonts.yTickFont;
+
+  const title = input.active.anchorXLabel;
+  const titleMeasure = input.fonts.measureText({
+    text: title,
+    font: headerFont,
+    angle: 0,
+  });
+  const rowMeasures = input.active.points.map((point) => {
+    const rowText = `${point.seriesId}: ${point.yLabel}`;
+    const m = input.fonts.measureText({
+      text: rowText,
+      font: input.fonts.yTickFont,
+      angle: 0,
+    });
+    return { text: rowText, width: m.width, height: m.height, color: point.color };
+  });
+
+  const rowHeight = Math.max(
+    input.fonts.yTickFont.size,
+    ...rowMeasures.map((row) => row.height)
+  );
+  const textWidth = Math.max(titleMeasure.width, ...rowMeasures.map((row) => row.width + swatchSize + rowPrefixGap));
+  const tooltipWidth = Math.ceil(textWidth + padding * 2);
+  const tooltipHeight = Math.ceil(
+    padding * 2 +
+      titleMeasure.height +
+      lineGap +
+      rowMeasures.length * rowHeight +
+      Math.max(0, rowMeasures.length - 1) * 2
+  );
+
+  const preferredX = input.active.crosshairX + 10;
+  const preferredY = input.active.crosshairY - tooltipHeight - 10;
+  const x = clamp(preferredX, 4, input.chartWidth - tooltipWidth - 4);
+  const y = clamp(preferredY, 4, input.chartHeight - tooltipHeight - 4);
+
+  const backgroundColor =
+    input.colorScheme === 'dark' ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.96)';
+  const strokeColor =
+    input.colorScheme === 'dark' ? 'rgba(148,163,184,0.55)' : 'rgba(75,85,99,0.28)';
+  const textColor = input.colorScheme === 'dark' ? '#E5E7EB' : '#111827';
+
+  const titleBaselineY = y + padding + baselineOffsetFromTop(headerFont.size);
+  const dividerY = y + padding + titleMeasure.height + 2;
+  const rowsStartY = dividerY + lineGap;
+
   return (
     <Group>
-      {input.legend.items.map((item, index) => {
-        const topY =
-          input.legend.orientation === 'horizontal'
-            ? startY + LEGEND_PADDING_PX
-            : startY +
-              LEGEND_PADDING_PX +
-              index * (rowHeight + LEGEND_ITEM_GAP_PX);
-
-        const leftX =
-          input.legend.orientation === 'horizontal'
-            ? startX +
-              LEGEND_PADDING_PX +
-              input.legend.items
-                .slice(0, index)
-                .reduce((acc, current) => acc + current.rowWidth, 0) +
-              index * LEGEND_ITEM_GAP_PX
-            : startX + LEGEND_PADDING_PX;
-
-        const swatchY = topY + Math.max(0, (rowHeight - LEGEND_SWATCH_SIZE_PX) / 2);
-        const textX = leftX + LEGEND_SWATCH_SIZE_PX + LEGEND_SWATCH_TEXT_GAP_PX;
-        const textY = topY + baselineOffsetFromTop(input.fontSize);
+      <SkRect
+        x={x}
+        y={y}
+        width={tooltipWidth}
+        height={tooltipHeight}
+        color={backgroundColor}
+      />
+      <SkRect
+        x={x}
+        y={y}
+        width={tooltipWidth}
+        height={tooltipHeight}
+        color={strokeColor}
+        style="stroke"
+        strokeWidth={1}
+      />
+      <Text
+        text={title}
+        font={input.skiaFont}
+        x={x + padding}
+        y={titleBaselineY}
+        color={textColor}
+      />
+      <Line
+        p1={{ x: x + padding, y: dividerY }}
+        p2={{ x: x + tooltipWidth - padding, y: dividerY }}
+        color={strokeColor}
+        strokeWidth={1}
+      />
+      {rowMeasures.map((row, index) => {
+        const topY = rowsStartY + index * (rowHeight + 2);
+        const baselineY = topY + baselineOffsetFromTop(input.fonts.yTickFont.size);
+        const swatchY = topY + Math.max(0, (rowHeight - swatchSize) / 2);
+        const textX = x + padding + swatchSize + rowPrefixGap;
         return (
-          <Group key={`legend-${item.id}-${index}`}>
+          <Group key={`tooltip-row-${row.text}-${index}`}>
             <SkRect
-              x={leftX}
+              x={x + padding}
               y={swatchY}
-              width={LEGEND_SWATCH_SIZE_PX}
-              height={LEGEND_SWATCH_SIZE_PX}
-              color={item.color}
+              width={swatchSize}
+              height={swatchSize}
+              color={row.color}
             />
             <Text
-              text={item.label}
-              font={input.font}
+              text={row.text}
+              font={input.skiaFont}
               x={textX}
-              y={textY}
-              color={input.textColor}
+              y={baselineY}
+              color={textColor}
             />
           </Group>
         );
       })}
     </Group>
   );
+}
+
+function formatInteractiveXLabel(
+  value: unknown,
+  formatX?: (d: Date) => string
+): string {
+  if (value instanceof Date) {
+    if (formatX) return formatX(value);
+    return `${value.toLocaleString()}`;
+  }
+  return String(value);
+}
+
+function formatInteractiveYLabel(
+  value: number,
+  formatY?: (v: number) => string
+): string {
+  if (formatY) return formatY(value);
+  if (Math.abs(value) >= 1000) return value.toLocaleString();
+  return Number(value.toFixed(2)).toString();
+}
+
+function findNearestPoint(
+  points: InteractivePoint[],
+  x: number,
+  y: number
+): InteractivePoint | null {
+  let best: InteractivePoint | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const point of points) {
+    const dx = point.x - x;
+    const dy = point.y - y;
+    const d = dx * dx + dy * dy;
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = point;
+    }
+  }
+  return best;
+}
+
+function collectPointsAtAnchor(
+  points: InteractivePoint[],
+  anchorX: number
+): InteractivePoint[] {
+  const out: InteractivePoint[] = [];
+  for (const point of points) {
+    if (Math.abs(point.x - anchorX) < 0.5) out.push(point);
+  }
+  out.sort((a, b) => a.seriesIndex - b.seriesIndex);
+  return out;
+}
+
+function findNearestNumeric(values: number[], target: number): number {
+  if (values.length === 0) return Number.NaN;
+  let best = values[0] ?? Number.NaN;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const value of values) {
+    const d = Math.abs(value - target);
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = value;
+    }
+  }
+  return best;
+}
+
+function isInsidePlot(
+  x: number,
+  y: number,
+  plot: ReturnType<typeof buildTimeSeriesPlan>['layout']['plot']
+): boolean {
+  return (
+    x >= plot.x &&
+    x <= plot.x + plot.width &&
+    y >= plot.y &&
+    y <= plot.y + plot.height
+  );
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }

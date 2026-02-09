@@ -343,6 +343,13 @@ function GalleryApp() {
               yAxisTitle="USD"
               xTickValues={lineTickValues}
               xTickDomainMode="exact"
+              legend={{ interactive: true, interactionMode: "isolate" }}
+              interaction={{
+                enabled: true,
+                crosshair: "x",
+                snap: "index",
+                tooltip: true,
+              }}
               {...commonChartProps}
             >
               <LineSeries
@@ -430,6 +437,7 @@ function GalleryApp() {
               xTickValues={groupedBarTickValues}
               xTickDomainMode="slots"
               tickCounts={{ x: groupedBarLabels.length, y: 6 }}
+              legend={{ interactive: true, interactionMode: "isolate" }}
               {...commonChartProps}
             >
               <GroupedBarSeries
@@ -454,7 +462,11 @@ function GalleryApp() {
               xTickValues={stackedBarTickValues}
               xTickDomainMode="slots"
               tickCounts={{ x: stackedBarLabels.length, y: 6 }}
-              legend={{ items: stackedBarLegendItems }}
+              legend={{
+                items: stackedBarLegendItems,
+                interactive: true,
+                interactionMode: "isolate",
+              }}
               {...commonChartProps}
             >
               <StackedBarSeries
@@ -478,12 +490,21 @@ function GalleryApp() {
               xTickValues={scatterTickValues}
               xTickDomainMode="slots"
               tickCounts={{ x: 8, y: 6 }}
+              interaction={{
+                enabled: true,
+                crosshair: "xy",
+                snap: "nearest",
+                tooltip: true,
+              }}
               {...commonChartProps}
             >
               <ScatterSeries
                 series={scatterSeries}
                 color={exampleChartTypeConfig.scatter.color}
-                radius={exampleChartTypeConfig.scatter.pointRadius}
+                symbol="plus"
+                size={9}
+                strokeWidth={1.7}
+                hitRadiusPx={22}
               />
             </Chart>
           ) : null}

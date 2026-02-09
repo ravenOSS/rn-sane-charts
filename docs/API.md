@@ -47,6 +47,23 @@ type ScatterDatum = {
   y: number;
   r?: number;
 };
+
+type MarkerSymbol =
+  | "circle"
+  | "plus"
+  | "cross"
+  | "square"
+  | "diamond"
+  | "triangle";
+
+type MarkerStyle = {
+  symbol?: MarkerSymbol;
+  size?: number;
+  color: string;
+  opacity?: number;
+  strokeWidth?: number;
+  filled?: boolean;
+};
 ```
 
 ## Shared Components
@@ -71,7 +88,15 @@ type ChartProps = {
   legend?: {
     show?: boolean;
     position?: "auto" | "right" | "bottom";
+    interactive?: boolean;
+    interactionMode?: "toggle" | "isolate";
     items?: Array<{ id: string; label?: string; color?: string }>;
+  };
+  interaction?: {
+    enabled?: boolean;
+    crosshair?: "none" | "x" | "xy";
+    snap?: "nearest" | "index";
+    tooltip?: boolean;
   };
   fonts: SaneChartFonts;
   colorScheme?: "light" | "dark" | "system";
@@ -89,6 +114,14 @@ Behavior:
   otherwise `bottom`), and is hidden for single-series charts unless `show` is forced.
 - For bottom legends, label widths are measured and the legend switches to a
   horizontal row only when all items fit the available chart width.
+- `legend.interactive` enables tap-to-toggle series visibility directly from legend items.
+- `legend.interactionMode` controls legend tap behavior:
+  - `"toggle"`: hide/show one series at a time.
+  - `"isolate"`: show only the tapped series; tap it again to restore all.
+- `interaction` enables touch crosshair + tooltip behavior:
+  - `snap: "nearest"` focuses the nearest data point.
+  - `snap: "index"` snaps to the nearest x-slot and shows all series values at that slot.
+  - `crosshair` controls whether x-only or x/y crosshair lines are shown.
 - `xTickValues` can pin ticks to explicit x positions (useful for category-like
   charts mapped onto time slots).
 - `xTickDomainMode` controls edge behavior with explicit ticks:
@@ -145,6 +178,7 @@ type LineSeriesProps = {
   series: Series;
   color?: string;
   strokeWidth?: number;
+  marker?: Omit<MarkerStyle, "color"> & { color?: string };
 };
 ```
 
@@ -172,6 +206,7 @@ type AreaSeriesProps = {
   strokeColor?: string;
   strokeWidth?: number;
   baselineY?: number;
+  marker?: Omit<MarkerStyle, "color"> & { color?: string };
 };
 ```
 
@@ -240,10 +275,17 @@ Current component:
 type ScatterSeriesProps = {
   series: Series;
   color?: string;
-  radius?: number;
+  symbol?: MarkerSymbol;
+  size?: number;
+  strokeWidth?: number;
+  filled?: boolean;
   opacity?: number;
+  hitRadiusPx?: number;
 };
 ```
+
+Notes:
+- `hitRadiusPx` is reserved for interaction hit-testing and tooltip layers.
 
 ---
 

@@ -1,14 +1,18 @@
 import React from 'react';
-import { Circle } from '@shopify/react-native-skia';
 import type { Series } from '@rn-sane-charts/core';
 import { buildPoints } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
+import { MarkerGlyph, type MarkerStyle, type MarkerSymbol } from './markerSymbol';
 
 export type ScatterSeriesProps = {
   series: Series;
   color?: string;
-  radius?: number;
+  symbol?: MarkerSymbol;
+  size?: number;
+  strokeWidth?: number;
+  filled?: boolean;
   opacity?: number;
+  hitRadiusPx?: number;
 };
 
 /**
@@ -19,27 +23,35 @@ export type ScatterSeriesProps = {
  * - Reuses shared geometry path used by hit-testing/interaction layers.
  */
 export function ScatterSeries(props: ScatterSeriesProps) {
-  const { scales, theme } = useChartContext();
+  const { scales, theme, hiddenSeriesIds } = useChartContext();
+  if (hiddenSeriesIds.has(props.series.id)) return null;
 
   const points = React.useMemo(
     () => buildPoints(props.series, scales),
     [props.series, scales]
   );
 
-  const color = props.color ?? theme.series.palette[0];
-  const radius = props.radius ?? 4;
+  const fallbackColor = '#2563EB';
+  const color = props.color ?? theme.series.palette[0] ?? fallbackColor;
+  const size = props.size ?? 8;
   const opacity = clampOpacity(props.opacity ?? 0.9);
+  const marker: MarkerStyle = {
+    symbol: props.symbol ?? 'circle',
+    size,
+    color,
+    opacity,
+    strokeWidth: props.strokeWidth ?? 1.5,
+    filled: props.filled ?? true,
+  };
 
   return (
     <>
       {points.map((pt, index) => (
-        <Circle
+        <MarkerGlyph
           key={`scatter-${index}-${pt.x}-${pt.y}`}
-          cx={pt.x}
-          cy={pt.y}
-          r={radius}
-          color={color}
-          opacity={opacity}
+          x={pt.x}
+          y={pt.y}
+          {...marker}
         />
       ))}
     </>

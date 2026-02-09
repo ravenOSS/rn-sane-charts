@@ -21,22 +21,29 @@ export type StackedBarSeriesProps = {
  * - Alignment is by datum index per series.
  */
 export function StackedBarSeries(props: StackedBarSeriesProps) {
-  const { scales, theme } = useChartContext();
+  const { scales, theme, hiddenSeriesIds } = useChartContext();
   const opacity = clampOpacity(props.opacity ?? 0.92);
   const widthRatio = clampRatio(props.widthRatio ?? 0.72);
   const baselineValue = props.baselineY ?? 0;
+  const visibleSeries = React.useMemo(
+    () =>
+      props.series
+        .map((series, sourceIndex) => ({ series, sourceIndex }))
+        .filter((entry) => !hiddenSeriesIds.has(entry.series.id)),
+    [props.series, hiddenSeriesIds]
+  );
 
   const slotWidth = React.useMemo(
-    () => computeBarSlotWidthPx(props.series, scales.x),
-    [props.series, scales.x]
+    () => computeBarSlotWidthPx(visibleSeries.map((entry) => entry.series), scales.x),
+    [visibleSeries, scales.x]
   );
   const barWidth = Math.max(2, slotWidth * widthRatio);
 
-  const maxLen = Math.max(0, ...props.series.map((s) => s.data.length));
+  const maxLen = Math.max(0, ...visibleSeries.map((entry) => entry.series.data.length));
   return (
     <>
       {Array.from({ length: maxLen }, (_, index) => {
-        const xDatum = props.series.find((s) => s.data[index])?.data[index];
+        const xDatum = visibleSeries.find((entry) => entry.series.data[index])?.series.data[index];
         if (!xDatum) return null;
         const x = scales.x(xDatum.x);
         if (!Number.isFinite(x)) return null;
@@ -44,8 +51,8 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
         let posAcc = baselineValue;
         let negAcc = baselineValue;
 
-        return props.series.map((series, seriesIndex) => {
-          const datum = series.data[index];
+        return visibleSeries.map((entry, visibleIndex) => {
+          const datum = entry.series.data[index];
           if (!datum || !Number.isFinite(datum.y)) return null;
 
           const yValue = datum.y;
@@ -65,12 +72,12 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
           const rectY = Math.min(yStartPx, yEndPx);
           const rectH = Math.max(1, Math.abs(yStartPx - yEndPx));
           const color =
-            props.colors?.[seriesIndex] ??
-            theme.series.palette[seriesIndex % theme.series.palette.length];
+            props.colors?.[entry.sourceIndex] ??
+            theme.series.palette[entry.sourceIndex % theme.series.palette.length];
 
           return (
             <Rect
-              key={`stacked-${series.id}-${index}-${seriesIndex}-${x}`}
+              key={`stacked-${entry.series.id}-${index}-${visibleIndex}-${x}`}
               x={x - barWidth / 2}
               y={rectY}
               width={barWidth}

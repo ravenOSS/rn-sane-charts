@@ -2,6 +2,13 @@ import type { FontSpec, MeasureTextFn } from '@rn-sane-charts/core';
 
 export type ChartColorScheme = 'light' | 'dark' | 'system';
 
+export type ChartInteraction = {
+  enabled?: boolean;
+  crosshair?: 'none' | 'x' | 'xy';
+  snap?: 'nearest' | 'index';
+  tooltip?: boolean;
+};
+
 export type SaneChartTheme = {
   background: string;
   frame: { stroke: string; strokeWidth: number };

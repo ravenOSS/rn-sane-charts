@@ -1,8 +1,9 @@
 import React from 'react';
 import { Path, Skia } from '@shopify/react-native-skia';
 import type { Series } from '@rn-sane-charts/core';
-import { buildAreaPath } from '@rn-sane-charts/core';
+import { buildAreaPath, buildPoints } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
+import { MarkerGlyph, type MarkerStyle } from './markerSymbol';
 
 export type AreaSeriesProps = {
   series: Series;
@@ -11,6 +12,7 @@ export type AreaSeriesProps = {
   strokeColor?: string;
   strokeWidth?: number;
   baselineY?: number;
+  marker?: Omit<MarkerStyle, 'color'> & { color?: string };
 };
 
 /**
@@ -22,7 +24,8 @@ export type AreaSeriesProps = {
  * - Baseline defaults to `0` but can be overridden for specialized displays.
  */
 export function AreaSeries(props: AreaSeriesProps) {
-  const { scales, theme } = useChartContext();
+  const { scales, theme, hiddenSeriesIds } = useChartContext();
+  if (hiddenSeriesIds.has(props.series.id)) return null;
 
   const { d } = React.useMemo(
     () =>
@@ -36,10 +39,14 @@ export function AreaSeries(props: AreaSeriesProps) {
     () => (d ? Skia.Path.MakeFromSVGString(d) : null),
     [d]
   );
+  const points = React.useMemo(
+    () => (props.marker ? buildPoints(props.series, scales) : []),
+    [props.marker, props.series, scales]
+  );
 
   if (!skPath) return null;
 
-  const fillColor = props.fillColor ?? theme.series.palette[0];
+  const fillColor = props.fillColor ?? theme.series.palette[0] ?? '#2563EB';
   const fillOpacity = clampOpacity(props.fillOpacity ?? 0.18);
   const strokeColor = props.strokeColor ?? fillColor;
   const strokeWidth = props.strokeWidth ?? theme.series.strokeWidth;
@@ -55,6 +62,21 @@ export function AreaSeries(props: AreaSeriesProps) {
           strokeWidth={strokeWidth}
         />
       ) : null}
+      {props.marker
+        ? points.map((pt, index) => (
+            <MarkerGlyph
+              key={`area-marker-${index}-${pt.x}-${pt.y}`}
+              x={pt.x}
+              y={pt.y}
+              symbol={props.marker?.symbol}
+              size={props.marker?.size ?? 7}
+              color={props.marker?.color ?? strokeColor}
+              opacity={props.marker?.opacity ?? 1}
+              strokeWidth={props.marker?.strokeWidth}
+              filled={props.marker?.filled}
+            />
+          ))
+        : null}
     </>
   );
 }

@@ -134,6 +134,14 @@ Recommended workflow:
 2. Move shared fonts/theme to one app-level config module.
 3. Use per-series overrides only for chart-specific emphasis.
 
+Interaction defaults (opt-in):
+1. Set `interaction.enabled` on `Chart`.
+2. Use `snap: "index"` for business time-series comparison tooltips.
+3. Use `snap: "nearest"` for dense scatter exploration.
+4. Set `legend.interactive: true` for tap-to-toggle series visibility.
+5. Use `legend.interactionMode: "isolate"` when users should compare one
+   series at a time.
+
 ## Static vs Dynamic Inputs
 
 Static (usually one-time setup):
