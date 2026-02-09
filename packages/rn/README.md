@@ -112,6 +112,7 @@ export default function App() {
 - `theme` is a partial override of defaults.
 - Per-series props (`color`, `strokeWidth`) override theme for that series.
 - Fonts are layout-critical (not cosmetic only), because axis sizing uses text measurement.
+- Optional chart frame is available via `theme.frame` (`stroke`, `strokeWidth`).
 
 ## Streaming Data
 

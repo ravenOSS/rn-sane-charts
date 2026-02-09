@@ -26,6 +26,27 @@ type Series = {
   id: string;
   data: Datum[];
 };
+
+type CategoryDatum = {
+  x: string | number;
+  y: number;
+};
+
+type GroupedBarDatum = {
+  category: string;
+  values: Record<string, number>;
+};
+
+type StackedBarDatum = {
+  category: string;
+  values: Record<string, number>;
+};
+
+type ScatterDatum = {
+  x: number;
+  y: number;
+  r?: number;
+};
 ```
 
 ## Shared Components
@@ -71,6 +92,7 @@ type SaneChartFonts = {
 ```ts
 type SaneChartTheme = {
   background: string;
+  frame: { stroke: string; strokeWidth: number };
   grid: { stroke: string; strokeWidth: number };
   axis: {
     tick: { color: string };
@@ -138,6 +160,8 @@ Status: `Planned (MVP)`
 
 Data shape:
 - Categorical x-values in series data (`x: string | number`, `y: number`).
+- Grouped bars are modeled as `GroupedBarDatum[]`.
+- Stacked bars are modeled as `StackedBarDatum[]`.
 
 Planned component direction:
 
@@ -210,3 +234,20 @@ Application layer responsibility:
 1. Ingest payloads (JSON, websocket, GraphQL, etc.).
 2. Validate and map to chart data contracts.
 3. Pass shaped data into chart props.
+
+## Example Config Targets
+
+The examples app maintains chart-type visual presets in
+`packages/examples/chartConfig.ts` under `exampleChartTypeConfig`.
+
+Current keys:
+- `line`: `strokeWidth`, `colors`
+- `area`: `fillOpacity`, `strokeWidth`, `colors`, `baselineY`
+- `bar`: `barRadius`, `barGapPx`, `color`
+- `groupedBar`: `barRadius`, `groupGapPx`, `colors`
+- `stackedBar`: `barRadius`, `colors`
+- `scatter`: `pointRadius`, `selectedPointRadius`, `color`
+- `histogram`: `bins`, `color`, `barGapPx`
+
+These options are an app-level config shape today and a reference target for
+future renderer prop design.

@@ -94,6 +94,24 @@ Pass multiple series in `Chart.series`, and render one `LineSeries` per series.
 </Chart>
 ```
 
+## Sample Dataset Catalog
+
+The examples app includes ready-made datasets for each MVP chart type in:
+- `packages/examples/sampleDatasets.ts`
+
+Included fixtures:
+1. `sampleLineSeries`
+2. `sampleAreaSeries`
+3. `sampleStackedAreaSeries`
+4. `sampleBarData`
+5. `sampleGroupedBarData`
+6. `sampleStackedBarData`
+7. `sampleScatterData`
+8. `sampleHistogramValues`
+
+Use these fixtures to validate renderer behavior and visual defaults while new
+chart types are implemented.
+
 ## Styling After First Render
 
 Default behavior:

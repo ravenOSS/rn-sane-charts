@@ -29,6 +29,50 @@ export const exampleSeriesColors = {
 } as const;
 
 /**
+ * Visual presets by chart type.
+ *
+ * These presets are app-level configuration targets. Implemented renderers
+ * (line/area) can use them now, while planned renderers should align to these
+ * keys to keep visual behavior consistent.
+ */
+export const exampleChartTypeConfig = {
+  line: {
+    strokeWidth: 2,
+    colors: [exampleSeriesColors.revenue, exampleSeriesColors.forecast, exampleSeriesColors.target],
+  },
+  area: {
+    fillOpacity: 0.18,
+    strokeWidth: 2,
+    colors: [exampleSeriesColors.revenue, exampleSeriesColors.forecast, exampleSeriesColors.target],
+    baselineY: 0,
+  },
+  bar: {
+    barRadius: 2,
+    barGapPx: 6,
+    color: "#2563EB",
+  },
+  groupedBar: {
+    barRadius: 2,
+    groupGapPx: 10,
+    colors: [exampleSeriesColors.revenue, exampleSeriesColors.forecast, exampleSeriesColors.target],
+  },
+  stackedBar: {
+    barRadius: 2,
+    colors: ["#2563EB", "#16A34A", "#EA580C"],
+  },
+  scatter: {
+    pointRadius: 4,
+    color: "#2563EB",
+    selectedPointRadius: 6,
+  },
+  histogram: {
+    bins: 12,
+    color: "#2563EB",
+    barGapPx: 2,
+  },
+} as const;
+
+/**
  * Build chart fonts from a shared family token + renderer measure function.
  *
  * Dynamic input:

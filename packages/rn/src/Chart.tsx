@@ -53,6 +53,7 @@ export function Chart(props: ChartProps) {
     () => ({
       ...defaultTheme,
       ...props.theme,
+      frame: { ...defaultTheme.frame, ...(props.theme?.frame ?? {}) },
       axis: { ...defaultTheme.axis, ...(props.theme?.axis ?? {}) },
       grid: { ...defaultTheme.grid, ...(props.theme?.grid ?? {}) },
       series: { ...defaultTheme.series, ...(props.theme?.series ?? {}) },
@@ -166,6 +167,17 @@ export function Chart(props: ChartProps) {
           height={props.height}
           color={theme.background}
         />
+        {theme.frame.strokeWidth > 0 ? (
+          <SkRect
+            x={theme.frame.strokeWidth / 2}
+            y={theme.frame.strokeWidth / 2}
+            width={Math.max(0, props.width - theme.frame.strokeWidth)}
+            height={Math.max(0, props.height - theme.frame.strokeWidth)}
+            color={theme.frame.stroke}
+            style="stroke"
+            strokeWidth={theme.frame.strokeWidth}
+          />
+        ) : null}
 
         {/* Clip series rendering to plot bounds */}
         <Group

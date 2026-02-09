@@ -2,6 +2,7 @@ import type { FontSpec, MeasureTextFn } from '@rn-sane-charts/core';
 
 export type SaneChartTheme = {
   background: string;
+  frame: { stroke: string; strokeWidth: number };
   grid: { stroke: string; strokeWidth: number };
   axis: {
     tick: { color: string };

@@ -9,36 +9,13 @@ import {
   LineSeries,
   makeSkiaMeasureText,
 } from "@rn-sane-charts/rn";
-import type { Series } from "@rn-sane-charts/core";
 import {
   createExampleChartFonts,
   exampleChartTheme,
+  exampleChartTypeConfig,
   exampleSeriesColors,
 } from "./chartConfig";
-
-const data: Series[] = [
-  {
-    id: "Revenue",
-    data: Array.from({ length: 50 }, (_, i) => ({
-      x: new Date(2026, 0, i + 1),
-      y: 20 + Math.sin(i / 5) * 6 + i * 0.1,
-    })),
-  },
-  {
-    id: "Forecast",
-    data: Array.from({ length: 50 }, (_, i) => ({
-      x: new Date(2026, 0, i + 1),
-      y: 19 + Math.sin((i + 3) / 6) * 5 + i * 0.12,
-    })),
-  },
-  {
-    id: "Target",
-    data: Array.from({ length: 50 }, (_, i) => ({
-      x: new Date(2026, 0, i + 1),
-      y: 22 + Math.sin((i - 4) / 7) * 3 + i * 0.08,
-    })),
-  },
-];
+import { sampleAreaSeries, sampleLineSeries } from "./sampleDatasets";
 
 export default function App() {
   /**
@@ -63,7 +40,7 @@ export default function App() {
       <Chart
         width={360}
         height={240}
-        series={data}
+        series={sampleLineSeries}
         title="Revenue"
         subtitle="Last 50 days"
         xAxisTitle="Date"
@@ -72,15 +49,28 @@ export default function App() {
         theme={exampleChartTheme}
       >
         <AreaSeries
-          series={data[0]}
+          series={sampleAreaSeries}
           fillColor={exampleSeriesColors.revenue}
-          fillOpacity={0.16}
+          fillOpacity={exampleChartTypeConfig.area.fillOpacity}
           strokeColor={exampleSeriesColors.revenue}
-          strokeWidth={2}
+          strokeWidth={exampleChartTypeConfig.area.strokeWidth}
+          baselineY={exampleChartTypeConfig.area.baselineY}
         />
-        <LineSeries series={data[0]} color={exampleSeriesColors.revenue} />
-        <LineSeries series={data[1]} color={exampleSeriesColors.forecast} />
-        <LineSeries series={data[2]} color={exampleSeriesColors.target} />
+        <LineSeries
+          series={sampleLineSeries[0]}
+          color={exampleSeriesColors.revenue}
+          strokeWidth={exampleChartTypeConfig.line.strokeWidth}
+        />
+        <LineSeries
+          series={sampleLineSeries[1]}
+          color={exampleSeriesColors.forecast}
+          strokeWidth={exampleChartTypeConfig.line.strokeWidth}
+        />
+        <LineSeries
+          series={sampleLineSeries[2]}
+          color={exampleSeriesColors.target}
+          strokeWidth={exampleChartTypeConfig.line.strokeWidth}
+        />
       </Chart>
     </View>
   );
