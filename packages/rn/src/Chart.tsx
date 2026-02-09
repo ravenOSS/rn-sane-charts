@@ -419,10 +419,34 @@ export function Chart(props: ChartProps) {
     [legendInteractive, legendInteractionMode, props.series]
   );
 
+  /**
+   * Restores full-series visibility when isolate mode is active.
+   *
+   * Why this exists:
+   * - In isolate mode, users need a predictable way to exit "single series" view.
+   * - Tapping inside the plot is a natural reset gesture that does not require
+   *   targeting the already-selected legend item.
+   */
+  const clearLegendIsolation = React.useCallback(() => {
+    if (!legendInteractive || legendInteractionMode !== 'isolate') return;
+    setHiddenSeriesIds((prev) => (prev.length === 0 ? prev : []));
+  }, [legendInteractive, legendInteractionMode]);
+
   const handleTouch = React.useCallback(
     (x: number, y: number) => {
       if (!interactionEnabled || interactiveSeriesPoints.length === 0) return;
       if (!isInsidePlot(x, y, plan.layout.plot)) {
+        setInteractionState(null);
+        return;
+      }
+
+      // Plot tap exits isolate mode so users can quickly restore all series.
+      if (
+        legendInteractive &&
+        legendInteractionMode === 'isolate' &&
+        hiddenSeriesIds.length > 0
+      ) {
+        clearLegendIsolation();
         setInteractionState(null);
         return;
       }
@@ -469,6 +493,10 @@ export function Chart(props: ChartProps) {
       plan.layout.plot,
       snapMode,
       indexedXAnchors,
+      legendInteractive,
+      legendInteractionMode,
+      hiddenSeriesIds.length,
+      clearLegendIsolation,
     ]
   );
 

@@ -581,11 +581,7 @@ function GalleryApp() {
           ) : null}
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabs}
-        >
+        <View style={styles.tabs}>
           {viewOptions.map((option) => {
             const isActive = option.id === activeView;
             return (
@@ -600,7 +596,7 @@ function GalleryApp() {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
       </ScrollView>
     </View>
   );
@@ -655,19 +651,23 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   tabs: {
+    width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     gap: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    alignItems: "center",
   },
   tab: {
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.20)",
     borderRadius: 999,
-    paddingHorizontal: 10,
+    width: 112,
     paddingVertical: 4,
     minHeight: 34,
     justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "#FFFFFF",
   },
   tabActive: {
