@@ -1,5 +1,7 @@
 import type { FontSpec, MeasureTextFn } from '@rn-sane-charts/core';
 
+export type ChartColorScheme = 'light' | 'dark' | 'system';
+
 export type SaneChartTheme = {
   background: string;
   frame: { stroke: string; strokeWidth: number };

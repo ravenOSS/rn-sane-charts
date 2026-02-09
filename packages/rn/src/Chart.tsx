@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, useColorScheme } from 'react-native';
 import {
   Canvas,
   Group,
@@ -11,8 +11,8 @@ import {
 
 import type { Series } from '@rn-sane-charts/core';
 import { buildTimeSeriesPlan } from '@rn-sane-charts/core';
-import type { SaneChartFonts, SaneChartTheme } from './types';
-import { defaultTheme } from './theme/defaultTheme';
+import type { ChartColorScheme, SaneChartFonts, SaneChartTheme } from './types';
+import { darkTheme, lightTheme } from './theme/defaultTheme';
 import { ChartContext } from './context';
 
 export type ChartProps = {
@@ -25,8 +25,24 @@ export type ChartProps = {
   subtitle?: string;
   xAxisTitle?: string;
   yAxisTitle?: string;
+  yIncludeZero?: boolean;
+  formatX?: (d: Date) => string;
+  formatY?: (v: number) => string;
+  tickCounts?: { x?: number; y?: number };
+  xTickValues?: Date[];
+  xTickDomainMode?: 'slots' | 'exact';
+  legend?: {
+    show?: boolean;
+    position?: 'auto' | 'right' | 'bottom';
+    items?: Array<{
+      id: string;
+      label?: string;
+      color?: string;
+    }>;
+  };
 
   fonts: SaneChartFonts;
+  colorScheme?: ChartColorScheme;
   theme?: Partial<SaneChartTheme>;
 
   /** Children are series components, axes, etc. */
@@ -46,20 +62,103 @@ export type ChartProps = {
  * - Pluggable composition systems
  */
 export function Chart(props: ChartProps) {
+  const systemColorScheme = useColorScheme();
   const xAxisTitleFont = props.fonts.xAxisTitleFont ?? props.fonts.subtitleFont;
   const yAxisTitleFont = props.fonts.yAxisTitleFont ?? props.fonts.subtitleFont;
 
+  const resolvedColorScheme: Exclude<ChartColorScheme, 'system'> =
+    props.colorScheme === 'dark' ||
+    (props.colorScheme !== 'light' && systemColorScheme === 'dark')
+      ? 'dark'
+      : 'light';
+
   const theme: SaneChartTheme = React.useMemo(
-    () => ({
-      ...defaultTheme,
-      ...props.theme,
-      frame: { ...defaultTheme.frame, ...(props.theme?.frame ?? {}) },
-      axis: { ...defaultTheme.axis, ...(props.theme?.axis ?? {}) },
-      grid: { ...defaultTheme.grid, ...(props.theme?.grid ?? {}) },
-      series: { ...defaultTheme.series, ...(props.theme?.series ?? {}) },
-    }),
-    [props.theme]
+    () =>
+      mergeTheme(
+        resolvedColorScheme === 'dark' ? darkTheme : lightTheme,
+        props.theme
+      ),
+    [resolvedColorScheme, props.theme]
   );
+
+  const legendLayout = React.useMemo(() => {
+    const fallbackLegendColor = '#2563EB';
+    const resolveLegendColor = (index: number, inputColor?: string) =>
+      inputColor ??
+      theme.series.palette[index % theme.series.palette.length] ??
+      fallbackLegendColor;
+
+    const sourceItems =
+      props.legend?.items ??
+      props.series.map((series, index) => ({
+        id: series.id,
+        label: series.id,
+        color: resolveLegendColor(index),
+      }));
+
+    const items: LegendItem[] = sourceItems.map((item, index) => ({
+      id: item.id,
+      label: item.label ?? item.id,
+      color: resolveLegendColor(index, item.color),
+    }));
+
+    const explicitShow = props.legend?.show;
+    const show = explicitShow ?? items.length > 1;
+    if (!show || items.length === 0) {
+      return {
+        show: false,
+        items: [],
+        position: 'bottom' as const,
+        orientation: 'vertical' as const,
+        width: 0,
+        height: 0,
+        reservedRight: 0,
+        reservedBottom: 0,
+      };
+    }
+
+    const measured = measureLegend(items, props.fonts);
+    const explicitPosition = props.legend?.position ?? 'auto';
+    const position =
+      explicitPosition === 'auto'
+        ? resolveLegendPosition({
+            chartWidth: props.width,
+            legendWidth: measured.verticalWidth,
+          })
+        : explicitPosition;
+
+    const availableBottomWidth = Math.max(0, props.width - 24);
+    const orientation: 'horizontal' | 'vertical' =
+      position === 'bottom' &&
+      measured.horizontalWidth <= availableBottomWidth
+        ? 'horizontal'
+        : 'vertical';
+
+    const width =
+      orientation === 'horizontal'
+        ? measured.horizontalWidth
+        : measured.verticalWidth;
+    const height =
+      orientation === 'horizontal'
+        ? measured.horizontalHeight
+        : measured.verticalHeight;
+
+    const reservedRight =
+      position === 'right' ? measured.verticalWidth + 12 : 0;
+    const reservedBottom = position === 'bottom' ? height + 10 : 0;
+
+    return {
+      show: true,
+      items: measured.items,
+      position,
+      orientation,
+      width,
+      height,
+      rowHeight: measured.rowHeight,
+      reservedRight,
+      reservedBottom,
+    };
+  }, [props.legend, props.series, props.fonts, props.width, theme.series.palette]);
 
   const plan = React.useMemo(() => {
     return buildTimeSeriesPlan({
@@ -67,7 +166,12 @@ export function Chart(props: ChartProps) {
       layoutInput: {
         width: props.width,
         height: props.height,
-        padding: { top: 12, right: 12, bottom: 12, left: 12 },
+        padding: {
+          top: 12,
+          right: 12 + legendLayout.reservedRight,
+          bottom: 12 + legendLayout.reservedBottom,
+          left: 12,
+        },
         text: {
           title: props.title,
           subtitle: props.subtitle,
@@ -88,7 +192,12 @@ export function Chart(props: ChartProps) {
         },
         measureText: props.fonts.measureText,
       },
-      yIncludeZero: false,
+      yIncludeZero: props.yIncludeZero ?? false,
+      tickCounts: props.tickCounts,
+      xTickValues: props.xTickValues,
+      xTickDomainMode: props.xTickDomainMode,
+      formatX: props.formatX,
+      formatY: props.formatY,
     });
   }, [
     props.series,
@@ -98,6 +207,14 @@ export function Chart(props: ChartProps) {
     props.subtitle,
     props.xAxisTitle,
     props.yAxisTitle,
+    props.yIncludeZero,
+    props.tickCounts,
+    props.xTickValues,
+    props.xTickDomainMode,
+    props.formatX,
+    props.formatY,
+    legendLayout.reservedBottom,
+    legendLayout.reservedRight,
     xAxisTitleFont,
     yAxisTitleFont,
     props.fonts,
@@ -121,6 +238,7 @@ export function Chart(props: ChartProps) {
       subtitle: matchFont(toSkiaFontStyle(props.fonts.subtitleFont)),
       xAxisTitle: matchFont(toSkiaFontStyle(xAxisTitleFont)),
       yAxisTitle: matchFont(toSkiaFontStyle(yAxisTitleFont)),
+      legend: matchFont(toSkiaFontStyle(props.fonts.yTickFont)),
     }),
     [
       props.fonts.xTickFont,
@@ -129,6 +247,7 @@ export function Chart(props: ChartProps) {
       props.fonts.subtitleFont,
       xAxisTitleFont,
       yAxisTitleFont,
+      props.fonts.yTickFont,
     ]
   );
 
@@ -307,13 +426,69 @@ export function Chart(props: ChartProps) {
             </Group>
           </Group>
         ))}
+
+        {legendLayout.show
+          ? renderLegend({
+              chartWidth: props.width,
+              chartHeight: props.height,
+              layout: plan.layout,
+              legend: legendLayout,
+              font: skiaFonts.legend,
+              fontSize: props.fonts.yTickFont.size,
+              textColor: theme.axis.tick.color,
+            })
+          : null}
       </Canvas>
     </View>
   );
 }
 
+/**
+ * Merge caller overrides onto a concrete preset theme.
+ *
+ * Why this helper exists:
+ * - Callers pass partial overrides, but nested objects need deterministic
+ *   merging so unspecified tokens still come from the active preset.
+ * - Keeping this in one place avoids ad-hoc merge logic drifting over time.
+ */
+function mergeTheme(
+  baseTheme: SaneChartTheme,
+  override?: Partial<SaneChartTheme>
+): SaneChartTheme {
+  if (!override) return baseTheme;
+  return {
+    ...baseTheme,
+    ...override,
+    frame: { ...baseTheme.frame, ...(override.frame ?? {}) },
+    axis: {
+      ...baseTheme.axis,
+      ...(override.axis ?? {}),
+      tick: { ...baseTheme.axis.tick, ...(override.axis?.tick ?? {}) },
+      line: { ...baseTheme.axis.line, ...(override.axis?.line ?? {}) },
+    },
+    grid: { ...baseTheme.grid, ...(override.grid ?? {}) },
+    series: {
+      ...baseTheme.series,
+      ...(override.series ?? {}),
+      palette: override.series?.palette ?? baseTheme.series.palette,
+    },
+  };
+}
+
 const AXIS_TICK_SIZE_PX = 4;
 const AXIS_LABEL_GAP_PX = 6;
+const LEGEND_SWATCH_SIZE_PX = 9;
+const LEGEND_SWATCH_TEXT_GAP_PX = 6;
+const LEGEND_ITEM_GAP_PX = 6;
+const LEGEND_PADDING_PX = 4;
+const LEGEND_OUTER_MARGIN_PX = 6;
+
+type LegendItem = { id: string; label: string; color: string };
+type LegendMeasuredItem = LegendItem & {
+  textWidth: number;
+  textHeight: number;
+  rowWidth: number;
+};
 
 /**
  * Build concrete coordinates for RN/Skia axis rendering from core decisions.
@@ -542,4 +717,143 @@ type SkiaFontWeight =
  */
 function baselineOffsetFromTop(fontSize: number) {
   return Math.round(fontSize * 0.8);
+}
+
+function measureLegend(items: LegendItem[], fonts: SaneChartFonts) {
+  const measuredItems: LegendMeasuredItem[] = items.map((item) => {
+    const measured = fonts.measureText({
+      text: item.label,
+      font: fonts.yTickFont,
+      angle: 0,
+    });
+    const textWidth = measured.width;
+    const textHeight = measured.height;
+    const rowWidth =
+      LEGEND_SWATCH_SIZE_PX + LEGEND_SWATCH_TEXT_GAP_PX + textWidth;
+    return {
+      ...item,
+      textWidth,
+      textHeight,
+      rowWidth,
+    };
+  });
+
+  let maxTextWidth = 0;
+  let maxTextHeight = 0;
+  let horizontalContentWidth = 0;
+
+  for (const item of measuredItems) {
+    if (item.textWidth > maxTextWidth) maxTextWidth = item.textWidth;
+    if (item.textHeight > maxTextHeight) maxTextHeight = item.textHeight;
+    horizontalContentWidth += item.rowWidth;
+  }
+
+  const rowHeight = Math.max(LEGEND_SWATCH_SIZE_PX, maxTextHeight);
+  const verticalWidth =
+    LEGEND_PADDING_PX * 2 +
+    LEGEND_SWATCH_SIZE_PX +
+    LEGEND_SWATCH_TEXT_GAP_PX +
+    maxTextWidth;
+  const verticalHeight =
+    LEGEND_PADDING_PX * 2 +
+    items.length * rowHeight +
+    Math.max(0, items.length - 1) * LEGEND_ITEM_GAP_PX;
+  const horizontalWidth =
+    LEGEND_PADDING_PX * 2 +
+    horizontalContentWidth +
+    Math.max(0, measuredItems.length - 1) * LEGEND_ITEM_GAP_PX;
+  const horizontalHeight = LEGEND_PADDING_PX * 2 + rowHeight;
+
+  return {
+    items: measuredItems,
+    rowHeight,
+    verticalWidth,
+    verticalHeight,
+    horizontalWidth,
+    horizontalHeight,
+  };
+}
+
+function resolveLegendPosition(input: {
+  chartWidth: number;
+  legendWidth: number;
+}): 'right' | 'bottom' {
+  if (input.chartWidth >= 420 && input.legendWidth <= input.chartWidth * 0.28) {
+    return 'right';
+  }
+  return 'bottom';
+}
+
+function renderLegend(input: {
+  chartWidth: number;
+  chartHeight: number;
+  layout: ReturnType<typeof buildTimeSeriesPlan>['layout'];
+  legend: {
+    show: boolean;
+    items: LegendMeasuredItem[];
+    position: 'right' | 'bottom';
+    orientation: 'vertical' | 'horizontal';
+    width: number;
+    height: number;
+    rowHeight?: number;
+  };
+  font: ReturnType<typeof matchFont>;
+  fontSize: number;
+  textColor: string;
+}) {
+  const rowHeight = input.legend.rowHeight ?? LEGEND_SWATCH_SIZE_PX;
+  const startX =
+    input.legend.position === 'right'
+      ? input.chartWidth - input.legend.width - LEGEND_OUTER_MARGIN_PX
+      : input.layout.header.x +
+        Math.max(0, (input.layout.header.width - input.legend.width) / 2);
+  const startY =
+    input.legend.position === 'right'
+      ? input.layout.plot.y + LEGEND_OUTER_MARGIN_PX
+      : input.chartHeight - input.legend.height - LEGEND_OUTER_MARGIN_PX;
+
+  return (
+    <Group>
+      {input.legend.items.map((item, index) => {
+        const topY =
+          input.legend.orientation === 'horizontal'
+            ? startY + LEGEND_PADDING_PX
+            : startY +
+              LEGEND_PADDING_PX +
+              index * (rowHeight + LEGEND_ITEM_GAP_PX);
+
+        const leftX =
+          input.legend.orientation === 'horizontal'
+            ? startX +
+              LEGEND_PADDING_PX +
+              input.legend.items
+                .slice(0, index)
+                .reduce((acc, current) => acc + current.rowWidth, 0) +
+              index * LEGEND_ITEM_GAP_PX
+            : startX + LEGEND_PADDING_PX;
+
+        const swatchY = topY + Math.max(0, (rowHeight - LEGEND_SWATCH_SIZE_PX) / 2);
+        const textX = leftX + LEGEND_SWATCH_SIZE_PX + LEGEND_SWATCH_TEXT_GAP_PX;
+        const textY = topY + baselineOffsetFromTop(input.fontSize);
+        return (
+          <Group key={`legend-${item.id}-${index}`}>
+            <SkRect
+              x={leftX}
+              y={swatchY}
+              width={LEGEND_SWATCH_SIZE_PX}
+              height={LEGEND_SWATCH_SIZE_PX}
+              color={item.color}
+            />
+            <Text
+              text={item.label}
+              font={input.font}
+              x={textX}
+              y={textY}
+              color={input.textColor}
+            />
+          </Group>
+        );
+      })}
+    </Group>
+  );
 }

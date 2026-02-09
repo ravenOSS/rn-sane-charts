@@ -2,10 +2,15 @@
 export { Chart } from './Chart';
 export { LineSeries } from './series/LineSeries';
 export { AreaSeries } from './series/AreaSeries';
+export { ScatterSeries } from './series/ScatterSeries';
+export { BarSeries } from './series/BarSeries';
+export { GroupedBarSeries } from './series/GroupedBarSeries';
+export { StackedBarSeries } from './series/StackedBarSeries';
+export { HistogramSeries } from './series/HistogramSeries';
 
-export { defaultTheme } from './theme/defaultTheme';
+export { darkTheme, defaultTheme, lightTheme } from './theme/defaultTheme';
 
-export type { SaneChartTheme, SaneChartFonts } from './types';
+export type { ChartColorScheme, SaneChartTheme, SaneChartFonts } from './types';
 
 export { makeSkiaMeasureText } from './skia/measureTextAdaptor';
 

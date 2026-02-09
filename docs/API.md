@@ -62,7 +62,19 @@ type ChartProps = {
   subtitle?: string;
   xAxisTitle?: string;
   yAxisTitle?: string;
+  yIncludeZero?: boolean;
+  formatX?: (d: Date) => string;
+  formatY?: (v: number) => string;
+  tickCounts?: { x?: number; y?: number };
+  xTickValues?: Date[];
+  xTickDomainMode?: "slots" | "exact";
+  legend?: {
+    show?: boolean;
+    position?: "auto" | "right" | "bottom";
+    items?: Array<{ id: string; label?: string; color?: string }>;
+  };
   fonts: SaneChartFonts;
+  colorScheme?: "light" | "dark" | "system";
   theme?: Partial<SaneChartTheme>;
   children: React.ReactNode;
 };
@@ -70,8 +82,18 @@ type ChartProps = {
 
 Behavior:
 - Built-in defaults are always applied first.
+- `colorScheme` selects the base preset (`"system"` follows device appearance).
 - `theme` is a partial override of defaults.
 - Axis label orientation is auto-resolved (`0°`, `45°`, `90°`) with tick skipping.
+- Legend defaults to vertical and auto-positioned (`right` on wider charts,
+  otherwise `bottom`), and is hidden for single-series charts unless `show` is forced.
+- For bottom legends, label widths are measured and the legend switches to a
+  horizontal row only when all items fit the available chart width.
+- `xTickValues` can pin ticks to explicit x positions (useful for category-like
+  charts mapped onto time slots).
+- `xTickDomainMode` controls edge behavior with explicit ticks:
+  - `"slots"` adds half-step edge padding (bar/grouped/stacked/histogram friendly)
+  - `"exact"` uses first/last tick as domain bounds (line/area edge alignment)
 
 ### `SaneChartFonts` (Implemented)
 
@@ -104,6 +126,11 @@ type SaneChartTheme = {
   };
 };
 ```
+
+Theme presets exported by `@rn-sane-charts/rn`:
+- `lightTheme`
+- `darkTheme`
+- `defaultTheme` (alias of `lightTheme`)
 
 ## Chart Types
 
@@ -156,21 +183,38 @@ Notes:
 
 ### Bar (grouped + stacked)
 
-Status: `Planned (MVP)`
+Status: `Implemented (series renderers)`
 
 Data shape:
 - Categorical x-values in series data (`x: string | number`, `y: number`).
 - Grouped bars are modeled as `GroupedBarDatum[]`.
 - Stacked bars are modeled as `StackedBarDatum[]`.
 
-Planned component direction:
+Current components:
 
 ```ts
 type BarSeriesProps = {
   series: Series;
   color?: string;
-  stacked?: boolean;
-  grouped?: boolean;
+  opacity?: number;
+  widthRatio?: number;
+  baselineY?: number;
+};
+
+type GroupedBarSeriesProps = {
+  series: Series[];
+  colors?: readonly string[];
+  opacity?: number;
+  groupWidthRatio?: number;
+  baselineY?: number;
+};
+
+type StackedBarSeriesProps = {
+  series: Series[];
+  colors?: readonly string[];
+  opacity?: number;
+  widthRatio?: number;
+  baselineY?: number;
 };
 ```
 
@@ -178,7 +222,7 @@ type BarSeriesProps = {
 
 ### Scatter
 
-Status: `Planned (MVP)`
+Status: `Implemented`
 
 Data shape:
 
@@ -190,13 +234,14 @@ type ScatterDatum = {
 };
 ```
 
-Planned component direction:
+Current component:
 
 ```ts
 type ScatterSeriesProps = {
-  series: { id: string; data: ScatterDatum[] };
+  series: Series;
   color?: string;
   radius?: number;
+  opacity?: number;
 };
 ```
 
@@ -204,19 +249,21 @@ type ScatterSeriesProps = {
 
 ### Histogram
 
-Status: `Planned (MVP)`
+Status: `Implemented (renderer); binning in core`
 
 Data shape:
 - Raw numeric array: `number[]`
 - Binning handled in core.
 
-Planned component direction:
+Current component:
 
 ```ts
-type HistogramProps = {
-  values: number[];
-  bins?: number;
+type HistogramSeriesProps = {
+  bins: Array<{ x0: number | Date; x1: number | Date; count: number }>;
   color?: string;
+  opacity?: number;
+  gapPx?: number;
+  baselineY?: number;
 };
 ```
 

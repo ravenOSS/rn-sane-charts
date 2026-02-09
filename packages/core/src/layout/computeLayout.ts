@@ -155,7 +155,15 @@ function measureHeaderHeight(measureText: MeasureTextFn, text: ChartTextSpec): n
 
   // Small spacing between title and subtitle when both exist.
   const gap = text.title && text.subtitle ? 4 : 0;
-  return Math.ceil(titleH + gap + subtitleH);
+
+  /**
+   * Keep a dedicated header-to-plot gap so subtitles never feel "glued" to
+   * the first data marks. This improves readability across dense chart types
+   * (especially stacked/grouped bars where top bars sit close to the header).
+   */
+  const headerBottomGap = titleH > 0 || subtitleH > 0 ? 8 : 0;
+
+  return Math.ceil(titleH + gap + subtitleH + headerBottomGap);
 }
 
 function measureYAxisWidth(measureText: MeasureTextFn, yAxis: AxisSpec, yTicks: YTick[]): number {

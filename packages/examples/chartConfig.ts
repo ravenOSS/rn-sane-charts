@@ -9,10 +9,6 @@ import type { SaneChartFonts, SaneChartTheme } from "@rn-sane-charts/rn";
  * - Reuse across every chart in the app.
  */
 export const exampleChartTheme: Partial<SaneChartTheme> = {
-  axis: {
-    tick: { color: "rgba(0,0,0,0.78)" },
-    line: { stroke: "rgba(0,0,0,0.30)", strokeWidth: 1 },
-  },
   series: {
     palette: ["#2563EB", "#DC2626", "#16A34A"],
     strokeWidth: 2,
@@ -27,6 +23,51 @@ export const exampleSeriesColors = {
   forecast: "#DC2626",
   target: "#16A34A",
 } as const;
+
+/**
+ * Color-blind-friendly palette (Okabe-Ito inspired) used by the accessibility
+ * verification view.
+ */
+export const accessibilityPalette = ["#0072B2", "#D55E00", "#009E73"] as const;
+
+/**
+ * Build a high-contrast accessibility check theme for the current color scheme.
+ *
+ * Why this exists:
+ * - Demonstrates a "known-good" token set for chart readability checks.
+ * - Keeps accessibility tuning centralized instead of scattering constants.
+ */
+export function createAccessibilityTheme(
+  colorScheme: "light" | "dark"
+): Partial<SaneChartTheme> {
+  if (colorScheme === "dark") {
+    return {
+      background: "#0B1220",
+      axis: {
+        tick: { color: "#F8FAFC" },
+        line: { stroke: "#94A3B8", strokeWidth: 1.15 },
+      },
+      grid: { stroke: "rgba(148,163,184,0.36)", strokeWidth: 1 },
+      series: {
+        palette: ["#56B4E9", "#E69F00", "#009E73"],
+        strokeWidth: 2.4,
+      },
+    };
+  }
+
+  return {
+    background: "#FFFFFF",
+    axis: {
+      tick: { color: "#111827" },
+      line: { stroke: "#4B5563", strokeWidth: 1.1 },
+    },
+    grid: { stroke: "rgba(75,85,99,0.24)", strokeWidth: 1 },
+    series: {
+      palette: [...accessibilityPalette],
+      strokeWidth: 2.2,
+    },
+  };
+}
 
 /**
  * Visual presets by chart type.

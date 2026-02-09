@@ -71,7 +71,13 @@ export const sampleLineSeries: [Series, Series, Series] = [
 /**
  * Area chart fixture (single-series area + line overlay).
  */
-export const sampleAreaSeries: Series = sampleLineSeries[0];
+export const sampleAreaSeries: Series = {
+  id: "Active Users",
+  data: Array.from({ length: POINT_COUNT }, (_, i) => ({
+    x: buildDateAtOffset(i),
+    y: 680 + Math.sin(i / 7) * 90 + i * 2.2,
+  })),
+};
 
 /**
  * Stacked area fixture (future renderer target).
@@ -104,15 +110,18 @@ export const sampleStackedAreaSeries: Series[] = [
 
 /**
  * Simple bar fixture (single-series categorical bars).
+ *
+ * Metric choice: net cash flow can legitimately cross zero, so this
+ * fixture is useful for validating baseline behavior for positive/negative bars.
  */
 export const sampleBarData: CategoryDatum[] = [
-  { x: "Mon", y: 18 },
-  { x: "Tue", y: 23 },
-  { x: "Wed", y: 20 },
-  { x: "Thu", y: 26 },
-  { x: "Fri", y: 24 },
-  { x: "Sat", y: 14 },
-  { x: "Sun", y: 12 },
+  { x: "Mon", y: 12 },
+  { x: "Tue", y: -4 },
+  { x: "Wed", y: 8 },
+  { x: "Thu", y: -2 },
+  { x: "Fri", y: 15 },
+  { x: "Sat", y: -6 },
+  { x: "Sun", y: 5 },
 ];
 
 /**

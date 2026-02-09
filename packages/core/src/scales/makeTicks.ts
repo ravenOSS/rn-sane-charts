@@ -58,3 +58,43 @@ export function makeTimeXTicks(input: {
     x: input.xScale(d),
   }));
 }
+
+/**
+ * Generate x-axis ticks at explicit Date values.
+ *
+ * Why:
+ * - Category-like charts often project labels onto synthetic time slots.
+ * - Auto-generated domain ticks can drift from those slots, causing labels
+ *   to appear missing or misaligned under bars/groups.
+ *
+ * This function guarantees one tick candidate per provided value (after
+ * dedupe/sort), then collision logic may still skip some for readability.
+ */
+export function makeTimeXTicksFromValues(input: {
+  values: Date[];
+  xScale: (v: Date) => number;
+  formatX?: (d: Date) => string;
+  xDomain?: [Date, Date];
+}): Tick[] {
+  const unique = new Map<number, Date>();
+  for (const d of input.values) {
+    const t = d.getTime();
+    if (!Number.isFinite(t)) continue;
+    if (!unique.has(t)) unique.set(t, d);
+  }
+
+  const values = Array.from(unique.values()).sort(
+    (a, b) => a.getTime() - b.getTime()
+  );
+  if (values.length === 0) return [];
+
+  const domainForFormat =
+    input.xDomain ?? [values[0] as Date, values[values.length - 1] as Date];
+  const fmt = input.formatX ?? makeDomainDateFormatter(domainForFormat);
+
+  return values.map((d) => ({
+    value: d,
+    label: fmt(d),
+    x: input.xScale(d),
+  }));
+}

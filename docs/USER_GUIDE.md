@@ -109,13 +109,23 @@ Included fixtures:
 7. `sampleScatterData`
 8. `sampleHistogramValues`
 
-Use these fixtures to validate renderer behavior and visual defaults while new
-chart types are implemented.
+Use these fixtures to validate renderer behavior and visual defaults across the
+example gallery tabs.
+
+## Accessibility Theme Check (Examples)
+
+The gallery includes an `A11y Theme` tab that demonstrates:
+- A color-blind-friendly series palette
+- Higher-contrast axis tokens for light and dark schemes
+- A live axis-text contrast check against background (target: `>= 4.5:1`)
+
+Use this tab as a quick visual/functional gate before finalizing theme tokens.
 
 ## Styling After First Render
 
 Default behavior:
 - Library defaults are applied first.
+- `colorScheme` picks the base light/dark preset (`"system"` follows device mode).
 - `theme` props partially override defaults.
 - Per-series props override theme for that series.
 
