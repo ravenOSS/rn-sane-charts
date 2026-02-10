@@ -112,3 +112,17 @@ Create one `Chart` per visualization and reuse shared `fonts`, theme, and format
 - Architecture: `docs/ARCHITECTURE.md`
 - API details: `docs/API.md`
 - User guide: `docs/USER_GUIDE.md`
+
+## Contributing
+
+Contributions are welcome. Start with `CONTRIBUTING.md`, then run:
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm test
+```
+
+Architecture expectations:
+- `@rn-sane-charts/core`: deterministic math/layout/transforms.
+- `@rn-sane-charts/rn`: Skia rendering + interaction wiring.

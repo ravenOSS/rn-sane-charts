@@ -15,6 +15,11 @@ rn-sane-charts values:
 
 If a change increases complexity without clear user benefit, it likely does not belong in MVP.
 
+Before writing code, read:
+
+* `AGENTS.md` (workflow + architecture constraints)
+* `docs/PRD.md` (MVP scope and product intent)
+
 ---
 
 ## Inline Documentation Requirement
