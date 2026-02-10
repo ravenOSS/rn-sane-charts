@@ -55,11 +55,11 @@ You can override only what you need:
 pnpm add @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
 ```
 
-### 2. Compose charts with `Chart` + series components
+### 2. Compose charts with `ResponsiveChart` + series components
 
 ```tsx
 import React from "react";
-import { Chart, LineSeries } from "@rn-sane-charts/rn";
+import { ResponsiveChart, LineSeries } from "@rn-sane-charts/rn";
 import type { Series } from "@rn-sane-charts/core";
 
 const revenue: Series = {
@@ -73,26 +73,30 @@ const revenue: Series = {
 
 export function RevenueChart({ fonts }: { fonts: any }) {
   return (
-    <Chart
-      width={360}
-      height={220}
+    <ResponsiveChart
       series={[revenue]}
       title="Revenue"
       subtitle="Last 3 days"
       xAxisTitle="Date"
       yAxisTitle="USD"
+      aspectRatio={1.6}
+      minHeight={200}
       interaction={{ enabled: true, snap: "index", tooltip: true }}
       legend={{ interactive: true, interactionMode: "toggle" }}
       fonts={fonts}
       colorScheme="light"
     >
       <LineSeries series={revenue} color="#2563EB" strokeWidth={2.4} />
-    </Chart>
+    </ResponsiveChart>
   );
 }
 ```
 
-### 3. Render multiple chart types quickly
+### 3. Use explicit sizing when needed
+
+Use `Chart` directly when layout must be fully deterministic (fixed-size exports, screenshot tests, exact dashboards).
+
+### 4. Render multiple chart types quickly
 
 Create one `Chart` per visualization and reuse shared `fonts`, theme, and formatting helpers.
 

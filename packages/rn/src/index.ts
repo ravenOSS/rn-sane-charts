@@ -1,5 +1,6 @@
 // packages/rn/src/index.ts
 export { Chart } from './Chart';
+export { ResponsiveChart } from './ResponsiveChart';
 export { LineSeries } from './series/LineSeries';
 export { AreaSeries } from './series/AreaSeries';
 export { ScatterSeries } from './series/ScatterSeries';

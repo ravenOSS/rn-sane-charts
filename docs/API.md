@@ -125,8 +125,27 @@ Behavior:
 - `xTickValues` can pin ticks to explicit x positions (useful for category-like
   charts mapped onto time slots).
 - `xTickDomainMode` controls edge behavior with explicit ticks:
-  - `"slots"` adds half-step edge padding (bar/grouped/stacked/histogram friendly)
-  - `"exact"` uses first/last tick as domain bounds (line/area edge alignment)
+- `"slots"` adds half-step edge padding (bar/grouped/stacked/histogram friendly)
+- `"exact"` uses first/last tick as domain bounds (line/area edge alignment)
+
+### `ResponsiveChart` (Implemented)
+
+```ts
+type ResponsiveChartProps = Omit<ChartProps, "width" | "height"> & {
+  width?: number;
+  height?: number;
+  aspectRatio?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  containerStyle?: StyleProp<ViewStyle>;
+};
+```
+
+Behavior:
+- Wraps `Chart` and derives dimensions from parent width by default.
+- Preserves proportions using `aspectRatio` (`width / height`).
+- Applies explicit `width` / `height` overrides when provided.
+- Supports optional `minHeight` / `maxHeight` clamps for responsive layouts.
 
 ### `SaneChartFonts` (Implemented)
 
