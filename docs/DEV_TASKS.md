@@ -4,11 +4,8 @@ Last updated: 2026-02-09
 
 ## Current Project Status
 
-1. Branch state: `main` is ahead of `origin/main` by 7 commits.
-2. Local uncommitted changes:
-   - `packages/examples/App.tsx` (uniform wrapped chart-type buttons)
-   - `packages/rn/src/Chart.tsx` (plot tap restores all series in legend isolate mode)
-   - `.specstory/history/2026-01-25_01-24Z-build-failure.md` (untracked session artifact)
+1. Branch state: `main` is in sync with `origin/main`.
+2. Local uncommitted changes: check with `git status` before cutting a release tag.
 3. Validation status:
    - `pnpm -r typecheck` passes.
    - `pnpm -r test` passes for `core`; `rn` test file is still skipped/todo.
@@ -33,15 +30,22 @@ Last updated: 2026-02-09
 
 ## Beautification Research Recovery
 
-1. Recoverable from local history: only implementation/build/debug history in `.specstory/history/`.
-2. Not recoverable from local history: a clear competitive design survey of other chart libraries (no durable notes found in `docs/` or tracked markdown).
-3. Conclusion: the beautification research exercise should be repeated unless you have external notes.
+1. Recoverable from local history:
+   - Skia text/font implementation notes (`matchFont`, system fonts, paragraph fallback).
+   - Expo/RN environment and stability notes (SDK 55, bridgeless/dev-client issues).
+2. Not recoverable from local history:
+   - A concrete competitive survey of chart libraries for UX/DX guidance.
+   - A preserved set of "beautification rules" derived from other libraries.
+3. Conclusion:
+   - We should repeat competitive chart-library research unless external notes exist.
+   - Use recovered Skia notes to constrain implementation choices (text measurement and fallback behavior) during that research.
 
 ## Recommended Next Tasks (Priority Order)
 
-1. Create `docs/research/chart-library-survey-2026-02.md`:
-   - Compare visual defaults from 4-6 libraries.
-   - Extract concrete rules (palette, stroke widths, grid contrast, typography, spacing, legend behavior).
+1. Run a fresh competitive research pass and document it in `docs/research/chart-library-survey-2026-02.md`:
+   - Compare visual defaults and API ergonomics from 4-6 libraries.
+   - Separate findings into `DX` (API shape, defaults, onboarding) and `UX` (readability, legend/tooltips, density heuristics).
+   - Convert findings into explicit acceptance rules for this Skia-first codebase.
 2. Implement stacked area renderer:
    - Add core stacking path support where needed.
    - Add RN renderer + example panel + tests.
@@ -55,4 +59,6 @@ Last updated: 2026-02-09
 5. Add lightweight perf harness in examples:
    - 5k line points and 1k scatter points scenarios.
    - Capture FPS/memory snapshots as repeatable dev checks.
-
+6. Add `docs/research/skia-constraints.md`:
+   - Capture recovered constraints from history (font loading, text measurement strategy, fallback behavior).
+   - Tie chart beautification rules to what is practical in Skia + RN.
