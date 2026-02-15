@@ -11,7 +11,8 @@
     "ios:rebuild": "pnpm run ios:clean && expo run:ios",
     "web": "expo start --web",
     "run:ios": "expo run:ios",
-    "run:android": "expo run:android"
+    "run:android": "expo run:android",
+    "perf:harness": "pnpm --filter @rn-sane-charts/core build && node ./scripts/perf-harness.mjs"
   },
   "dependencies": {
     "@rn-sane-charts/core": "workspace:*",

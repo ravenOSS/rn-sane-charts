@@ -46,6 +46,7 @@ import {
   sampleStackedAreaSeries,
   sampleStackedBarData,
 } from "./sampleDatasets";
+import { runInteractionPerfHarness, type PerfRunResult } from "./perfHarness";
 
 type GalleryView =
   | "line"
@@ -56,7 +57,8 @@ type GalleryView =
   | "stackedBar"
   | "scatter"
   | "histogram"
-  | "a11yTheme";
+  | "a11yTheme"
+  | "perf";
 
 const viewOptions: { id: GalleryView; label: string }[] = [
   { id: "line", label: "Line" },
@@ -68,6 +70,7 @@ const viewOptions: { id: GalleryView; label: string }[] = [
   { id: "scatter", label: "Scatter" },
   { id: "histogram", label: "Histogram" },
   { id: "a11yTheme", label: "A11y Theme" },
+  { id: "perf", label: "Perf" },
 ];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -137,6 +140,8 @@ function GalleryApp() {
   );
 
   const [activeView, setActiveView] = React.useState<GalleryView>("line");
+  const [perfResults, setPerfResults] = React.useState<PerfRunResult[]>([]);
+  const [perfRunAt, setPerfRunAt] = React.useState<string>("");
 
   const barSeries = React.useMemo<Series>(
     () => ({
@@ -363,6 +368,17 @@ function GalleryApp() {
     theme: exampleChartTheme,
     colorScheme: chartColorScheme,
   };
+
+  const runPerfHarness = React.useCallback(() => {
+    const results = runInteractionPerfHarness();
+    setPerfResults(results);
+    setPerfRunAt(new Date().toLocaleTimeString());
+  }, []);
+
+  React.useEffect(() => {
+    if (activeView !== "perf" || perfResults.length > 0) return;
+    runPerfHarness();
+  }, [activeView, perfResults.length, runPerfHarness]);
 
   return (
     <View
@@ -661,6 +677,36 @@ function GalleryApp() {
               </Text>
             </View>
           ) : null}
+
+          {activeView === "perf" ? (
+            <View style={styles.perfPanel}>
+              <Text style={[styles.perfHeading, { color: headingColor }]}>
+                Interaction Perf Harness
+              </Text>
+              <Text style={[styles.perfCopy, { color: subtitleColor }]}>
+                Deterministic scenarios: 5k line index snap and 1k scatter nearest.
+              </Text>
+              <Pressable onPress={runPerfHarness} style={styles.perfRunButton}>
+                <Text style={styles.perfRunButtonLabel}>Run Harness</Text>
+              </Pressable>
+              <Text style={[styles.perfStamp, { color: subtitleColor }]}>
+                {perfRunAt ? `Last run: ${perfRunAt}` : "Not run yet"}
+              </Text>
+              <View style={styles.perfResults}>
+                {perfResults.map((result) => (
+                  <View key={result.scenario} style={styles.perfRow}>
+                    <Text style={styles.perfScenario}>{result.scenario}</Text>
+                    <Text style={styles.perfMetric}>
+                      {result.totalMs.toFixed(2)} ms total
+                    </Text>
+                    <Text style={styles.perfMetric}>
+                      {result.avgMsPerIteration.toFixed(4)} ms/op
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.tabs}>
@@ -731,6 +777,58 @@ const styles = StyleSheet.create({
   a11yNote: {
     fontSize: 12,
     fontWeight: "500",
+  },
+  perfPanel: {
+    width: 360,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.12)",
+    borderRadius: 12,
+    backgroundColor: "#F8FAFC",
+    padding: 12,
+    gap: 8,
+  },
+  perfHeading: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  perfCopy: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  perfRunButton: {
+    alignSelf: "flex-start",
+    borderRadius: 8,
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  perfRunButtonLabel: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  perfStamp: {
+    fontSize: 11,
+  },
+  perfResults: {
+    gap: 8,
+  },
+  perfRow: {
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    padding: 8,
+    gap: 2,
+  },
+  perfScenario: {
+    color: "#111827",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  perfMetric: {
+    color: "#374151",
+    fontSize: 11,
   },
   tabs: {
     width: "100%",

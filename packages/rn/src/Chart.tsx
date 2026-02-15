@@ -16,11 +16,12 @@ import type {
 } from '@rn-sane-charts/core';
 import {
   buildTimeSeriesPlan,
-  collectPointsAtAnchorX,
+  buildScatterSpatialIndex,
   computeLegendItemBoxes,
   computeLegendLayout,
   findLegendHit,
   findNearestNumericValue,
+  findNearestPointInScatterIndex,
   findNearestPoint,
   isPointInRect,
 } from '@rn-sane-charts/core';
@@ -365,6 +366,32 @@ export function Chart(props: ChartProps) {
     return Array.from(anchors).sort((a, b) => a - b);
   }, [interactiveSeriesPoints]);
 
+  /**
+   * Pre-group interaction points by exact projected x-anchor.
+   *
+   * Why this is precomputed:
+   * - Index snap mode runs on every gesture move.
+   * - Building grouped arrays once avoids per-frame allocations from repeatedly
+   *   filtering the full point list during scrubbing.
+   */
+  const pointsByAnchorX = React.useMemo(() => {
+    const grouped = new Map<number, InteractivePoint[]>();
+    for (const point of interactiveSeriesPoints) {
+      const existing = grouped.get(point.x);
+      if (existing) existing.push(point);
+      else grouped.set(point.x, [point]);
+    }
+    for (const pointsAtAnchor of grouped.values()) {
+      pointsAtAnchor.sort((a, b) => a.seriesIndex - b.seriesIndex);
+    }
+    return grouped;
+  }, [interactiveSeriesPoints]);
+
+  const scatterIndex = React.useMemo(
+    () => buildScatterSpatialIndex(interactiveSeriesPoints, 44),
+    [interactiveSeriesPoints]
+  );
+
   const [interactionState, setInteractionState] =
     React.useState<InteractionState | null>(null);
 
@@ -456,9 +483,8 @@ export function Chart(props: ChartProps) {
           return;
         }
 
-        const grouped = collectPointsAtAnchorX(interactiveSeriesPoints, targetX);
-        grouped.sort((a, b) => a.seriesIndex - b.seriesIndex);
-        if (grouped.length === 0) {
+        const grouped = pointsByAnchorX.get(targetX);
+        if (!grouped || grouped.length === 0) {
           setInteractionState(null);
           return;
         }
@@ -473,7 +499,9 @@ export function Chart(props: ChartProps) {
         return;
       }
 
-      const nearest = findNearestPoint(interactiveSeriesPoints, x, y);
+      const nearest =
+        findNearestPointInScatterIndex(scatterIndex, x, y) ??
+        findNearestPoint(interactiveSeriesPoints, x, y);
       if (!nearest) {
         setInteractionState(null);
         return;
@@ -492,6 +520,8 @@ export function Chart(props: ChartProps) {
       plan.layout.plot,
       snapMode,
       indexedXAnchors,
+      pointsByAnchorX,
+      scatterIndex,
       legendInteractive,
       legendInteractionMode,
       hiddenSeriesIds.length,

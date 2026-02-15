@@ -11,12 +11,13 @@ Complete MVP with deterministic core architecture, production-safe defaults, and
 ## Current Snapshot
 
 - Done: core chart set (line, area single + stacked, bar/grouped/stacked, scatter, histogram), responsive chart wrapper, core-based legend layout/hit-test helpers, core stack/downsample transforms.
-- Open: scatter spatial indexing, stronger RN tests, perf harness, package/dependency hygiene.
+- Done: scatter spatial indexing in core interaction path, repeatable perf harness (`pnpm --filter examples perf:harness`), baseline metrics in `docs/PERF_BASELINE.md`.
+- Open: stronger RN tests, package/dependency hygiene.
 
 Milestone status:
 - M1: Completed
 - M2: Completed
-- M3: Not Started
+- M3: Completed
 - M4: Not Started
 
 ## Milestone M1: MVP Architecture Completion
