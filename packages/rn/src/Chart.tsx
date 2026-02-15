@@ -9,8 +9,21 @@ import {
   Text,
 } from '@shopify/react-native-skia';
 
-import type { Series } from '@rn-sane-charts/core';
-import { buildTimeSeriesPlan } from '@rn-sane-charts/core';
+import type {
+  LegendItem as CoreLegendItem,
+  LegendLayoutResult,
+  Series,
+} from '@rn-sane-charts/core';
+import {
+  buildTimeSeriesPlan,
+  collectPointsAtAnchorX,
+  computeLegendItemBoxes,
+  computeLegendLayout,
+  findLegendHit,
+  findNearestNumericValue,
+  findNearestPoint,
+  isPointInRect,
+} from '@rn-sane-charts/core';
 import type {
   ChartColorScheme,
   ChartInteraction,
@@ -110,7 +123,7 @@ export function Chart(props: ChartProps) {
   );
   const seriesForPlan = visibleSeries.length > 0 ? visibleSeries : props.series;
 
-  const legendLayout = React.useMemo(() => {
+  const legendLayout = React.useMemo<LegendLayoutResult>(() => {
     const fallbackLegendColor = '#2563EB';
     const resolveLegendColor = (index: number, inputColor?: string) =>
       inputColor ??
@@ -125,68 +138,20 @@ export function Chart(props: ChartProps) {
         color: resolveLegendColor(index),
       }));
 
-    const items: LegendItem[] = sourceItems.map((item, index) => ({
+    const items: CoreLegendItem[] = sourceItems.map((item, index) => ({
       id: item.id,
       label: item.label ?? item.id,
       color: resolveLegendColor(index, item.color),
     }));
 
-    const explicitShow = props.legend?.show;
-    const show = explicitShow ?? items.length > 1;
-    if (!show || items.length === 0) {
-      return {
-        show: false,
-        items: [],
-        position: 'bottom' as const,
-        orientation: 'vertical' as const,
-        width: 0,
-        height: 0,
-        reservedRight: 0,
-        reservedBottom: 0,
-      };
-    }
-
-    const measured = measureLegend(items, props.fonts);
-    const explicitPosition = props.legend?.position ?? 'auto';
-    const position =
-      explicitPosition === 'auto'
-        ? resolveLegendPosition({
-            chartWidth: props.width,
-            legendWidth: measured.verticalWidth,
-          })
-        : explicitPosition;
-
-    const availableBottomWidth = Math.max(0, props.width - 24);
-    const orientation: 'horizontal' | 'vertical' =
-      position === 'bottom' &&
-      measured.horizontalWidth <= availableBottomWidth
-        ? 'horizontal'
-        : 'vertical';
-
-    const width =
-      orientation === 'horizontal'
-        ? measured.horizontalWidth
-        : measured.verticalWidth;
-    const height =
-      orientation === 'horizontal'
-        ? measured.horizontalHeight
-        : measured.verticalHeight;
-
-    const reservedRight =
-      position === 'right' ? measured.verticalWidth + 12 : 0;
-    const reservedBottom = position === 'bottom' ? height + 10 : 0;
-
-    return {
-      show: true,
-      items: measured.items,
-      position,
-      orientation,
-      width,
-      height,
-      rowHeight: measured.rowHeight,
-      reservedRight,
-      reservedBottom,
-    };
+    return computeLegendLayout({
+      chartWidth: props.width,
+      items,
+      measureText: props.fonts.measureText,
+      font: props.fonts.yTickFont,
+      show: props.legend?.show,
+      position: props.legend?.position,
+    });
   }, [props.legend, props.series, props.fonts, props.width, theme.series.palette]);
 
   const plan = React.useMemo(() => {
@@ -332,7 +297,7 @@ export function Chart(props: ChartProps) {
         const px = plan.scales.x(datum.x as any);
         const py = plan.scales.y(datum.y);
         if (!Number.isFinite(px) || !Number.isFinite(py)) return;
-        if (!isInsidePlot(px, py, plan.layout.plot)) return;
+        if (!isPointInRect(px, py, plan.layout.plot)) return;
 
         points.push({
           seriesId: series.id,
@@ -435,7 +400,7 @@ export function Chart(props: ChartProps) {
   const handleTouch = React.useCallback(
     (x: number, y: number) => {
       if (!interactionEnabled || interactiveSeriesPoints.length === 0) return;
-      if (!isInsidePlot(x, y, plan.layout.plot)) {
+      if (!isPointInRect(x, y, plan.layout.plot)) {
         setInteractionState(null);
         return;
       }
@@ -452,13 +417,14 @@ export function Chart(props: ChartProps) {
       }
 
       if (snapMode === 'index') {
-        const targetX = findNearestNumeric(indexedXAnchors, x);
+        const targetX = findNearestNumericValue(indexedXAnchors, x);
         if (!Number.isFinite(targetX)) {
           setInteractionState(null);
           return;
         }
 
-        const grouped = collectPointsAtAnchor(interactiveSeriesPoints, targetX);
+        const grouped = collectPointsAtAnchorX(interactiveSeriesPoints, targetX);
+        grouped.sort((a, b) => a.seriesIndex - b.seriesIndex);
         if (grouped.length === 0) {
           setInteractionState(null);
           return;
@@ -772,25 +738,7 @@ function mergeTheme(
 
 const AXIS_TICK_SIZE_PX = 4;
 const AXIS_LABEL_GAP_PX = 6;
-const LEGEND_SWATCH_SIZE_PX = 9;
-const LEGEND_SWATCH_TEXT_GAP_PX = 6;
-const LEGEND_ITEM_GAP_PX = 6;
-const LEGEND_PADDING_PX = 4;
-const LEGEND_OUTER_MARGIN_PX = 6;
 
-type LegendItem = { id: string; label: string; color: string };
-type LegendMeasuredItem = LegendItem & {
-  textWidth: number;
-  textHeight: number;
-  rowWidth: number;
-};
-type LegendItemBox = {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
 type InteractivePoint = {
   seriesId: string;
   seriesIndex: number;
@@ -1039,91 +987,23 @@ function baselineOffsetFromTop(fontSize: number) {
   return Math.round(fontSize * 0.8);
 }
 
-function measureLegend(items: LegendItem[], fonts: SaneChartFonts) {
-  const measuredItems: LegendMeasuredItem[] = items.map((item) => {
-    const measured = fonts.measureText({
-      text: item.label,
-      font: fonts.yTickFont,
-      angle: 0,
-    });
-    const textWidth = measured.width;
-    const textHeight = measured.height;
-    const rowWidth =
-      LEGEND_SWATCH_SIZE_PX + LEGEND_SWATCH_TEXT_GAP_PX + textWidth;
-    return {
-      ...item,
-      textWidth,
-      textHeight,
-      rowWidth,
-    };
-  });
-
-  let maxTextWidth = 0;
-  let maxTextHeight = 0;
-  let horizontalContentWidth = 0;
-
-  for (const item of measuredItems) {
-    if (item.textWidth > maxTextWidth) maxTextWidth = item.textWidth;
-    if (item.textHeight > maxTextHeight) maxTextHeight = item.textHeight;
-    horizontalContentWidth += item.rowWidth;
-  }
-
-  const rowHeight = Math.max(LEGEND_SWATCH_SIZE_PX, maxTextHeight);
-  const verticalWidth =
-    LEGEND_PADDING_PX * 2 +
-    LEGEND_SWATCH_SIZE_PX +
-    LEGEND_SWATCH_TEXT_GAP_PX +
-    maxTextWidth;
-  const verticalHeight =
-    LEGEND_PADDING_PX * 2 +
-    items.length * rowHeight +
-    Math.max(0, items.length - 1) * LEGEND_ITEM_GAP_PX;
-  const horizontalWidth =
-    LEGEND_PADDING_PX * 2 +
-    horizontalContentWidth +
-    Math.max(0, measuredItems.length - 1) * LEGEND_ITEM_GAP_PX;
-  const horizontalHeight = LEGEND_PADDING_PX * 2 + rowHeight;
-
-  return {
-    items: measuredItems,
-    rowHeight,
-    verticalWidth,
-    verticalHeight,
-    horizontalWidth,
-    horizontalHeight,
-  };
-}
-
-function resolveLegendPosition(input: {
-  chartWidth: number;
-  legendWidth: number;
-}): 'right' | 'bottom' {
-  if (input.chartWidth >= 420 && input.legendWidth <= input.chartWidth * 0.28) {
-    return 'right';
-  }
-  return 'bottom';
-}
-
 function renderLegend(input: {
   chartWidth: number;
   chartHeight: number;
   layout: ReturnType<typeof buildTimeSeriesPlan>['layout'];
-  legend: {
-    show: boolean;
-    items: LegendMeasuredItem[];
-    position: 'right' | 'bottom';
-    orientation: 'vertical' | 'horizontal';
-    width: number;
-    height: number;
-    rowHeight?: number;
-  };
+  legend: LegendLayoutResult;
   font: ReturnType<typeof matchFont>;
   fontSize: number;
   textColor: string;
   hiddenSeriesIds: Set<string>;
   interactive: boolean;
 }) {
-  const itemBoxes = computeLegendItemBoxes(input);
+  const itemBoxes = computeLegendItemBoxes({
+    chartWidth: input.chartWidth,
+    chartHeight: input.chartHeight,
+    layout: input.layout,
+    legend: input.legend,
+  });
 
   return (
     <Group>
@@ -1132,16 +1012,20 @@ function renderLegend(input: {
         if (!box) return null;
         const hidden = input.hiddenSeriesIds.has(item.id);
         const opacity = hidden ? 0.35 : 1;
-        const swatchY = box.y + Math.max(0, (box.height - LEGEND_SWATCH_SIZE_PX) / 2);
-        const textX = box.x + LEGEND_SWATCH_SIZE_PX + LEGEND_SWATCH_TEXT_GAP_PX;
+        const swatchY =
+          box.y + Math.max(0, (box.height - input.legend.metrics.swatchSizePx) / 2);
+        const textX =
+          box.x +
+          input.legend.metrics.swatchSizePx +
+          input.legend.metrics.swatchTextGapPx;
         const textY = box.y + baselineOffsetFromTop(input.fontSize);
         return (
           <Group key={`legend-${item.id}-${index}`}>
             <SkRect
               x={box.x}
               y={swatchY}
-              width={LEGEND_SWATCH_SIZE_PX}
-              height={LEGEND_SWATCH_SIZE_PX}
+              width={input.legend.metrics.swatchSizePx}
+              height={input.legend.metrics.swatchSizePx}
               color={item.color}
               opacity={opacity}
             />
@@ -1170,77 +1054,6 @@ function renderLegend(input: {
       })}
     </Group>
   );
-}
-
-function computeLegendItemBoxes(input: {
-  chartWidth: number;
-  chartHeight: number;
-  layout: ReturnType<typeof buildTimeSeriesPlan>['layout'];
-  legend: {
-    show: boolean;
-    items: LegendMeasuredItem[];
-    position: 'right' | 'bottom';
-    orientation: 'vertical' | 'horizontal';
-    width: number;
-    height: number;
-    rowHeight?: number;
-  };
-}): LegendItemBox[] {
-  if (!input.legend.show || input.legend.items.length === 0) return [];
-
-  const rowHeight = input.legend.rowHeight ?? LEGEND_SWATCH_SIZE_PX;
-  const startX =
-    input.legend.position === 'right'
-      ? input.chartWidth - input.legend.width - LEGEND_OUTER_MARGIN_PX
-      : input.layout.header.x +
-        Math.max(0, (input.layout.header.width - input.legend.width) / 2);
-  const startY =
-    input.legend.position === 'right'
-      ? input.layout.plot.y + LEGEND_OUTER_MARGIN_PX
-      : input.chartHeight - input.legend.height - LEGEND_OUTER_MARGIN_PX;
-
-  return input.legend.items.map((item, index) => {
-    const topY =
-      input.legend.orientation === 'horizontal'
-        ? startY + LEGEND_PADDING_PX
-        : startY + LEGEND_PADDING_PX + index * (rowHeight + LEGEND_ITEM_GAP_PX);
-
-    const leftX =
-      input.legend.orientation === 'horizontal'
-        ? startX +
-          LEGEND_PADDING_PX +
-          input.legend.items
-            .slice(0, index)
-            .reduce((acc, current) => acc + current.rowWidth, 0) +
-          index * LEGEND_ITEM_GAP_PX
-        : startX + LEGEND_PADDING_PX;
-
-    return {
-      id: item.id,
-      x: leftX,
-      y: topY,
-      width: item.rowWidth,
-      height: rowHeight,
-    };
-  });
-}
-
-function findLegendHit(
-  boxes: LegendItemBox[],
-  x: number,
-  y: number
-): LegendItemBox | null {
-  for (const box of boxes) {
-    if (
-      x >= box.x &&
-      x <= box.x + box.width &&
-      y >= box.y &&
-      y <= box.y + box.height
-    ) {
-      return box;
-    }
-  }
-  return null;
 }
 
 function renderTooltip(input: {
@@ -1380,64 +1193,6 @@ function formatInteractiveYLabel(
   if (formatY) return formatY(value);
   if (Math.abs(value) >= 1000) return value.toLocaleString();
   return Number(value.toFixed(2)).toString();
-}
-
-function findNearestPoint(
-  points: InteractivePoint[],
-  x: number,
-  y: number
-): InteractivePoint | null {
-  let best: InteractivePoint | null = null;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const point of points) {
-    const dx = point.x - x;
-    const dy = point.y - y;
-    const d = dx * dx + dy * dy;
-    if (d < bestDistance) {
-      bestDistance = d;
-      best = point;
-    }
-  }
-  return best;
-}
-
-function collectPointsAtAnchor(
-  points: InteractivePoint[],
-  anchorX: number
-): InteractivePoint[] {
-  const out: InteractivePoint[] = [];
-  for (const point of points) {
-    if (Math.abs(point.x - anchorX) < 0.5) out.push(point);
-  }
-  out.sort((a, b) => a.seriesIndex - b.seriesIndex);
-  return out;
-}
-
-function findNearestNumeric(values: number[], target: number): number {
-  if (values.length === 0) return Number.NaN;
-  let best = values[0] ?? Number.NaN;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const value of values) {
-    const d = Math.abs(value - target);
-    if (d < bestDistance) {
-      bestDistance = d;
-      best = value;
-    }
-  }
-  return best;
-}
-
-function isInsidePlot(
-  x: number,
-  y: number,
-  plot: ReturnType<typeof buildTimeSeriesPlan>['layout']['plot']
-): boolean {
-  return (
-    x >= plot.x &&
-    x <= plot.x + plot.width &&
-    y >= plot.y &&
-    y <= plot.y + plot.height
-  );
 }
 
 function clamp(value: number, min: number, max: number) {
