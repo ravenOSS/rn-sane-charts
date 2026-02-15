@@ -1,6 +1,6 @@
 # rn-sane-charts Roadmap
 
-Last updated: 2026-02-15
+Last updated: 2026-02-16
 
 Planning source of truth: this file is the single roadmap/task tracker.
 
@@ -15,7 +15,7 @@ Complete MVP with deterministic core architecture, production-safe defaults, and
 
 Milestone status:
 - M1: Completed
-- M2: In Progress
+- M2: Completed
 - M3: Not Started
 - M4: Not Started
 
