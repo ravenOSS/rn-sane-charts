@@ -103,8 +103,8 @@ Create one `Chart` per visualization and reuse shared `fonts`, theme, and format
 ## Current Status
 
 - MVP in progress.
-- Implemented: line, area (single), bar/grouped/stacked, scatter, histogram.
-- Planned: stacked area completion, marker annotations API, deeper perf harnessing.
+- Implemented: line, area (single + stacked), bar/grouped/stacked, scatter, histogram, marker annotations.
+- Planned: deeper perf harnessing and additional interaction/perf optimizations.
 
 ## Docs
 

@@ -60,6 +60,16 @@ export type ChartProps = {
       color?: string;
     }>;
   };
+  annotations?: {
+    markers?: Array<{
+      id?: string;
+      x: number | Date;
+      y: number;
+      label?: string;
+      color?: string;
+      size?: number;
+    }>;
+  };
 
   fonts: SaneChartFonts;
   colorScheme?: ChartColorScheme;
@@ -275,6 +285,29 @@ export function Chart(props: ChartProps) {
   const snapMode = props.interaction?.snap ?? 'nearest';
   const showTooltip = props.interaction?.tooltip ?? true;
   const responderEnabled = interactionEnabled || (legendInteractive && legendLayout.show);
+
+  const annotationMarkers = React.useMemo(() => {
+    const markers = props.annotations?.markers ?? [];
+    if (markers.length === 0) return [];
+
+    return markers
+      .map((marker, index) => {
+        const x = plan.scales.x(marker.x as any);
+        const y = plan.scales.y(marker.y);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+        if (!isPointInRect(x, y, plan.layout.plot)) return null;
+
+        return {
+          id: marker.id ?? `annotation-marker-${index}`,
+          x,
+          y,
+          label: marker.label,
+          color: marker.color ?? "#DC2626",
+          size: Number.isFinite(marker.size) ? Math.max(4, marker.size ?? 8) : 8,
+        };
+      })
+      .filter((marker): marker is NonNullable<typeof marker> => marker !== null);
+  }, [props.annotations?.markers, plan.scales, plan.layout.plot]);
 
   const interactiveSeriesPoints = React.useMemo(() => {
     const fallbackColor = '#2563EB';
@@ -523,6 +556,13 @@ export function Chart(props: ChartProps) {
           <ChartContext.Provider value={ctxValue}>
             {props.children}
           </ChartContext.Provider>
+          {annotationMarkers.length > 0
+            ? renderAnnotationMarkers({
+                markers: annotationMarkers,
+                font: skiaFonts.yTick,
+                fontSize: props.fonts.yTickFont.size,
+              })
+            : null}
         </Group>
 
         {/* Header text */}
@@ -1168,6 +1208,54 @@ function renderTooltip(input: {
               y={baselineY}
               color={textColor}
             />
+          </Group>
+        );
+      })}
+    </Group>
+  );
+}
+
+function renderAnnotationMarkers(input: {
+  markers: Array<{
+    id: string;
+    x: number;
+    y: number;
+    label?: string;
+    color: string;
+    size: number;
+  }>;
+  font: ReturnType<typeof matchFont>;
+  fontSize: number;
+}) {
+  return (
+    <Group>
+      {input.markers.map((marker) => {
+        const half = marker.size / 2;
+        const labelX = marker.x + marker.size + 4;
+        const labelY = marker.y - 4 + baselineOffsetFromTop(input.fontSize);
+        return (
+          <Group key={marker.id}>
+            <Line
+              p1={{ x: marker.x - half, y: marker.y }}
+              p2={{ x: marker.x + half, y: marker.y }}
+              color={marker.color}
+              strokeWidth={1.6}
+            />
+            <Line
+              p1={{ x: marker.x, y: marker.y - half }}
+              p2={{ x: marker.x, y: marker.y + half }}
+              color={marker.color}
+              strokeWidth={1.6}
+            />
+            {marker.label ? (
+              <Text
+                text={marker.label}
+                font={input.font}
+                x={labelX}
+                y={labelY}
+                color={marker.color}
+              />
+            ) : null}
           </Group>
         );
       })}

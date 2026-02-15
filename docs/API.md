@@ -92,6 +92,16 @@ type ChartProps = {
     interactionMode?: "toggle" | "isolate";
     items?: Array<{ id: string; label?: string; color?: string }>;
   };
+  annotations?: {
+    markers?: Array<{
+      id?: string;
+      x: Date | number;
+      y: number;
+      label?: string;
+      color?: string;
+      size?: number;
+    }>;
+  };
   interaction?: {
     enabled?: boolean;
     crosshair?: "none" | "x" | "xy";
@@ -125,8 +135,9 @@ Behavior:
 - `xTickValues` can pin ticks to explicit x positions (useful for category-like
   charts mapped onto time slots).
 - `xTickDomainMode` controls edge behavior with explicit ticks:
-- `"slots"` adds half-step edge padding (bar/grouped/stacked/histogram friendly)
-- `"exact"` uses first/last tick as domain bounds (line/area edge alignment)
+  - `"slots"` adds half-step edge padding (bar/grouped/stacked/histogram friendly)
+  - `"exact"` uses first/last tick as domain bounds (line/area edge alignment)
+- `annotations.markers` renders lightweight in-plot marker overlays with optional labels.
 
 ### `ResponsiveChart` (Implemented)
 
@@ -209,7 +220,7 @@ Notes:
 
 ### Area (including stacked)
 
-Status: `Partially Implemented (single-series area)`
+Status: `Implemented (single + stacked)`
 
 Data shape:
 - Same `Series[]` contract as line charts.
@@ -231,7 +242,18 @@ type AreaSeriesProps = {
 
 Notes:
 - `AreaSeries` is implemented for single-series area rendering.
-- Stacked area behavior remains planned.
+- `StackedAreaSeries` is implemented for stacked area rendering from multiple aligned series.
+
+Additional component:
+
+```ts
+type StackedAreaSeriesProps = {
+  series: Series[];
+  colors?: readonly string[];
+  fillOpacity?: number;
+  strokeWidth?: number;
+};
+```
 
 ---
 

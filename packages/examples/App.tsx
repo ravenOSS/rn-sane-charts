@@ -15,7 +15,7 @@ import {
 } from "react-native-safe-area-context";
 
 import type { Series } from "@rn-sane-charts/core";
-import { binHistogram } from "@rn-sane-charts/core";
+import { binHistogram, stackSeries } from "@rn-sane-charts/core";
 import {
   AreaSeries,
   BarSeries,
@@ -24,6 +24,7 @@ import {
   HistogramSeries,
   LineSeries,
   ScatterSeries,
+  StackedAreaSeries,
   StackedBarSeries,
   makeSkiaMeasureText,
 } from "@rn-sane-charts/rn";
@@ -42,12 +43,14 @@ import {
   sampleHistogramValues,
   sampleLineSeries,
   sampleScatterData,
+  sampleStackedAreaSeries,
   sampleStackedBarData,
 } from "./sampleDatasets";
 
 type GalleryView =
   | "line"
   | "area"
+  | "stackedArea"
   | "bar"
   | "groupedBar"
   | "stackedBar"
@@ -58,6 +61,7 @@ type GalleryView =
 const viewOptions: { id: GalleryView; label: string }[] = [
   { id: "line", label: "Line" },
   { id: "area", label: "Area" },
+  { id: "stackedArea", label: "Stacked Area" },
   { id: "bar", label: "Bar" },
   { id: "groupedBar", label: "Grouped Bar" },
   { id: "stackedBar", label: "Stacked Bar" },
@@ -243,11 +247,65 @@ function GalleryApp() {
         .filter((x): x is Date => x instanceof Date),
     []
   );
+  const stackedAreaSeries = React.useMemo<Series[]>(
+    () => sampleStackedAreaSeries,
+    []
+  );
+  const stackedAreaTickValues = React.useMemo(
+    () =>
+      (sampleStackedAreaSeries[0]?.data ?? [])
+        .map((d) => d.x)
+        .filter((x): x is Date => x instanceof Date),
+    []
+  );
+  const stackedAreaDomainSeries = React.useMemo<Series[]>(() => {
+    const stacked = stackSeries(sampleStackedAreaSeries);
+    if (stacked.length === 0) return [];
+
+    const first = stacked[0];
+    const last = stacked[stacked.length - 1];
+    if (!first || !last) return [];
+
+    return [
+      {
+        id: "__stacked_area_upper_domain__",
+        data: last.data.map((d) => ({ x: d.x, y: d.y1 })),
+      },
+      {
+        id: "__stacked_area_lower_domain__",
+        data: first.data.map((d) => ({ x: d.x, y: d.y0 })),
+      },
+    ];
+  }, []);
+  const stackedAreaLegendItems = React.useMemo(
+    () =>
+      stackedAreaSeries.map((series, index) => ({
+        id: series.id,
+        label: series.id,
+        color:
+          exampleChartTypeConfig.area.colors[
+            index % exampleChartTypeConfig.area.colors.length
+          ],
+      })),
+    [stackedAreaSeries]
+  );
   const lineTickValues = React.useMemo(
     () =>
       sampleLineSeries[0].data
         .map((d) => d.x)
         .filter((x): x is Date => x instanceof Date),
+    []
+  );
+  const lineAnnotations = React.useMemo(
+    () => [
+      {
+        id: "release-cutover",
+        x: sampleLineSeries[0].data[24]?.x ?? new Date(2026, 0, 25),
+        y: (sampleLineSeries[0].data[24]?.y ?? 0) + 2,
+        label: "Release",
+        color: "#DC2626",
+      },
+    ],
     []
   );
 
@@ -350,6 +408,7 @@ function GalleryApp() {
                 snap: "index",
                 tooltip: true,
               }}
+              annotations={{ markers: lineAnnotations }}
               {...commonChartProps}
             >
               <LineSeries
@@ -395,6 +454,29 @@ function GalleryApp() {
                 series={sampleAreaSeries}
                 color="#0EA5E9"
                 strokeWidth={exampleChartTypeConfig.line.strokeWidth}
+              />
+            </Chart>
+          ) : null}
+
+          {activeView === "stackedArea" ? (
+            <Chart
+              width={360}
+              height={240}
+              series={stackedAreaDomainSeries}
+              title="Traffic Source Mix"
+              subtitle="Stacked daily contribution by channel"
+              xAxisTitle="Date"
+              yAxisTitle="Users"
+              xTickValues={stackedAreaTickValues}
+              xTickDomainMode="exact"
+              legend={{ items: stackedAreaLegendItems, show: true }}
+              {...commonChartProps}
+            >
+              <StackedAreaSeries
+                series={stackedAreaSeries}
+                colors={[...exampleChartTypeConfig.area.colors]}
+                fillOpacity={exampleChartTypeConfig.area.fillOpacity}
+                strokeWidth={exampleChartTypeConfig.area.strokeWidth}
               />
             </Chart>
           ) : null}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Series } from "../model/types";
-import { buildAreaPath } from "./areaPath";
+import { buildAreaPath, buildStackedAreaPath } from "./areaPath";
 
 describe("buildAreaPath", () => {
   const scales = {
@@ -45,5 +45,20 @@ describe("buildAreaPath", () => {
 
     const { d } = buildAreaPath(series, scales);
     expect(d).toBe("");
+  });
+
+  it("builds stacked area path from y0/y1 bands", () => {
+    const { d } = buildStackedAreaPath(
+      {
+        id: "stack-1",
+        data: [
+          { x: 0, y: 10, y0: 2, y1: 10 },
+          { x: 10, y: 16, y0: 4, y1: 16 },
+        ],
+      },
+      scales
+    );
+
+    expect(d).toBe("M0,10L10,16L10,4L0,2Z");
   });
 });

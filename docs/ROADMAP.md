@@ -10,8 +10,14 @@ Complete MVP with deterministic core architecture, production-safe defaults, and
 
 ## Current Snapshot
 
-- Done: core chart set (line, area single-series, bar/grouped/stacked, scatter, histogram), responsive chart wrapper, core-based legend layout and hit-test helpers.
-- Open: stacked area, marker annotations API, downsampling, scatter spatial indexing, stronger RN tests, perf harness, package/dependency hygiene.
+- Done: core chart set (line, area single + stacked, bar/grouped/stacked, scatter, histogram), responsive chart wrapper, core-based legend layout/hit-test helpers, core stack/downsample transforms.
+- Open: scatter spatial indexing, stronger RN tests, perf harness, package/dependency hygiene.
+
+Milestone status:
+- M1: Completed
+- M2: In Progress
+- M3: Not Started
+- M4: Not Started
 
 ## Milestone M1: MVP Architecture Completion
 

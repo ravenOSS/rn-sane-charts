@@ -94,6 +94,48 @@ Pass multiple series in `Chart.series`, and render one `LineSeries` per series.
 </Chart>
 ```
 
+## Stacked Area
+
+Use `StackedAreaSeries` when each series is one layer in a cumulative stack:
+
+```tsx
+<Chart series={domainSeries} {...rest}>
+  <StackedAreaSeries
+    series={stackLayers}
+    colors={["#2563EB", "#16A34A", "#EA580C"]}
+    fillOpacity={0.24}
+    strokeWidth={1.6}
+  />
+</Chart>
+```
+
+Notes:
+- `stackLayers` should be aligned by shared `x` values.
+- `Chart.series` should include a domain-driving series set that covers stacked totals.
+
+## Marker Annotations
+
+Use `Chart.annotations.markers` for lightweight in-plot callouts:
+
+```tsx
+<Chart
+  annotations={{
+    markers: [
+      {
+        id: "release-cutover",
+        x: new Date(2026, 0, 25),
+        y: 27.5,
+        label: "Release",
+        color: "#DC2626",
+      },
+    ],
+  }}
+  {...rest}
+>
+  ...
+</Chart>
+```
+
 ## Sample Dataset Catalog
 
 The examples app includes ready-made datasets for each MVP chart type in:

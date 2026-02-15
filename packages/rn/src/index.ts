@@ -3,6 +3,7 @@ export { Chart } from './Chart';
 export { ResponsiveChart } from './ResponsiveChart';
 export { LineSeries } from './series/LineSeries';
 export { AreaSeries } from './series/AreaSeries';
+export { StackedAreaSeries } from './series/StackedAreaSeries';
 export { ScatterSeries } from './series/ScatterSeries';
 export { BarSeries } from './series/BarSeries';
 export { GroupedBarSeries } from './series/GroupedBarSeries';
