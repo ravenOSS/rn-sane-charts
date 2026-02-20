@@ -111,6 +111,7 @@ Create one `Chart` per visualization and reuse shared `fonts`, theme, and format
 - Product goals: `docs/PRD.md`
 - Architecture: `docs/ARCHITECTURE.md`
 - API details: `docs/API.md`
+- Design guide: `docs/DESIGN_GUIDE.md`
 - User guide: `docs/USER_GUIDE.md`
 
 ## Contributing
@@ -124,5 +125,6 @@ pnpm test
 ```
 
 Architecture expectations:
+
 - `@rn-sane-charts/core`: deterministic math/layout/transforms.
 - `@rn-sane-charts/rn`: Skia rendering + interaction wiring.

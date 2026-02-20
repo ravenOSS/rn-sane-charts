@@ -5,9 +5,23 @@
 `rn-sane-charts` is a React Native-first charting library for professional-looking business charts with minimal setup.
 
 Best fit:
+
 - You want a chart on screen quickly with sane defaults.
 - You care about readable axes and labels on mobile.
 - You prefer a small API over high-flexibility configuration systems.
+
+## Design Guide (Chart Selection + Visual Defaults)
+
+rn-sane-charts ships “sane defaults,” but many teams (especially small ones) need the library to also help them make good design decisions.
+
+- For **which chart to use**, **series limits**, **color roles**, and **light/dark parity**, see: `docs/DESIGN_GUIDE.md`.
+
+Quick gut-check:
+
+- Trends → **Line**
+- Ranking/categories → **Bar**
+- Relationship/outliers → **Scatter**
+- Distribution → **Histogram**
 
 ## First Decision: Data Shape
 
@@ -29,6 +43,7 @@ type Series = {
 ```
 
 Notes:
+
 - `x` can be a timestamp (`Date`) or number.
 - `y` must be numeric.
 - Data should already be fetched and normalized by your app.
@@ -110,6 +125,7 @@ Use `StackedAreaSeries` when each series is one layer in a cumulative stack:
 ```
 
 Notes:
+
 - `stackLayers` should be aligned by shared `x` values.
 - `Chart.series` should include a domain-driving series set that covers stacked totals.
 
@@ -139,9 +155,11 @@ Use `Chart.annotations.markers` for lightweight in-plot callouts:
 ## Sample Dataset Catalog
 
 The examples app includes ready-made datasets for each MVP chart type in:
+
 - `packages/examples/sampleDatasets.ts`
 
 Included fixtures:
+
 1. `sampleLineSeries`
 2. `sampleAreaSeries`
 3. `sampleStackedAreaSeries`
@@ -157,6 +175,7 @@ example gallery tabs.
 ## Accessibility Theme Check (Examples)
 
 The gallery includes an `A11y Theme` tab that demonstrates:
+
 - A color-blind-friendly series palette
 - Higher-contrast axis tokens for light and dark schemes
 - A live axis-text contrast check against background (target: `>= 4.5:1`)
@@ -166,17 +185,20 @@ Use this tab as a quick visual/functional gate before finalizing theme tokens.
 ## Styling After First Render
 
 Default behavior:
+
 - Library defaults are applied first.
 - `colorScheme` picks the base light/dark preset (`"system"` follows device mode).
 - `theme` props partially override defaults.
 - Per-series props override theme for that series.
 
 Recommended workflow:
+
 1. Get a working chart with default styling.
 2. Move shared fonts/theme to one app-level config module.
 3. Use per-series overrides only for chart-specific emphasis.
 
 Interaction defaults (opt-in):
+
 1. Set `interaction.enabled` on `Chart`.
 2. Use `snap: "index"` for business time-series comparison tooltips.
 3. Use `snap: "nearest"` for dense scatter exploration.
@@ -187,11 +209,13 @@ Interaction defaults (opt-in):
 ## Static vs Dynamic Inputs
 
 Static (usually one-time setup):
+
 - Theme palette
 - Axis contrast
 - Default font sizes and weights
 
 Dynamic (changes at runtime):
+
 - Incoming data values
 - Highlighted series color
 - Interaction-driven emphasis
@@ -201,12 +225,14 @@ Dynamic (changes at runtime):
 `rn-sane-charts` does not fetch or stream data itself. Keep ingestion in your app.
 
 Recommended pipeline:
+
 1. Receive JSON payload from API/socket.
 2. Validate and map payload into `Series[]`.
 3. Append to in-memory buffers.
 4. Pass updated arrays to chart props.
 
 For high-frequency streams:
+
 1. Keep a fixed-size ring buffer per series.
 2. Batch updates on a short interval (100-250ms) instead of every message.
 3. Preserve stable object shapes to reduce JS churn.
@@ -214,6 +240,7 @@ For high-frequency streams:
 ## Troubleshooting
 
 If visual updates do not appear:
+
 1. Clear Metro cache: `pnpm start -- --clear` from `packages/examples`.
 2. Ensure workspace package aliasing is active in `packages/examples/metro.config.js`.
 3. Re-run type checks for changed packages:
