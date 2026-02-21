@@ -146,7 +146,10 @@ type ScatterDatum = {
 number[]
 ```
 
-The library handles binning internally.
+Current implementation detail:
+
+- Core provides `binHistogram(number[], options)` for deterministic binning.
+- RN `HistogramSeries` currently renders precomputed bins, not raw arrays directly.
 
 ---
 

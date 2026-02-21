@@ -124,10 +124,12 @@ Behavior:
   otherwise `bottom`), and is hidden for single-series charts unless `show` is forced.
 - For bottom legends, label widths are measured and the legend switches to a
   horizontal row only when all items fit the available chart width.
-- `legend.interactive` enables tap-to-toggle series visibility directly from legend items.
+- `legend.interactive` enables legend tap interactions.
 - `legend.interactionMode` controls legend tap behavior:
   - `"toggle"`: hide/show one series at a time.
   - `"isolate"`: show only the tapped series; tap it again to restore all.
+- Design policy note: prefer focus + de-emphasis for comparison tasks; use
+  hide/reveal interaction modes as fallback for exceptional clutter.
 - `interaction` enables touch crosshair + tooltip behavior:
   - `snap: "nearest"` focuses the nearest data point.
   - `snap: "index"` snaps to the nearest x-slot and shows all series values at that slot.
@@ -194,6 +196,10 @@ Theme presets exported by `@rn-sane-charts/rn`:
 - `lightTheme`
 - `darkTheme`
 - `defaultTheme` (alias of `lightTheme`)
+
+Current rendering note:
+- `grid` tokens are part of the theme contract but grid lines are not rendered
+  by `Chart` yet.
 
 ## Chart Types
 
@@ -326,7 +332,7 @@ type ScatterSeriesProps = {
 ```
 
 Notes:
-- `hitRadiusPx` is reserved for interaction hit-testing and tooltip layers.
+- `hitRadiusPx` is currently reserved and not wired into interaction hit-testing.
 
 ---
 
@@ -335,8 +341,8 @@ Notes:
 Status: `Implemented (renderer); binning in core`
 
 Data shape:
-- Raw numeric array: `number[]`
-- Binning handled in core.
+- Raw numeric array in app/core transforms: `number[]`
+- RN histogram renderer currently consumes precomputed bins.
 
 Current component:
 
@@ -349,6 +355,10 @@ type HistogramSeriesProps = {
   baselineY?: number;
 };
 ```
+
+Typical flow:
+1. Build bins with `binHistogram(values, options)` from `@rn-sane-charts/core`.
+2. Pass resulting bins into `HistogramSeries`.
 
 ## Data Ingestion Boundary
 

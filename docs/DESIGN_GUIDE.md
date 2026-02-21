@@ -40,12 +40,18 @@ For most business/product dashboards, the “basic” charts win because they’
 1. **Bar charts start at zero**  
    Truncating the baseline often exaggerates differences. If you need to show small deltas, prefer alternate views (annotation, delta labels, or a different chart) instead of distorting the bar baseline.
 
-2. **If labels don’t fit, don’t rotate into illegibility (especially on mobile)**  
-   Prefer one of:
-   - fewer ticks (reduce tick density)
-   - shorter formatting (abbreviations, compact units)
-   - horizontal bars for long category labels
-   - tap-to-inspect for exact values
+2. **If labels don’t fit, use a rotation-first readability strategy**  
+   Current implementation order:
+   - try `0°`
+   - then `45°`
+   - then `90°`
+   - apply tick skipping only when needed
+
+   Guardrails:
+   - reduce tick density when `90°` still feels cramped
+   - shorten formatting (abbreviations, compact units)
+   - use horizontal bars for long category labels
+   - keep tap-to-inspect for exact values
 
 3. **If you need more than ~6–8 series, the chart is asking for interaction or a different layout**  
    More colors is rarely the right answer. Use:
@@ -95,10 +101,15 @@ Define colors by **role** rather than “pick a bunch of series colors”:
 
 This role model keeps palettes small and clean while supporting many series via interaction.
 
+Current implementation note:
+- Theme roles are currently exposed as `background`, `frame`, `grid`, `axis`, and `series`.
+- `focus` / `muted` are policy goals, but not first-class theme state tokens yet.
+
 ### Default palette strategy (Apple-like)
 
-**Default categorical palette (6 colors)**  
-Ship 6 distinct, calm-but-saturated hues (and dark-mode counterparts) inspired by Apple system color families (conceptually: blue, teal, green, orange, indigo/purple, red).
+**Default categorical palette (current presets: 5 colors)**  
+Current built-in light/dark presets ship 5 calm-but-saturated categorical colors.
+Recommended working range remains 2-6 visible series for readability.
 
 **Extended palette (up to 8)**  
 Allow up to 8, but treat it as a “you probably need interaction” threshold.
@@ -125,15 +136,19 @@ Recommended behavior:
 
 - **1 series**: use primary
 - **2–6 series**: use default palette
-- **7–8 series**: allowed, but strongly encourage interaction (tap to isolate/highlight)
+- **7–8 series**: allowed, but strongly encourage interaction (focus + mute)
 - **9+ series**: don’t solve with more colors  
   Use filtering, highlight-on-select, small multiples, and/or secondary encodings.
 
 Suggested strategies when series count is high:
 
 - **Highlight-on-select**: selecting one series increases opacity/weight; others fade.
-- **Legend toggle**: tap legend items to show/hide or focus.
+- **Legend interaction**: prefer focus + de-emphasis; avoid hide/reveal as the primary behavior.
 - **Secondary encodings** (when needed): dashed lines, marker shapes, point outlines.
+
+Current implementation note:
+- `legend.interactionMode` currently supports `"toggle"` and `"isolate"` (hide/reveal flows).
+- Treat these as fallback tools for exceptional clutter, not as the default interaction model.
 
 ### Practical contrast guidance (usability-first)
 
@@ -144,13 +159,18 @@ Even if you don’t want to claim a standard, a simple benchmark prevents unread
 
 ### Recommended override model (simple, predictable)
 
-Expose a small theme surface rather than dozens of knobs:
+Expose a small theme surface rather than dozens of knobs.
 
+Current shipped surface:
 - `background`
-- `scaffolding` (grid/axes/labels)
-- `palette.categorical[]` (6–8)
-- `state.focus` (selection/focus style)
-- `state.muted` (de-emphasis style)
+- `frame`
+- `grid`
+- `axis.tick`, `axis.line`
+- `series.palette[]`, `series.strokeWidth`
+
+Design target (not fully implemented yet):
+- consolidated `scaffolding`
+- first-class `state.focus` and `state.muted`
 
 This supports “sane defaults for speed” while keeping overrides straightforward and coherent.
 

@@ -202,9 +202,10 @@ Interaction defaults (opt-in):
 1. Set `interaction.enabled` on `Chart`.
 2. Use `snap: "index"` for business time-series comparison tooltips.
 3. Use `snap: "nearest"` for dense scatter exploration.
-4. Set `legend.interactive: true` for tap-to-toggle series visibility.
-5. Use `legend.interactionMode: "isolate"` when users should compare one
-   series at a time.
+4. Set `legend.interactive: true` when you need legend tap interaction.
+5. Prefer focus + de-emphasis interaction patterns for comparison.
+6. Use `legend.interactionMode: "isolate"` or `"toggle"` only as fallback for
+   extreme clutter.
 
 ## Static vs Dynamic Inputs
 
