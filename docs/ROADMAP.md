@@ -1,109 +1,91 @@
 # rn-sane-charts Roadmap
 
-Last updated: 2026-02-15
+Last updated: 2026-02-21
 
 Planning source of truth: this file is the single roadmap/task tracker.
 
 ## Goal
 
-Complete MVP with deterministic core architecture, production-safe defaults, and measurable performance.
+Ship a solid MVP baseline with:
+- deterministic core architecture
+- readable default visuals on mobile
+- documented, test-backed behavior
+- predictable package/dev workflow
 
-## Current Snapshot
+## Current Status
 
-- Done: core chart set (line, area single + stacked, bar/grouped/stacked, scatter, histogram), responsive chart wrapper, core-based legend layout/hit-test helpers, core stack/downsample transforms.
-- Done: scatter spatial indexing in core interaction path, repeatable perf harness (`pnpm --filter examples perf:harness`), baseline metrics in `docs/PERF_BASELINE.md`.
-- Open: stronger RN tests, package/dependency hygiene.
+- Completed: core chart set (line, area/stacked area, bar/grouped/stacked, scatter, histogram renderer), responsive chart wrapper, legend layout/hit testing, stack/downsample transforms, scatter spatial index, perf harness + baseline docs.
+- Completed: doc harmonization for current behavior (`DESIGN_GUIDE`, `PRD`, `API`, `USER_GUIDE`).
+- Open: visual/theming behavior gaps, RN test coverage, release-hardening work.
 
-Milestone status:
+## MVP Push (Current)
 
-- M1: Completed
-- M2: Completed
-- M3: Completed
-- M4: Not Started
+This push is focused on making MVP feel production-safe without expanding scope.
 
-## Milestone M1: MVP Architecture Completion
+### In Scope
 
-Scope:
+1. Visual correctness and consistency
+- Align x-axis rotated-label collision math and renderer anchoring so overlap decisions are reliable.
+- Ensure multi-series defaults use palette progression by series index (not all series defaulting to palette slot 0).
+- Wire gridline rendering to existing `theme.grid` tokens (currently tokenized but not rendered).
 
-- Implement core transforms:
+2. Interaction behavior baseline
+- Keep existing legend `toggle`/`isolate` modes for compatibility.
+- Add clear docs/examples that prefer focus + de-emphasis as the default comparison pattern.
+- Ensure tooltip/legend interactions remain allocation-safe during gestures.
 
-  - `stack` (`packages/core/src/transforms/stack.ts`)
-  - `downsample` (`packages/core/src/transforms/downsample.ts`)
+3. Histogram ergonomics clarification
+- Keep current renderer contract (`HistogramSeries` consumes bins).
+- Keep core binning as the standard path (`binHistogram`), with examples/docs showing this flow consistently.
 
-- Export transforms in `packages/core/src/transforms/index.ts`.
-- Add/expand core tests for transforms and interaction edge cases.
+4. Release hardening
+- Add meaningful RN smoke tests (render + legend interaction + one interaction path).
+- Resolve package/dependency hygiene items in `@rn-sane-charts/rn`.
+- Confirm deterministic local workflow (`pnpm install`, `pnpm -r typecheck`, `pnpm -r test`).
 
-Exit criteria:
+### Exit Criteria
 
-- `stack` and `downsample` are implemented, tested, and documented.
-- No placeholder transform files remain.
-- `pnpm -r typecheck` and `pnpm -r test` pass.
+- Visual regressions addressed for the three top gaps:
+  - x-label anchor mismatch fixed
+  - multi-series palette defaults fixed
+  - gridlines rendered from theme tokens
+- RN tests no longer rely on `it.todo` only.
+- Core/RN typecheck and tests pass in CI-equivalent local run.
+- Examples app demonstrates and validates shipped behavior.
+- Docs remain aligned with shipped behavior after code changes.
 
-## Milestone M2: Feature Completion (MVP Gaps)
+## Skipped In This Push
 
-Scope:
+These are intentionally deferred to protect MVP scope:
 
-- Add stacked area support (core prep + RN renderer + examples + docs).
-- Add first-class marker annotations API (minimal, opinionated surface).
+1. New public theming API surface
+- No new first-class `state.focus` / `state.muted` tokens yet.
+- No theme schema redesign (keep current `background/frame/grid/axis/series` shape).
 
-Exit criteria:
+2. Interaction model redesign
+- No replacement of `toggle`/`isolate` with a brand-new legend interaction API.
+- No large interaction state-machine rewrite.
 
-- Stacked area available in public API and examples app.
-- Marker annotations documented and demoed in examples.
-- API and user guide reflect shipped behavior.
+3. New chart types or renderer targets
+- No horizontal bar series in this push.
+- No web renderer.
+- No financial/candlestick charts.
 
-## Milestone M3: Performance + Interaction Quality
+4. Advanced feature work
+- No zoom/brush/pan feature set.
+- No full accessibility compliance pass (keep practical readability checks only).
+- No major perf architecture rewrite beyond regression prevention.
 
-Scope:
+## Execution Order
 
-- Add scatter spatial indexing in core interaction path.
-- Add repeatable performance harness in examples:
-
-  - 5k line points
-  - 1k scatter points
-
-- Verify interaction path avoids unnecessary per-frame allocations.
-
-Exit criteria:
-
-- Performance scenarios are scripted/repeatable.
-- Baseline perf results are documented.
-- Scatter hit-testing uses indexed lookup path (not full linear scan).
-
-## Milestone M4: Packaging + Release Readiness
-
-Scope:
-
-- Package dependency hygiene:
-
-  - align `@rn-sane-charts/rn` dependency declaration for `@rn-sane-charts/core`
-  - resolve/document package manager mismatch in `packages/rn/package.json`
-
-- Expand RN tests beyond `it.todo`.
-- Sync stale docs (`DEV_TASKS`, codebase analysis artifacts) to current state.
-
-Exit criteria:
-
-- Fresh install and local dev flow are deterministic with documented commands.
-- RN has meaningful smoke tests for chart render + legend interaction.
-- Status docs are aligned with current codebase.
-
-## Cross-Cutting Rules (All Milestones)
-
-- Keep core deterministic and renderer-agnostic.
-- Keep API small; no config sprawl.
-- Every non-trivial layout/heuristic algorithm must include function docblocks and inline reasoning comments.
-- Every behavior change must include tests and example validation.
-
-## Suggested Execution Order
-
-1. M1 (transforms foundation)
-2. M2 (stacked area + annotations)
-3. M3 (perf/indexing)
-4. M4 (release hardening)
+1. Fix visual correctness gaps (x-label anchor, palette indexing, grid rendering).
+2. Add/upgrade RN tests to lock behavior.
+3. Complete package/dependency hygiene.
+4. Verify examples + docs alignment and run full validation commands.
 
 ## Risks To Monitor
 
-- Scope creep from annotation API customization.
-- Performance regressions from richer interactions.
-- Docs drifting behind implementation (already observed once).
+- Scope creep from theming redesign requests.
+- Regressions from label collision/anchor changes.
+- Interaction complexity growth while trying to add focus+mute semantics.
+- Docs drifting from implementation after rapid fixes.
