@@ -1,6 +1,20 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
-  }
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@rn-sane-charts/rn": ["../rn/src/index.ts"],
+      "@rn-sane-charts/core": ["../core/src/index.ts"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../rn/src/**/*.ts",
+    "../rn/src/**/*.tsx",
+    "../core/src/**/*.ts",
+    "../core/src/**/*.tsx",
+    "../core/src/**/*.d.ts"
+  ]
 }

@@ -368,6 +368,12 @@ function GalleryApp() {
     theme: exampleChartTheme,
     colorScheme: chartColorScheme,
   };
+  const indexInteraction = {
+    enabled: true,
+    crosshair: "x" as const,
+    snap: "index" as const,
+    tooltip: true,
+  };
 
   const runPerfHarness = React.useCallback(() => {
     const results = runInteractionPerfHarness();
@@ -456,6 +462,7 @@ function GalleryApp() {
               yAxisTitle="Users"
               xTickValues={areaTickValues}
               xTickDomainMode="exact"
+              interaction={indexInteraction}
               {...commonChartProps}
             >
               <AreaSeries
@@ -486,6 +493,7 @@ function GalleryApp() {
               xTickValues={stackedAreaTickValues}
               xTickDomainMode="exact"
               legend={{ items: stackedAreaLegendItems, show: true }}
+              interaction={indexInteraction}
               {...commonChartProps}
             >
               <StackedAreaSeries
@@ -511,6 +519,7 @@ function GalleryApp() {
               xTickValues={barTickValues}
               xTickDomainMode="slots"
               tickCounts={{ x: barLabels.length, y: 6 }}
+              interaction={indexInteraction}
               {...commonChartProps}
             >
               <BarSeries
@@ -536,6 +545,7 @@ function GalleryApp() {
               xTickDomainMode="slots"
               tickCounts={{ x: groupedBarLabels.length, y: 6 }}
               legend={{ interactive: true, interactionMode: "isolate" }}
+              interaction={indexInteraction}
               {...commonChartProps}
             >
               <GroupedBarSeries
@@ -565,6 +575,7 @@ function GalleryApp() {
                 interactive: true,
                 interactionMode: "isolate",
               }}
+              interaction={indexInteraction}
               {...commonChartProps}
             >
               <StackedBarSeries
@@ -621,6 +632,7 @@ function GalleryApp() {
               xTickValues={histogramTickValues}
               xTickDomainMode="slots"
               tickCounts={{ x: 6, y: 6 }}
+              interaction={indexInteraction}
               {...commonChartProps}
             >
               <HistogramSeries
@@ -645,6 +657,7 @@ function GalleryApp() {
                 yAxisTitle="USD"
                 xTickValues={lineTickValues}
                 xTickDomainMode="exact"
+                interaction={indexInteraction}
                 colorScheme={chartColorScheme}
                 theme={accessibilityTheme}
                 fonts={chartFonts}
