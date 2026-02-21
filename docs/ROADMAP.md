@@ -1,6 +1,6 @@
 # rn-sane-charts Roadmap
 
-Last updated: 2026-02-16
+Last updated: 2026-02-15
 
 Planning source of truth: this file is the single roadmap/task tracker.
 
@@ -15,6 +15,7 @@ Complete MVP with deterministic core architecture, production-safe defaults, and
 - Open: stronger RN tests, package/dependency hygiene.
 
 Milestone status:
+
 - M1: Completed
 - M2: Completed
 - M3: Completed
@@ -23,13 +24,17 @@ Milestone status:
 ## Milestone M1: MVP Architecture Completion
 
 Scope:
+
 - Implement core transforms:
+
   - `stack` (`packages/core/src/transforms/stack.ts`)
   - `downsample` (`packages/core/src/transforms/downsample.ts`)
+
 - Export transforms in `packages/core/src/transforms/index.ts`.
 - Add/expand core tests for transforms and interaction edge cases.
 
 Exit criteria:
+
 - `stack` and `downsample` are implemented, tested, and documented.
 - No placeholder transform files remain.
 - `pnpm -r typecheck` and `pnpm -r test` pass.
@@ -37,10 +42,12 @@ Exit criteria:
 ## Milestone M2: Feature Completion (MVP Gaps)
 
 Scope:
+
 - Add stacked area support (core prep + RN renderer + examples + docs).
 - Add first-class marker annotations API (minimal, opinionated surface).
 
 Exit criteria:
+
 - Stacked area available in public API and examples app.
 - Marker annotations documented and demoed in examples.
 - API and user guide reflect shipped behavior.
@@ -48,13 +55,17 @@ Exit criteria:
 ## Milestone M3: Performance + Interaction Quality
 
 Scope:
+
 - Add scatter spatial indexing in core interaction path.
 - Add repeatable performance harness in examples:
+
   - 5k line points
   - 1k scatter points
+
 - Verify interaction path avoids unnecessary per-frame allocations.
 
 Exit criteria:
+
 - Performance scenarios are scripted/repeatable.
 - Baseline perf results are documented.
 - Scatter hit-testing uses indexed lookup path (not full linear scan).
@@ -62,13 +73,17 @@ Exit criteria:
 ## Milestone M4: Packaging + Release Readiness
 
 Scope:
+
 - Package dependency hygiene:
+
   - align `@rn-sane-charts/rn` dependency declaration for `@rn-sane-charts/core`
   - resolve/document package manager mismatch in `packages/rn/package.json`
+
 - Expand RN tests beyond `it.todo`.
 - Sync stale docs (`DEV_TASKS`, codebase analysis artifacts) to current state.
 
 Exit criteria:
+
 - Fresh install and local dev flow are deterministic with documented commands.
 - RN has meaningful smoke tests for chart render + legend interaction.
 - Status docs are aligned with current codebase.

@@ -10,6 +10,7 @@ rn-sane-charts is intentionally opinionated. This guide documents the design dec
 - [Chart chooser](#chart-chooser)
 - [Color and theming](#color-and-theming)
 - [Related implementation docs](#related-implementation-docs)
+- [References](#references)
 
 ---
 
@@ -24,13 +25,6 @@ rn-sane-charts is intentionally opinionated. This guide documents the design dec
 ## Chart chooser
 
 For most business/product dashboards, the “basic” charts win because they’re easiest to read and hardest to misinterpret—especially on small screens. This section is a **1-page decision guide** you can apply quickly.
-
-## **UX References**
-
-- Nielsen Norman Group — choosing chart types for UX:
-  - <https://www.nngroup.com/articles/choosing-chart-types/>
-- Datawrapper Academy — practical chart-type guidance:
-  - <https://academy.datawrapper.de/>
 
 ### Pick the chart by the user’s question (Option A)
 
@@ -74,15 +68,6 @@ For most business/product dashboards, the “basic” charts win because they’
 
 This section exists to eliminate the “old Excel palette” problem by making color **systematic**: clear roles, sensible series limits, and light/dark parity. The goal is **good usability** and a contemporary aesthetic—without claiming standards compliance.
 
-## **UI References**
-
-- Apple HIG — Color:
-  - <https://developer.apple.com/design/human-interface-guidelines/color>
-- Apple HIG — Charting data:
-  - <https://developer.apple.com/design/human-interface-guidelines/charting-data>
-- W3C WCAG — Non-text contrast (useful as a usability benchmark, not a certification claim):
-  - <https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast.html>
-
 ### Principles (Apple-like, product UI oriented)
 
 - Prefer **calm, modern hues** and avoid “default rainbow.”
@@ -102,7 +87,7 @@ Define colors by **role** rather than “pick a bunch of series colors”:
 3. **Secondary data**  
    Additional series. Distinct, but slightly less prominent than primary.
 
-4. **Focus/selection**  
+4. **Focus / selection**  
    Highlighted series/point on interaction. Highest emphasis; everything else can fade.
 
 5. **De-emphasis**  
@@ -123,12 +108,12 @@ Yellow frequently becomes low-contrast for thin strokes/markers unless you add a
 
 > Implementation note: Don’t bake “magic series colors” into rendering. Treat palette as a theme surface so apps can override cleanly.
 
-### Light/dark parity rules (don’t just invert)
+### Light / dark parity rules (don’t just invert)
 
 - **Scaffolding gets quieter in dark mode**  
   Gridlines and axis chrome should recede; data should stay prominent.
 - **Data stays legible**  
-  Don’t reduce stroke thickness/marker size in dark mode “because it looks bright.”
+  Don’t reduce stroke thickness / marker size in dark mode “because it looks bright.”
 - **Selection must pop**  
   Focus/selection should increase prominence while others de-emphasize (opacity drop is typically cleaner than shifting all hues).
 
@@ -155,7 +140,7 @@ Suggested strategies when series count is high:
 Even if you don’t want to claim a standard, a simple benchmark prevents unreadable charts:
 
 - **Meaningful graphical elements** (lines, bars, points, selection rings) should remain distinguishable against background and adjacent colors.
-- A commonly used benchmark for non-text graphical elements is **~3:1** contrast (see W3C non-text contrast explanation). Treat this as a **design check**, not a certification claim.
+- A commonly used benchmark for non-text graphical elements is **~3:1** contrast. Treat this as a **design check**, not a certification claim.
 
 ### Recommended override model (simple, predictable)
 
@@ -188,3 +173,25 @@ If you’re looking for “how do I wire this up,” start here:
   - interaction props (snap modes, tooltips, highlight behavior)
   - streaming / live data patterns and transformations
   - practical validation workflow (e.g., accessibility-oriented theme checks)
+
+---
+
+## References
+
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Sources used to inform this guide (for further reading)</summary>
+
+- Apple Human Interface Guidelines — Color  
+  <https://developer.apple.com/design/human-interface-guidelines/color>
+- Apple Human Interface Guidelines — Charting data  
+  <https://developer.apple.com/design/human-interface-guidelines/charting-data>
+- Nielsen Norman Group — Choosing Chart Types  
+  <https://www.nngroup.com/articles/choosing-chart-types/>
+- Datawrapper Academy — Chart types guidance  
+  <https://academy.datawrapper.de/>
+- W3C WCAG 2.1 — Understanding Non-text Contrast (SC 1.4.11)  
+  <https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast.html>
+
+</details>
+<!-- markdownlint-enable MD033 -->

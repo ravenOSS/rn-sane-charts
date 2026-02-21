@@ -15,3 +15,6 @@ android/
 
 # local working notes
 docs/notes.txt
+
+# Codex/specstory local session artifacts
+.specstory/

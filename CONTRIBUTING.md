@@ -113,6 +113,14 @@ A contribution is considered complete when:
 
 ---
 
+## Markdown Style
+
+* Use **GitHub Flavored Markdown (GFM)** for all `.md` files in this repository.
+* Follow markdownlint defaults used in CI, including list-spacing rules (for example, `MD032`).
+* Keep formatting consistent across `README.md`, `docs/*`, issue templates, and contributor guides.
+
+---
+
 ## Questions?
 
 If you are unsure whether something fits the philosophy or scope, open a discussion before investing time.
