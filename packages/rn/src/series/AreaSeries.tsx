@@ -24,7 +24,7 @@ export type AreaSeriesProps = {
  * - Baseline defaults to `0` but can be overridden for specialized displays.
  */
 export function AreaSeries(props: AreaSeriesProps) {
-  const { scales, theme, hiddenSeriesIds } = useChartContext();
+  const { scales, theme, hiddenSeriesIds, seriesColorById } = useChartContext();
   if (hiddenSeriesIds.has(props.series.id)) return null;
 
   const { d } = React.useMemo(
@@ -46,7 +46,11 @@ export function AreaSeries(props: AreaSeriesProps) {
 
   if (!skPath) return null;
 
-  const fillColor = props.fillColor ?? theme.series.palette[0] ?? '#2563EB';
+  const fillColor =
+    props.fillColor ??
+    seriesColorById.get(props.series.id) ??
+    theme.series.palette[0] ??
+    '#2563EB';
   const fillOpacity = clampOpacity(props.fillOpacity ?? 0.18);
   const strokeColor = props.strokeColor ?? fillColor;
   const strokeWidth = props.strokeWidth ?? theme.series.strokeWidth;

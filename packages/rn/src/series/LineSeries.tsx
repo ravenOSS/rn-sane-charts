@@ -20,7 +20,7 @@ export type LineSeriesProps = {
  * - Skia can ingest that path string directly.
  */
 export function LineSeries(props: LineSeriesProps) {
-  const { scales, theme, hiddenSeriesIds } = useChartContext();
+  const { scales, theme, hiddenSeriesIds, seriesColorById } = useChartContext();
   if (hiddenSeriesIds.has(props.series.id)) return null;
 
   const { d } = React.useMemo(
@@ -38,7 +38,11 @@ export function LineSeries(props: LineSeriesProps) {
 
   if (!skPath) return null;
 
-  const lineColor = props.color ?? theme.series.palette[0] ?? '#2563EB';
+  const lineColor =
+    props.color ??
+    seriesColorById.get(props.series.id) ??
+    theme.series.palette[0] ??
+    '#2563EB';
 
   return (
     <>

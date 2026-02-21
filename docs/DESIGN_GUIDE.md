@@ -102,6 +102,7 @@ Define colors by **role** rather than “pick a bunch of series colors”:
 This role model keeps palettes small and clean while supporting many series via interaction.
 
 Current implementation note:
+
 - Theme roles are currently exposed as `background`, `frame`, `grid`, `axis`, and `series`.
 - `focus` / `muted` are policy goals, but not first-class theme state tokens yet.
 
@@ -147,6 +148,7 @@ Suggested strategies when series count is high:
 - **Secondary encodings** (when needed): dashed lines, marker shapes, point outlines.
 
 Current implementation note:
+
 - `legend.interactionMode` currently supports `"toggle"` and `"isolate"` (hide/reveal flows).
 - Treat these as fallback tools for exceptional clutter, not as the default interaction model.
 
@@ -162,6 +164,7 @@ Even if you don’t want to claim a standard, a simple benchmark prevents unread
 Expose a small theme surface rather than dozens of knobs.
 
 Current shipped surface:
+
 - `background`
 - `frame`
 - `grid`
@@ -169,6 +172,7 @@ Current shipped surface:
 - `series.palette[]`, `series.strokeWidth`
 
 Design target (not fully implemented yet):
+
 - consolidated `scaffolding`
 - first-class `state.focus` and `state.muted`
 

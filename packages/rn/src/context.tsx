@@ -7,6 +7,7 @@ export type ChartContextValue = {
   theme: SaneChartTheme;
   fonts: SaneChartFonts;
   hiddenSeriesIds: Set<string>;
+  seriesColorById: Map<string, string>;
   scales: {
     x: (v: any) => number;
     y: (v: number) => number;

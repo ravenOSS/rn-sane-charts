@@ -165,6 +165,34 @@ export function Chart(props: ChartProps) {
     });
   }, [props.legend, props.series, props.fonts, props.width, theme.series.palette]);
 
+  /**
+   * Resolve one deterministic default color per source series id.
+   *
+   * Why this map exists:
+   * - Single-series renderers mount independently; without a shared mapping,
+   *   each renderer falls back to palette slot 0 in multi-series charts.
+   * - Centralizing this keeps legend swatches, rendered marks, and interaction
+   *   overlays visually consistent.
+   */
+  const seriesColorById = React.useMemo(() => {
+    const fallbackLegendColor = '#2563EB';
+    const legendColorById = new Map(
+      legendLayout.items.map((item) => [item.id, item.color] as const)
+    );
+    const byId = new Map<string, string>();
+
+    props.series.forEach((series, index) => {
+      byId.set(
+        series.id,
+        legendColorById.get(series.id) ??
+          theme.series.palette[index % theme.series.palette.length] ??
+          fallbackLegendColor
+      );
+    });
+
+    return byId;
+  }, [props.series, legendLayout.items, theme.series.palette]);
+
   const plan = React.useMemo(() => {
     return buildTimeSeriesPlan({
       series: seriesForPlan,
@@ -231,9 +259,10 @@ export function Chart(props: ChartProps) {
       theme,
       fonts: props.fonts,
       hiddenSeriesIds: hiddenSeriesIdSet,
+      seriesColorById,
       scales: plan.scales,
     }),
-    [plan.layout, plan.scales, theme, props.fonts, hiddenSeriesIdSet]
+    [plan.layout, plan.scales, theme, props.fonts, hiddenSeriesIdSet, seriesColorById]
   );
 
   const skiaFonts = React.useMemo(
@@ -313,9 +342,6 @@ export function Chart(props: ChartProps) {
   const interactiveSeriesPoints = React.useMemo(() => {
     const fallbackColor = '#2563EB';
     const points: InteractivePoint[] = [];
-    const legendColorBySeriesId = new Map(
-      legendLayout.items.map((item) => [item.id, item.color] as const)
-    );
     const sourceSeriesIndexById = new Map(
       props.series.map((series, index) => [series.id, index] as const)
     );
@@ -324,7 +350,7 @@ export function Chart(props: ChartProps) {
       const sourceIndex =
         sourceSeriesIndexById.get(series.id) ?? seriesIndex;
       const color =
-        legendColorBySeriesId.get(series.id) ??
+        seriesColorById.get(series.id) ??
         theme.series.palette[sourceIndex % theme.series.palette.length] ??
         fallbackColor;
       series.data.forEach((datum, datumIndex) => {
@@ -356,8 +382,8 @@ export function Chart(props: ChartProps) {
     props.series,
     props.formatX,
     props.formatY,
+    seriesColorById,
     theme.series.palette,
-    legendLayout.items,
   ]);
 
   const indexedXAnchors = React.useMemo(() => {
@@ -573,6 +599,16 @@ export function Chart(props: ChartProps) {
             strokeWidth={theme.frame.strokeWidth}
           />
         ) : null}
+
+        {theme.grid.strokeWidth > 0
+          ? renderPlotGrid({
+              layout: plan.layout,
+              xTicks: plan.ticks.x,
+              yTicks: plan.ticks.y,
+              stroke: theme.grid.stroke,
+              strokeWidth: theme.grid.strokeWidth,
+            })
+          : null}
 
         {/* Clip series rendering to plot bounds */}
         <Group
@@ -1055,6 +1091,53 @@ type SkiaFontWeight =
  */
 function baselineOffsetFromTop(fontSize: number) {
   return Math.round(fontSize * 0.8);
+}
+
+/**
+ * Draw low-emphasis gridlines from resolved chart ticks.
+ *
+ * Why this helper exists:
+ * - `theme.grid` is part of the public theme contract and should visibly
+ *   affect renderer output.
+ * - Rendering directly from final tick geometry keeps scaffolding deterministic
+ *   and aligned with core collision/tick decisions.
+ */
+function renderPlotGrid(input: {
+  layout: ReturnType<typeof buildTimeSeriesPlan>['layout'];
+  xTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['x'];
+  yTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['y'];
+  stroke: string;
+  strokeWidth: number;
+}) {
+  const plotRight = input.layout.plot.x + input.layout.plot.width;
+  const plotBottom = input.layout.plot.y + input.layout.plot.height;
+
+  return (
+    <Group>
+      {input.yTicks.map((tick, index) =>
+        Number.isFinite(tick.y) ? (
+          <Line
+            key={`grid-y-${index}-${tick.value}`}
+            p1={{ x: input.layout.plot.x, y: tick.y }}
+            p2={{ x: plotRight, y: tick.y }}
+            color={input.stroke}
+            strokeWidth={input.strokeWidth}
+          />
+        ) : null
+      )}
+      {input.xTicks.map((tick, index) =>
+        Number.isFinite(tick.x) ? (
+          <Line
+            key={`grid-x-${index}-${String(tick.value)}`}
+            p1={{ x: tick.x, y: input.layout.plot.y }}
+            p2={{ x: tick.x, y: plotBottom }}
+            color={input.stroke}
+            strokeWidth={input.strokeWidth}
+          />
+        ) : null
+      )}
+    </Group>
+  );
 }
 
 function renderLegend(input: {

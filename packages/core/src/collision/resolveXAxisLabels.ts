@@ -224,17 +224,17 @@ function measureLabelBoxes(
     /**
      * Anchor policy:
      * - 0° labels are centered on tick.x (standard horizontal axis labeling).
-     * - Rotated labels anchor their near-axis edge at tick.x and extend rightward.
+     * - Rotated labels are end-aligned so the label's right edge sits on tick.x.
      *
      * Why:
-     * - Produces a stable imaginary offset line from the axis (non-jagged look).
-     * - Better matches common 45°/90° business chart conventions.
-     * - Allows 45° to pass collision checks in situations where center anchoring
-     *   would force an unnecessary jump to 90°.
+     * - Matches RN renderer behavior exactly, keeping collision math and draw
+     *   output in sync.
+     * - Keeps the most specific suffix token in date-like labels (often day
+     *   numeral) closest to the tick in LTR reading flow.
      */
     const isHorizontal = Math.abs(angle) < 0.001;
-    const xMin = isHorizontal ? t.x - m.width / 2 : t.x;
-    const xMax = isHorizontal ? t.x + m.width / 2 : t.x + m.width;
+    const xMin = isHorizontal ? t.x - m.width / 2 : t.x - m.width;
+    const xMax = isHorizontal ? t.x + m.width / 2 : t.x;
 
     // For x-axis labels we typically place text below axis line; y bounds are relative.
     // The layout engine uses height to allocate bottom margin.
