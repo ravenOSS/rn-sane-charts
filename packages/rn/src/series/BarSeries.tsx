@@ -20,7 +20,13 @@ export type BarSeriesProps = {
  * - This keeps bars legible across dense and sparse domains without extra props.
  */
 export function BarSeries(props: BarSeriesProps) {
-  const { scales, theme, hiddenSeriesIds, seriesColorById } = useChartContext();
+  const {
+    scales,
+    theme,
+    hiddenSeriesIds,
+    seriesColorById,
+    resolveSeriesEmphasis,
+  } = useChartContext();
   if (hiddenSeriesIds.has(props.series.id)) return null;
   const fillColor =
     props.color ??
@@ -35,6 +41,7 @@ export function BarSeries(props: BarSeriesProps) {
     [props.series, scales.x]
   );
   const barWidth = Math.max(2, slotWidth * widthRatio);
+  const emphasis = resolveSeriesEmphasis(props.series.id);
 
   return (
     <>
@@ -53,7 +60,7 @@ export function BarSeries(props: BarSeriesProps) {
             width={barWidth}
             height={rectH}
             color={fillColor}
-            opacity={opacity}
+            opacity={opacity * emphasis.opacity}
           />
         );
       })}

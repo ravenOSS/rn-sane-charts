@@ -20,7 +20,13 @@ export type LineSeriesProps = {
  * - Skia can ingest that path string directly.
  */
 export function LineSeries(props: LineSeriesProps) {
-  const { scales, theme, hiddenSeriesIds, seriesColorById } = useChartContext();
+  const {
+    scales,
+    theme,
+    hiddenSeriesIds,
+    seriesColorById,
+    resolveSeriesEmphasis,
+  } = useChartContext();
   if (hiddenSeriesIds.has(props.series.id)) return null;
 
   const { d } = React.useMemo(
@@ -43,14 +49,19 @@ export function LineSeries(props: LineSeriesProps) {
     seriesColorById.get(props.series.id) ??
     theme.series.palette[0] ??
     '#2563EB';
+  const emphasis = resolveSeriesEmphasis(props.series.id);
 
   return (
     <>
       <Path
         path={skPath}
         style="stroke"
-        strokeWidth={props.strokeWidth ?? theme.series.strokeWidth}
+        strokeWidth={
+          (props.strokeWidth ?? theme.series.strokeWidth) *
+          emphasis.strokeWidthMultiplier
+        }
         color={lineColor}
+        opacity={emphasis.opacity}
       />
       {props.marker
         ? points.map((pt, index) => (
@@ -59,9 +70,9 @@ export function LineSeries(props: LineSeriesProps) {
               x={pt.x}
               y={pt.y}
               symbol={props.marker?.symbol}
-              size={props.marker?.size ?? 7}
+              size={(props.marker?.size ?? 7) * emphasis.markerSizeMultiplier}
               color={props.marker?.color ?? lineColor}
-              opacity={props.marker?.opacity ?? 1}
+              opacity={(props.marker?.opacity ?? 1) * emphasis.opacity}
               strokeWidth={props.marker?.strokeWidth}
               filled={props.marker?.filled}
             />

@@ -103,8 +103,8 @@ This role model keeps palettes small and clean while supporting many series via 
 
 Current implementation note:
 
-- Theme roles are currently exposed as `background`, `frame`, `grid`, `axis`, and `series`.
-- `focus` / `muted` are policy goals, but not first-class theme state tokens yet.
+- Theme roles are exposed as `background`, `frame`, `grid`, `axis`, and `series`.
+- Interaction state roles are first-class via `theme.state.focus` and `theme.state.muted`.
 
 ### Default palette strategy (Apple-like)
 
@@ -149,8 +149,8 @@ Suggested strategies when series count is high:
 
 Current implementation note:
 
-- `legend.interactionMode` currently supports `"toggle"` and `"isolate"` (hide/reveal flows).
-- Treat these as fallback tools for exceptional clutter, not as the default interaction model.
+- `legend.interactionMode` supports `"focus"` (default), `"toggle"`, and `"isolate"`.
+- Treat `"toggle"` and `"isolate"` as fallback tools for exceptional clutter, not as default interaction.
 
 ### Practical contrast guidance (usability-first)
 

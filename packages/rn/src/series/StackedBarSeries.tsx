@@ -27,7 +27,8 @@ export type StackedBarSeriesProps = {
  * - `baselineY` offsets the rendered stack without changing the core transform.
  */
 export function StackedBarSeries(props: StackedBarSeriesProps) {
-  const { scales, theme, hiddenSeriesIds } = useChartContext();
+  const { scales, theme, hiddenSeriesIds, resolveSeriesEmphasis } =
+    useChartContext();
   const opacity = clampOpacity(props.opacity ?? 0.92);
   const widthRatio = clampRatio(props.widthRatio ?? 0.72);
   const baselineValue = props.baselineY ?? 0;
@@ -77,6 +78,7 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
           const color =
             props.colors?.[entry.sourceIndex] ??
             theme.series.palette[entry.sourceIndex % theme.series.palette.length];
+          const emphasis = resolveSeriesEmphasis(entry.series.id);
 
           return (
             <Rect
@@ -86,7 +88,7 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
               width={barWidth}
               height={rectH}
               color={color}
-              opacity={opacity}
+              opacity={opacity * emphasis.opacity}
             />
           );
         });

@@ -20,7 +20,8 @@ export type GroupedBarSeriesProps = {
  * - Missing points are skipped safely.
  */
 export function GroupedBarSeries(props: GroupedBarSeriesProps) {
-  const { scales, theme, hiddenSeriesIds } = useChartContext();
+  const { scales, theme, hiddenSeriesIds, resolveSeriesEmphasis } =
+    useChartContext();
   const opacity = clampOpacity(props.opacity ?? 0.92);
   const groupWidthRatio = clampRatio(props.groupWidthRatio ?? 0.82);
   const y0 = resolveBaselineYPx(scales.y, props.baselineY);
@@ -57,6 +58,7 @@ export function GroupedBarSeries(props: GroupedBarSeriesProps) {
           const color =
             props.colors?.[entry.sourceIndex] ??
             theme.series.palette[entry.sourceIndex % theme.series.palette.length];
+          const emphasis = resolveSeriesEmphasis(entry.series.id);
 
           return (
             <Rect
@@ -66,7 +68,7 @@ export function GroupedBarSeries(props: GroupedBarSeriesProps) {
               width={barWidth}
               height={rectH}
               color={color}
-              opacity={opacity}
+              opacity={opacity * emphasis.opacity}
             />
           );
         })

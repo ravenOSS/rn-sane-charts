@@ -4,16 +4,30 @@ import type { SaneChartTheme } from '../types';
  * Light preset used as the baseline chart look.
  */
 export const lightTheme: SaneChartTheme = {
-  background: '#FFFFFF',
-  frame: { stroke: 'rgba(0,0,0,0)', strokeWidth: 0 },
-  grid: { stroke: 'rgba(0,0,0,0.08)', strokeWidth: 1 },
+  background: '#F6F8FB',
+  frame: { stroke: 'rgba(15,23,42,0.16)', strokeWidth: 1 },
+  grid: { stroke: 'rgba(15,23,42,0.10)', strokeWidth: 1 },
   axis: {
-    tick: { color: 'rgba(0,0,0,0.78)' },
-    line: { stroke: 'rgba(0,0,0,0.30)', strokeWidth: 1 },
+    tick: { color: 'rgba(15,23,42,0.84)' },
+    line: { stroke: 'rgba(15,23,42,0.36)', strokeWidth: 1 },
   },
   series: {
-    palette: ['#2563EB', '#DC2626', '#16A34A', '#9333EA', '#EA580C'],
-    strokeWidth: 2,
+    palette: ['#2563EB', '#0D9488', '#16A34A', '#EA580C', '#4F46E5', '#DC2626'],
+    strokeWidth: 2.2,
+  },
+  state: {
+    focus: {
+      seriesOpacity: 1,
+      strokeWidthMultiplier: 1.12,
+      markerSizeMultiplier: 1.1,
+      legendOpacity: 1,
+    },
+    muted: {
+      seriesOpacity: 0.22,
+      strokeWidthMultiplier: 0.9,
+      markerSizeMultiplier: 0.9,
+      legendOpacity: 0.42,
+    },
   },
 };
 
@@ -21,16 +35,30 @@ export const lightTheme: SaneChartTheme = {
  * Dark preset tuned for contrast on non-black surfaces.
  */
 export const darkTheme: SaneChartTheme = {
-  background: '#111827',
-  frame: { stroke: 'rgba(255,255,255,0)', strokeWidth: 0 },
-  grid: { stroke: 'rgba(255,255,255,0.14)', strokeWidth: 1 },
+  background: '#0B1220',
+  frame: { stroke: 'rgba(148,163,184,0.28)', strokeWidth: 1 },
+  grid: { stroke: 'rgba(148,163,184,0.18)', strokeWidth: 1 },
   axis: {
-    tick: { color: 'rgba(255,255,255,0.90)' },
-    line: { stroke: 'rgba(255,255,255,0.45)', strokeWidth: 1 },
+    tick: { color: 'rgba(226,232,240,0.94)' },
+    line: { stroke: 'rgba(148,163,184,0.62)', strokeWidth: 1 },
   },
   series: {
-    palette: ['#60A5FA', '#F87171', '#34D399', '#A78BFA', '#FB923C'],
-    strokeWidth: 2.25,
+    palette: ['#60A5FA', '#2DD4BF', '#34D399', '#FB923C', '#A78BFA', '#F87171'],
+    strokeWidth: 2.4,
+  },
+  state: {
+    focus: {
+      seriesOpacity: 1,
+      strokeWidthMultiplier: 1.15,
+      markerSizeMultiplier: 1.12,
+      legendOpacity: 1,
+    },
+    muted: {
+      seriesOpacity: 0.26,
+      strokeWidthMultiplier: 0.92,
+      markerSizeMultiplier: 0.92,
+      legendOpacity: 0.48,
+    },
   },
 };
 

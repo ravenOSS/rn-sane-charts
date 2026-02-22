@@ -179,7 +179,7 @@ The gallery includes an `A11y Theme` tab that demonstrates:
 - A color-blind-friendly series palette
 - Higher-contrast axis tokens for light and dark schemes
 - A live axis-text contrast check against background (target: `>= 4.5:1`)
-- Legend touch focus/isolation behavior for series comparison
+- Legend touch behavior with focus (default) plus optional toggle/isolate modes
 
 Use this tab as a quick visual/functional gate before finalizing theme tokens.
 

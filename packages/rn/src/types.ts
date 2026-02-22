@@ -9,6 +9,8 @@ export type ChartInteraction = {
   tooltip?: boolean;
 };
 
+export type LegendInteractionMode = 'focus' | 'toggle' | 'isolate';
+
 export type SaneChartTheme = {
   background: string;
   frame: { stroke: string; strokeWidth: number };
@@ -20,6 +22,20 @@ export type SaneChartTheme = {
   series: {
     palette: string[];
     strokeWidth: number;
+  };
+  state: {
+    focus: {
+      seriesOpacity: number;
+      strokeWidthMultiplier: number;
+      markerSizeMultiplier: number;
+      legendOpacity: number;
+    };
+    muted: {
+      seriesOpacity: number;
+      strokeWidthMultiplier: number;
+      markerSizeMultiplier: number;
+      legendOpacity: number;
+    };
   };
 };
 

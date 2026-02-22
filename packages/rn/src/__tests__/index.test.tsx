@@ -149,10 +149,52 @@ describe('rn smoke tests', () => {
     });
 
     const interactionState = hookStateEntries.find(
-      (entry) => entry.initial === null
+      (entry) => entry.initial === null && entry.set.mock.calls.length > 0
     );
 
     expect(interactionState).toBeDefined();
     expect(interactionState?.set).toHaveBeenCalled();
+  });
+
+  it('uses custom legend item color for interaction point state', async () => {
+    const { Chart } = await import('../Chart');
+    const customLegendColor = '#FF00AA';
+
+    const element = Chart({
+      width: 360,
+      height: 240,
+      series,
+      fonts,
+      legend: {
+        show: true,
+        items: [{ id: 'Revenue', label: 'Revenue', color: customLegendColor }],
+      },
+      interaction: { enabled: true, snap: 'nearest' },
+      children: null,
+    });
+
+    const onResponderGrant = (element as any).props.onResponderGrant as
+      | ((event: { nativeEvent: { locationX: number; locationY: number } }) => void)
+      | undefined;
+    expect(typeof onResponderGrant).toBe('function');
+
+    onResponderGrant?.({
+      nativeEvent: { locationX: 180, locationY: 120 },
+    });
+
+    const interactionPayload = hookStateEntries
+      .flatMap((entry) => entry.set.mock.calls.map((call) => call[0]))
+      .find(
+        (value): value is { points: Array<{ color: string }> } =>
+          Boolean(
+            value &&
+              typeof value === 'object' &&
+              'points' in (value as Record<string, unknown>) &&
+              Array.isArray((value as { points?: unknown }).points)
+          )
+      );
+
+    expect(interactionPayload).toBeDefined();
+    expect(interactionPayload?.points[0]?.color).toBe(customLegendColor);
   });
 });

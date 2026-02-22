@@ -23,7 +23,13 @@ export type ScatterSeriesProps = {
  * - Reuses shared geometry path used by hit-testing/interaction layers.
  */
 export function ScatterSeries(props: ScatterSeriesProps) {
-  const { scales, theme, hiddenSeriesIds, seriesColorById } = useChartContext();
+  const {
+    scales,
+    theme,
+    hiddenSeriesIds,
+    seriesColorById,
+    resolveSeriesEmphasis,
+  } = useChartContext();
   if (hiddenSeriesIds.has(props.series.id)) return null;
 
   const points = React.useMemo(
@@ -37,13 +43,14 @@ export function ScatterSeries(props: ScatterSeriesProps) {
     seriesColorById.get(props.series.id) ??
     theme.series.palette[0] ??
     fallbackColor;
+  const emphasis = resolveSeriesEmphasis(props.series.id);
   const size = props.size ?? 8;
   const opacity = clampOpacity(props.opacity ?? 0.9);
   const marker: MarkerStyle = {
     symbol: props.symbol ?? 'circle',
-    size,
+    size: size * emphasis.markerSizeMultiplier,
     color,
-    opacity,
+    opacity: opacity * emphasis.opacity,
     strokeWidth: props.strokeWidth ?? 1.5,
     filled: props.filled ?? true,
   };

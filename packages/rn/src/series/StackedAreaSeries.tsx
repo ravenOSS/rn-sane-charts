@@ -24,7 +24,8 @@ export type StackedAreaSeriesProps = {
  *   deterministic.
  */
 export function StackedAreaSeries(props: StackedAreaSeriesProps) {
-  const { scales, theme, hiddenSeriesIds } = useChartContext();
+  const { scales, theme, hiddenSeriesIds, resolveSeriesEmphasis } =
+    useChartContext();
   const fillOpacity = clampOpacity(props.fillOpacity ?? 0.24);
   const strokeWidth = Math.max(0, props.strokeWidth ?? 1.6);
 
@@ -67,9 +68,17 @@ export function StackedAreaSeries(props: StackedAreaSeriesProps) {
           color,
           fillSkPath,
           lineSkPath,
+          emphasis: resolveSeriesEmphasis(layer.id),
         };
       }),
-    [stacked, scales, visibleSeries, props.colors, theme.series.palette]
+    [
+      stacked,
+      scales,
+      visibleSeries,
+      props.colors,
+      theme.series.palette,
+      resolveSeriesEmphasis,
+    ]
   );
 
   return (
@@ -82,7 +91,7 @@ export function StackedAreaSeries(props: StackedAreaSeriesProps) {
             path={layer.fillSkPath}
             style="fill"
             color={layer.color}
-            opacity={fillOpacity}
+            opacity={fillOpacity * layer.emphasis.opacity}
           />
         );
       })}
@@ -95,7 +104,8 @@ export function StackedAreaSeries(props: StackedAreaSeriesProps) {
                 path={layer.lineSkPath}
                 style="stroke"
                 color={layer.color}
-                strokeWidth={strokeWidth}
+                strokeWidth={strokeWidth * layer.emphasis.strokeWidthMultiplier}
+                opacity={layer.emphasis.opacity}
               />
             );
           })
@@ -108,4 +118,3 @@ function clampOpacity(opacity: number): number {
   if (!Number.isFinite(opacity)) return 1;
   return Math.max(0, Math.min(1, opacity));
 }
-

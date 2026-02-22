@@ -28,6 +28,7 @@ import {
 import type {
   ChartColorScheme,
   ChartInteraction,
+  LegendInteractionMode,
   SaneChartFonts,
   SaneChartTheme,
 } from './types';
@@ -54,7 +55,7 @@ export type ChartProps = {
     show?: boolean;
     position?: 'auto' | 'right' | 'bottom';
     interactive?: boolean;
-    interactionMode?: 'toggle' | 'isolate';
+    interactionMode?: LegendInteractionMode;
     items?: Array<{
       id: string;
       label?: string;
@@ -114,18 +115,20 @@ export function Chart(props: ChartProps) {
   );
 
   const [hiddenSeriesIds, setHiddenSeriesIds] = React.useState<string[]>([]);
+  const [focusedSeriesId, setFocusedSeriesId] = React.useState<string | null>(null);
   const hiddenSeriesIdSet = React.useMemo(
     () => new Set(hiddenSeriesIds),
     [hiddenSeriesIds]
   );
   const legendInteractive = props.legend?.interactive ?? false;
-  const legendInteractionMode = props.legend?.interactionMode ?? 'toggle';
+  const legendInteractionMode = props.legend?.interactionMode ?? 'focus';
 
   React.useEffect(() => {
     const knownSeriesIds = new Set(props.series.map((series) => series.id));
     setHiddenSeriesIds((prev) =>
       prev.filter((seriesId) => knownSeriesIds.has(seriesId))
     );
+    setFocusedSeriesId((prev) => (prev && !knownSeriesIds.has(prev) ? null : prev));
   }, [props.series]);
 
   const visibleSeries = React.useMemo(
@@ -253,16 +256,74 @@ export function Chart(props: ChartProps) {
     props.fonts,
   ]);
 
+  const resolveSeriesEmphasis = React.useCallback(
+    (seriesId: string) => {
+      if (hiddenSeriesIdSet.has(seriesId)) {
+        return {
+          opacity: theme.state.muted.seriesOpacity,
+          strokeWidthMultiplier: theme.state.muted.strokeWidthMultiplier,
+          markerSizeMultiplier: theme.state.muted.markerSizeMultiplier,
+        };
+      }
+
+      if (
+        legendInteractive &&
+        legendInteractionMode === 'focus' &&
+        focusedSeriesId
+      ) {
+        if (focusedSeriesId === seriesId) {
+          return {
+            opacity: theme.state.focus.seriesOpacity,
+            strokeWidthMultiplier: theme.state.focus.strokeWidthMultiplier,
+            markerSizeMultiplier: theme.state.focus.markerSizeMultiplier,
+          };
+        }
+
+        return {
+          opacity: theme.state.muted.seriesOpacity,
+          strokeWidthMultiplier: theme.state.muted.strokeWidthMultiplier,
+          markerSizeMultiplier: theme.state.muted.markerSizeMultiplier,
+        };
+      }
+
+      return {
+        opacity: 1,
+        strokeWidthMultiplier: 1,
+        markerSizeMultiplier: 1,
+      };
+    },
+    [
+      hiddenSeriesIdSet,
+      theme.state,
+      legendInteractive,
+      legendInteractionMode,
+      focusedSeriesId,
+    ]
+  );
+
   const ctxValue = React.useMemo(
     () => ({
       layout: plan.layout,
       theme,
       fonts: props.fonts,
       hiddenSeriesIds: hiddenSeriesIdSet,
+      focusedSeriesId,
+      legendInteractionMode,
       seriesColorById,
+      resolveSeriesEmphasis,
       scales: plan.scales,
     }),
-    [plan.layout, plan.scales, theme, props.fonts, hiddenSeriesIdSet, seriesColorById]
+    [
+      plan.layout,
+      plan.scales,
+      theme,
+      props.fonts,
+      hiddenSeriesIdSet,
+      focusedSeriesId,
+      legendInteractionMode,
+      seriesColorById,
+      resolveSeriesEmphasis,
+    ]
   );
 
   const skiaFonts = React.useMemo(
@@ -437,6 +498,14 @@ export function Chart(props: ChartProps) {
       if (!legendInteractive) return;
       const known = new Set(props.series.map((series) => series.id));
       if (!known.has(seriesId)) return;
+
+      if (legendInteractionMode === 'focus') {
+        setHiddenSeriesIds((prev) => (prev.length === 0 ? prev : []));
+        setFocusedSeriesId((prev) => (prev === seriesId ? null : seriesId));
+        return;
+      }
+
+      setFocusedSeriesId(null);
 
       setHiddenSeriesIds((prev) => {
         if (legendInteractionMode === 'isolate') {
@@ -802,6 +871,9 @@ export function Chart(props: ChartProps) {
               fontSize: props.fonts.yTickFont.size,
               textColor: theme.axis.tick.color,
               hiddenSeriesIds: hiddenSeriesIdSet,
+              focusedSeriesId,
+              legendInteractionMode,
+              theme,
               interactive: legendInteractive,
             })
           : null}
@@ -838,6 +910,12 @@ function mergeTheme(
       ...baseTheme.series,
       ...(override.series ?? {}),
       palette: override.series?.palette ?? baseTheme.series.palette,
+    },
+    state: {
+      ...baseTheme.state,
+      ...(override.state ?? {}),
+      focus: { ...baseTheme.state.focus, ...(override.state?.focus ?? {}) },
+      muted: { ...baseTheme.state.muted, ...(override.state?.muted ?? {}) },
     },
   };
 }
@@ -1149,6 +1227,9 @@ function renderLegend(input: {
   fontSize: number;
   textColor: string;
   hiddenSeriesIds: Set<string>;
+  focusedSeriesId: string | null;
+  legendInteractionMode: LegendInteractionMode;
+  theme: SaneChartTheme;
   interactive: boolean;
 }) {
   const itemBoxes = computeLegendItemBoxes({
@@ -1164,7 +1245,20 @@ function renderLegend(input: {
         const box = itemBoxes[index];
         if (!box) return null;
         const hidden = input.hiddenSeriesIds.has(item.id);
-        const opacity = hidden ? 0.35 : 1;
+        const isFocused =
+          input.legendInteractionMode === 'focus' &&
+          input.focusedSeriesId === item.id;
+        const isMutedByFocus =
+          input.legendInteractionMode === 'focus' &&
+          !!input.focusedSeriesId &&
+          input.focusedSeriesId !== item.id;
+        const opacity = hidden
+          ? input.theme.state.muted.legendOpacity
+          : isMutedByFocus
+            ? input.theme.state.muted.legendOpacity
+            : isFocused
+              ? input.theme.state.focus.legendOpacity
+              : 1;
         const swatchY =
           box.y + Math.max(0, (box.height - input.legend.metrics.swatchSizePx) / 2);
         const textX =
@@ -1199,7 +1293,7 @@ function renderLegend(input: {
                 color={input.textColor}
                 opacity={0.12}
                 style="stroke"
-                strokeWidth={hidden ? 0.75 : 0.5}
+                strokeWidth={isFocused ? 1 : hidden ? 0.75 : 0.5}
               />
             ) : null}
           </Group>

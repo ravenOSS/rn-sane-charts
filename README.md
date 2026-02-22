@@ -82,7 +82,7 @@ export function RevenueChart({ fonts }: { fonts: any }) {
       aspectRatio={1.6}
       minHeight={200}
       interaction={{ enabled: true, snap: "index", tooltip: true }}
-      legend={{ interactive: true, interactionMode: "toggle" }}
+      legend={{ interactive: true }}
       fonts={fonts}
       colorScheme="light"
     >

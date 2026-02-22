@@ -20,7 +20,9 @@ Ship a solid MVP baseline with:
 - Completed: RN smoke tests under Vitest (chart render scaffolding + interaction responder path).
 - Completed: package/dependency hygiene for `@rn-sane-charts/rn` (workspace dependency declaration + pnpm-aligned package metadata).
 - Completed: examples interaction parity across gallery chart views.
-- Open: design-target theming evolution (`focus`/`muted` state tokens), optional interaction model refinement beyond current `toggle`/`isolate`, and broader MVP polish.
+- Completed: design-target theming evolution (`theme.state.focus` / `theme.state.muted`) and focus-first legend interaction (`focus` default, `toggle`/`isolate` optional).
+- Completed: examples gallery redesign to reflect DESIGN_GUIDE aesthetic across chart demos.
+- Open: final release hardening and npm publish gate execution.
 
 ## MVP Push (Current)
 
@@ -36,9 +38,9 @@ This push is focused on making MVP feel production-safe without expanding scope.
 
 2. Interaction behavior baseline
 
-   - Completed: kept existing legend `toggle`/`isolate` modes for compatibility.
-   - Completed: docs/examples emphasize focus + de-emphasis as preferred comparison pattern.
-   - Completed: interaction path remains allocation-safe in core/RN tests and perf harness baseline.
+   - Completed: legend interaction default switched to `focus`.
+   - Completed: `toggle` and `isolate` retained as optional modes for exceptional clutter.
+   - Completed: focus/mute emphasis is wired into line/area/scatter/bar/grouped/stacked/stacked-area rendering.
 
 3. Histogram ergonomics clarification
 
@@ -68,12 +70,12 @@ These are intentionally deferred to protect MVP scope:
 
 1. New public theming API surface
 
-   - No new first-class `state.focus` / `state.muted` tokens yet.
-   - No theme schema redesign (keep current `background/frame/grid/axis/series` shape).
+   - No broad theme schema redesign beyond adding `state.focus` and `state.muted`.
+   - No large expansion of per-mark customization knobs.
 
 2. Interaction model redesign
 
-   - No replacement of `toggle`/`isolate` with a brand-new legend interaction API.
+   - No additional legend modes beyond `focus`/`toggle`/`isolate`.
    - No large interaction state-machine rewrite.
 
 3. New chart types or renderer targets
@@ -90,10 +92,10 @@ These are intentionally deferred to protect MVP scope:
 
 ## Next Execution Order
 
-1. Decide whether to introduce first-class theme state tokens (`focus`/`muted`) in public API or keep policy-only guidance for MVP.
-2. If theme state tokens are deferred, add explicit examples of focus+de-emphasis behavior using current API surface.
-3. Expand RN smoke coverage to include legend tap mode assertions (`toggle` and `isolate`) in addition to current interaction responder coverage.
-4. Prepare MVP release checklist (versioning, changelog, publish dry-run).
+1. Expand RN smoke coverage with explicit legend mode assertions (`focus`, `toggle`, `isolate`).
+2. Run examples gallery visual QA in iOS + Android for redesigned aesthetic parity.
+3. Execute publish readiness checklist end-to-end (`pack`, external install, simulator build validation).
+4. Prepare MVP release notes and first public version tag.
 
 ## Publish Readiness Checklist
 
@@ -134,7 +136,7 @@ Use this as a strict go/no-go gate before publishing to npm.
 
 ## Risks To Monitor
 
-- Scope creep from theming redesign requests.
+- Scope creep from additional design-system/theming API requests beyond MVP.
 - Regressions from label collision/anchor changes.
-- Interaction complexity growth while trying to add focus+mute semantics.
+- Interaction complexity growth while expanding legend/touch behaviors.
 - Docs drifting from implementation after rapid fixes.

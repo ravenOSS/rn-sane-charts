@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Platform,
   Pressable,
@@ -6,16 +6,17 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
+  useWindowDimensions,
   View,
-} from "react-native";
-import { matchFont } from "@shopify/react-native-skia";
+} from 'react-native';
+import { matchFont } from '@shopify/react-native-skia';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
-} from "react-native-safe-area-context";
+} from 'react-native-safe-area-context';
 
-import type { Series } from "@rn-sane-charts/core";
-import { binHistogram, stackSeries } from "@rn-sane-charts/core";
+import type { Series } from '@rn-sane-charts/core';
+import { binHistogram, stackSeries } from '@rn-sane-charts/core';
 import {
   AreaSeries,
   BarSeries,
@@ -27,15 +28,16 @@ import {
   StackedAreaSeries,
   StackedBarSeries,
   makeSkiaMeasureText,
-} from "@rn-sane-charts/rn";
+} from '@rn-sane-charts/rn';
 import {
   accessibilityPalette,
   createAccessibilityTheme,
   createExampleChartFonts,
-  exampleChartTheme,
+  createExampleChartTheme,
   exampleChartTypeConfig,
   exampleSeriesColors,
-} from "./chartConfig";
+  exampleSurfaceTokens,
+} from './chartConfig';
 import {
   sampleAreaSeries,
   sampleBarData,
@@ -45,32 +47,40 @@ import {
   sampleScatterData,
   sampleStackedAreaSeries,
   sampleStackedBarData,
-} from "./sampleDatasets";
-import { runInteractionPerfHarness, type PerfRunResult } from "./perfHarness";
+} from './sampleDatasets';
+import { runInteractionPerfHarness, type PerfRunResult } from './perfHarness';
 
 type GalleryView =
-  | "line"
-  | "area"
-  | "stackedArea"
-  | "bar"
-  | "groupedBar"
-  | "stackedBar"
-  | "scatter"
-  | "histogram"
-  | "a11yTheme"
-  | "perf";
+  | 'line'
+  | 'area'
+  | 'stackedArea'
+  | 'bar'
+  | 'groupedBar'
+  | 'stackedBar'
+  | 'scatter'
+  | 'histogram'
+  | 'a11yTheme'
+  | 'perf';
+
+type LegendMode = 'focus' | 'toggle' | 'isolate';
 
 const viewOptions: { id: GalleryView; label: string }[] = [
-  { id: "line", label: "Line" },
-  { id: "area", label: "Area" },
-  { id: "stackedArea", label: "Stacked Area" },
-  { id: "bar", label: "Bar" },
-  { id: "groupedBar", label: "Grouped Bar" },
-  { id: "stackedBar", label: "Stacked Bar" },
-  { id: "scatter", label: "Scatter" },
-  { id: "histogram", label: "Histogram" },
-  { id: "a11yTheme", label: "A11y Theme" },
-  { id: "perf", label: "Perf" },
+  { id: 'line', label: 'Line' },
+  { id: 'area', label: 'Area' },
+  { id: 'stackedArea', label: 'Stacked Area' },
+  { id: 'bar', label: 'Bar' },
+  { id: 'groupedBar', label: 'Grouped Bar' },
+  { id: 'stackedBar', label: 'Stacked Bar' },
+  { id: 'scatter', label: 'Scatter' },
+  { id: 'histogram', label: 'Histogram' },
+  { id: 'a11yTheme', label: 'A11y Theme' },
+  { id: 'perf', label: 'Perf' },
+];
+
+const legendModeOptions: { id: LegendMode; label: string }[] = [
+  { id: 'focus', label: 'Focus' },
+  { id: 'toggle', label: 'Toggle' },
+  { id: 'isolate', label: 'Isolate' },
 ];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -83,12 +93,12 @@ function toSlotDate(index: number): Date {
 function indexFormatter(labels: string[]) {
   return (d: Date) => {
     const idx = Math.round((d.getTime() - CATEGORY_BASE.getTime()) / DAY_MS);
-    return idx >= 0 && idx < labels.length ? labels[idx] ?? "" : "";
+    return idx >= 0 && idx < labels.length ? labels[idx] ?? '' : '';
   };
 }
 
 function parseHexColor(hex: string): { r: number; g: number; b: number } {
-  const normalized = hex.trim().replace("#", "");
+  const normalized = hex.trim().replace('#', '');
   if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
     throw new Error(`Expected 6-digit hex color, received: ${hex}`);
   }
@@ -102,8 +112,6 @@ function parseHexColor(hex: string): { r: number; g: number; b: number } {
 
 /**
  * WCAG relative luminance for sRGB colors.
- *
- * Contrast checks require linear-light math; raw RGB values are not perceptual.
  */
 function relativeLuminance(hexColor: string): number {
   const { r, g, b } = parseHexColor(hexColor);
@@ -127,25 +135,39 @@ function contrastRatio(foregroundHex: string, backgroundHex: string): number {
 
 function GalleryApp() {
   const insets = useSafeAreaInsets();
+  const window = useWindowDimensions();
   const systemColorScheme = useColorScheme();
-  const chartColorScheme: "light" | "dark" =
-    systemColorScheme === "dark" ? "dark" : "light";
-  const pageBackground = chartColorScheme === "dark" ? "#0B1220" : "#FFFFFF";
-  const headingColor = chartColorScheme === "dark" ? "#E5E7EB" : "#1F2937";
-  const subtitleColor = chartColorScheme === "dark" ? "#94A3B8" : "#4B5563";
-  const fontFamily = Platform.select({ ios: "Helvetica", default: "sans-serif" });
+  const chartColorScheme: 'light' | 'dark' =
+    systemColorScheme === 'dark' ? 'dark' : 'light';
+  const surface =
+    chartColorScheme === 'dark'
+      ? exampleSurfaceTokens.dark
+      : exampleSurfaceTokens.light;
+
+  const chartWidth = Math.min(
+    420,
+    Math.max(300, window.width - insets.left - insets.right - 24)
+  );
+  const chartHeight = 262;
+
+  const fontFamily = Platform.select({
+    ios: 'Avenir Next',
+    android: 'serif',
+    default: 'serif',
+  });
   const font = React.useMemo(
     () => matchFont({ fontFamily, fontSize: 12 }),
     [fontFamily]
   );
 
-  const [activeView, setActiveView] = React.useState<GalleryView>("line");
+  const [activeView, setActiveView] = React.useState<GalleryView>('line');
+  const [legendMode, setLegendMode] = React.useState<LegendMode>('focus');
   const [perfResults, setPerfResults] = React.useState<PerfRunResult[]>([]);
-  const [perfRunAt, setPerfRunAt] = React.useState<string>("");
+  const [perfRunAt, setPerfRunAt] = React.useState<string>('');
 
   const barSeries = React.useMemo<Series>(
     () => ({
-      id: "Net Cash Flow",
+      id: 'Net Cash Flow',
       data: sampleBarData.map((d, i) => ({
         x: toSlotDate(i),
         y: d.y,
@@ -153,10 +175,7 @@ function GalleryApp() {
     }),
     []
   );
-  const barLabels = React.useMemo(
-    () => sampleBarData.map((d) => String(d.x)),
-    []
-  );
+  const barLabels = React.useMemo(() => sampleBarData.map((d) => String(d.x)), []);
   const barTickValues = React.useMemo(
     () => sampleBarData.map((_, i) => toSlotDate(i)),
     []
@@ -193,7 +212,7 @@ function GalleryApp() {
   }, []);
   const stackedBarTotalsSeries = React.useMemo<Series>(
     () => ({
-      id: "__stacked_total_domain__",
+      id: '__stacked_total_domain__',
       data: sampleStackedBarData.map((row, i) => ({
         x: toSlotDate(i),
         y: Object.values(row.values).reduce((sum, value) => sum + value, 0),
@@ -228,7 +247,7 @@ function GalleryApp() {
 
   const scatterSeries = React.useMemo<Series>(
     () => ({
-      id: "Signal",
+      id: 'Signal',
       data: sampleScatterData.map((pt) => ({
         x: toSlotDate(pt.x),
         y: pt.y,
@@ -252,10 +271,7 @@ function GalleryApp() {
         .filter((x): x is Date => x instanceof Date),
     []
   );
-  const stackedAreaSeries = React.useMemo<Series[]>(
-    () => sampleStackedAreaSeries,
-    []
-  );
+  const stackedAreaSeries = React.useMemo<Series[]>(() => sampleStackedAreaSeries, []);
   const stackedAreaTickValues = React.useMemo(
     () =>
       (sampleStackedAreaSeries[0]?.data ?? [])
@@ -273,11 +289,11 @@ function GalleryApp() {
 
     return [
       {
-        id: "__stacked_area_upper_domain__",
+        id: '__stacked_area_upper_domain__',
         data: last.data.map((d) => ({ x: d.x, y: d.y1 })),
       },
       {
-        id: "__stacked_area_lower_domain__",
+        id: '__stacked_area_lower_domain__',
         data: first.data.map((d) => ({ x: d.x, y: d.y0 })),
       },
     ];
@@ -304,13 +320,42 @@ function GalleryApp() {
   const lineAnnotations = React.useMemo(
     () => [
       {
-        id: "release-cutover",
+        id: 'release-cutover',
         x: sampleLineSeries[0].data[24]?.x ?? new Date(2026, 0, 25),
         y: (sampleLineSeries[0].data[24]?.y ?? 0) + 2,
-        label: "Release",
-        color: "#DC2626",
+        label: 'Release',
+        color: '#DC2626',
       },
     ],
+    []
+  );
+  const lineLegendItems = React.useMemo(
+    () => [
+      { id: sampleLineSeries[0].id, label: sampleLineSeries[0].id, color: exampleSeriesColors.revenue },
+      { id: sampleLineSeries[1].id, label: sampleLineSeries[1].id, color: exampleSeriesColors.forecast },
+      { id: sampleLineSeries[2].id, label: sampleLineSeries[2].id, color: exampleSeriesColors.target },
+    ],
+    []
+  );
+  const groupedBarLegendItems = React.useMemo(
+    () =>
+      groupedBarSeries.map((series, index) => ({
+        id: series.id,
+        label: series.id,
+        color:
+          exampleChartTypeConfig.groupedBar.colors[
+            index % exampleChartTypeConfig.groupedBar.colors.length
+          ],
+      })),
+    [groupedBarSeries]
+  );
+  const accessibilityLegendItems = React.useMemo(
+    () =>
+      sampleLineSeries.map((series, index) => ({
+        id: series.id,
+        label: series.id,
+        color: accessibilityPalette[index % accessibilityPalette.length],
+      })),
     []
   );
 
@@ -333,7 +378,7 @@ function GalleryApp() {
   const histogramSeries = React.useMemo<Series[]>(
     () => [
       {
-        id: "Sample Values",
+        id: 'Sample Values',
         data: histogramPlotBins.map((bin, i) => ({
           x: toSlotDate(i),
           y: bin.count,
@@ -351,27 +396,31 @@ function GalleryApp() {
 
   const measureText = makeSkiaMeasureText(font);
   const chartFonts = createExampleChartFonts({ fontFamily, measureText });
+  const chartTheme = React.useMemo(
+    () => createExampleChartTheme(chartColorScheme),
+    [chartColorScheme]
+  );
   const accessibilityTheme = React.useMemo(
     () => createAccessibilityTheme(chartColorScheme),
     [chartColorScheme]
   );
   const accessibilityContrastRatio = React.useMemo(() => {
-    const background = accessibilityTheme.background ?? "#FFFFFF";
+    const background = accessibilityTheme.background ?? '#FFFFFF';
     const tickColor =
       accessibilityTheme.axis?.tick?.color ??
-      (chartColorScheme === "dark" ? "#FFFFFF" : "#111827");
+      (chartColorScheme === 'dark' ? '#FFFFFF' : '#111827');
     return contrastRatio(tickColor, background);
   }, [accessibilityTheme, chartColorScheme]);
   const accessibilityContrastPass = accessibilityContrastRatio >= 4.5;
   const commonChartProps = {
     fonts: chartFonts,
-    theme: exampleChartTheme,
+    theme: chartTheme,
     colorScheme: chartColorScheme,
   };
   const indexInteraction = {
     enabled: true,
-    crosshair: "x" as const,
-    snap: "index" as const,
+    crosshair: 'x' as const,
+    snap: 'index' as const,
     tooltip: true,
   };
 
@@ -382,7 +431,7 @@ function GalleryApp() {
   }, []);
 
   React.useEffect(() => {
-    if (activeView !== "perf" || perfResults.length > 0) return;
+    if (activeView !== 'perf' || perfResults.length > 0) return;
     runPerfHarness();
   }, [activeView, perfResults.length, runPerfHarness]);
 
@@ -391,43 +440,91 @@ function GalleryApp() {
       style={[
         styles.safeArea,
         {
-          backgroundColor: pageBackground,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
+          backgroundColor: surface.pageStart,
         },
       ]}
     >
+      <View style={[styles.backdropOrbA, { backgroundColor: surface.pageEnd }]} />
+      <View style={[styles.backdropOrbB, { backgroundColor: surface.accent }]} />
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: headingColor }]}>
-          rn-sane-charts gallery
-        </Text>
-        <Text style={[styles.subtitle, { color: subtitleColor }]}>
-          Step through each chart type renderer.
-        </Text>
+        <View
+          style={[
+            styles.heroShell,
+            {
+              backgroundColor: surface.shell,
+              borderColor: surface.shellBorder,
+              width: chartWidth,
+            },
+          ]}
+        >
+          <Text style={[styles.title, { color: surface.heading }]}>rn-sane-charts</Text>
+          <Text style={[styles.subtitle, { color: surface.body }]}>
+            Modern default aesthetics, mobile-first interaction, and readable chart
+            scaffolding.
+          </Text>
+        </View>
+
+        <View style={styles.legendModeRow}>
+          <Text style={[styles.legendModeLabel, { color: surface.body }]}>Legend mode</Text>
+          <View style={styles.legendModeOptions}>
+            {legendModeOptions.map((option) => {
+              const isActive = option.id === legendMode;
+              return (
+                <Pressable
+                  key={option.id}
+                  onPress={() => setLegendMode(option.id)}
+                  style={[
+                    styles.legendModeChip,
+                    {
+                      backgroundColor: isActive ? surface.chipActiveBg : surface.chipBg,
+                      borderColor: isActive ? surface.chipActiveBg : surface.chipBorder,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.legendModeChipLabel,
+                      { color: isActive ? surface.chipActiveText : surface.chipText },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
 
         <View style={styles.chartPanel}>
-          {activeView === "line" ? (
+          {activeView === 'line' ? (
             <Chart
-              width={360}
-              height={240}
+              width={chartWidth}
+              height={chartHeight}
               series={sampleLineSeries}
-              title="Revenue Plan Tracking"
-              subtitle="Actual vs forecast vs target (last 50 days)"
-              xAxisTitle="Date"
-              yAxisTitle="USD"
+              title='Revenue Plan Tracking'
+              subtitle='Actual vs forecast vs target (last 50 days)'
+              xAxisTitle='Date'
+              yAxisTitle='USD'
               xTickValues={lineTickValues}
-              xTickDomainMode="exact"
-              legend={{ interactive: true, interactionMode: "isolate" }}
+              xTickDomainMode='exact'
+              legend={{
+                items: lineLegendItems,
+                interactive: true,
+                interactionMode: legendMode,
+              }}
               interaction={{
                 enabled: true,
-                crosshair: "x",
-                snap: "index",
+                crosshair: 'x',
+                snap: 'index',
                 tooltip: true,
               }}
               annotations={{ markers: lineAnnotations }}
@@ -451,48 +548,52 @@ function GalleryApp() {
             </Chart>
           ) : null}
 
-          {activeView === "area" ? (
+          {activeView === 'area' ? (
             <Chart
-              width={360}
-              height={240}
+              width={chartWidth}
+              height={chartHeight}
               series={[sampleAreaSeries]}
-              title="Daily Active Users"
-              subtitle="Last 50 days"
-              xAxisTitle="Date"
-              yAxisTitle="Users"
+              title='Daily Active Users'
+              subtitle='Last 50 days'
+              xAxisTitle='Date'
+              yAxisTitle='Users'
               xTickValues={areaTickValues}
-              xTickDomainMode="exact"
+              xTickDomainMode='exact'
               interaction={indexInteraction}
               {...commonChartProps}
             >
               <AreaSeries
                 series={sampleAreaSeries}
-                fillColor="#0EA5E9"
+                fillColor={exampleSeriesColors.revenue}
                 fillOpacity={exampleChartTypeConfig.area.fillOpacity}
-                strokeColor="#0EA5E9"
+                strokeColor={exampleSeriesColors.revenue}
                 strokeWidth={exampleChartTypeConfig.area.strokeWidth}
                 baselineY={exampleChartTypeConfig.area.baselineY}
               />
               <LineSeries
                 series={sampleAreaSeries}
-                color="#0EA5E9"
+                color={exampleSeriesColors.revenue}
                 strokeWidth={exampleChartTypeConfig.line.strokeWidth}
               />
             </Chart>
           ) : null}
 
-          {activeView === "stackedArea" ? (
+          {activeView === 'stackedArea' ? (
             <Chart
-              width={360}
-              height={240}
+              width={chartWidth}
+              height={chartHeight}
               series={stackedAreaDomainSeries}
-              title="Traffic Source Mix"
-              subtitle="Stacked daily contribution by channel"
-              xAxisTitle="Date"
-              yAxisTitle="Users"
+              title='Traffic Source Mix'
+              subtitle='Stacked daily contribution by channel'
+              xAxisTitle='Date'
+              yAxisTitle='Users'
               xTickValues={stackedAreaTickValues}
-              xTickDomainMode="exact"
-              legend={{ items: stackedAreaLegendItems, show: true }}
+              xTickDomainMode='exact'
+              legend={{
+                items: stackedAreaLegendItems,
+                interactive: true,
+                interactionMode: legendMode,
+              }}
               interaction={indexInteraction}
               {...commonChartProps}
             >
@@ -505,19 +606,19 @@ function GalleryApp() {
             </Chart>
           ) : null}
 
-          {activeView === "bar" ? (
+          {activeView === 'bar' ? (
             <Chart
-              width={360}
-              height={240}
+              width={chartWidth}
+              height={chartHeight}
               series={[barSeries]}
-              title="Daily Net Cash Flow"
-              subtitle="Inflows minus outflows by weekday"
-              xAxisTitle="Day"
-              yAxisTitle="USD (k)"
+              title='Daily Net Cash Flow'
+              subtitle='Inflows minus outflows by weekday'
+              xAxisTitle='Day'
+              yAxisTitle='USD (k)'
               yIncludeZero
               formatX={indexFormatter(barLabels)}
               xTickValues={barTickValues}
-              xTickDomainMode="slots"
+              xTickDomainMode='slots'
               tickCounts={{ x: barLabels.length, y: 6 }}
               interaction={indexInteraction}
               {...commonChartProps}
@@ -530,21 +631,25 @@ function GalleryApp() {
             </Chart>
           ) : null}
 
-          {activeView === "groupedBar" ? (
+          {activeView === 'groupedBar' ? (
             <Chart
-              width={360}
-              height={240}
+              width={chartWidth}
+              height={chartHeight}
               series={groupedBarSeries}
-              title="Quarterly Revenue Plan"
-              subtitle="Actual vs forecast vs target"
-              xAxisTitle="Quarter"
-              yAxisTitle="USD (k)"
+              title='Quarterly Revenue Plan'
+              subtitle='Actual vs forecast vs target'
+              xAxisTitle='Quarter'
+              yAxisTitle='USD (k)'
               yIncludeZero
               formatX={indexFormatter(groupedBarLabels)}
               xTickValues={groupedBarTickValues}
-              xTickDomainMode="slots"
+              xTickDomainMode='slots'
               tickCounts={{ x: groupedBarLabels.length, y: 6 }}
-              legend={{ interactive: true, interactionMode: "isolate" }}
+              legend={{
+                items: groupedBarLegendItems,
+                interactive: true,
+                interactionMode: legendMode,
+              }}
               interaction={indexInteraction}
               {...commonChartProps}
             >
@@ -556,24 +661,24 @@ function GalleryApp() {
             </Chart>
           ) : null}
 
-          {activeView === "stackedBar" ? (
+          {activeView === 'stackedBar' ? (
             <Chart
-              width={360}
-              height={240}
+              width={chartWidth}
+              height={chartHeight}
               series={stackedBarChartSeries}
-              title="Regional Revenue Mix"
-              subtitle="Stacked by segment"
-              xAxisTitle="Region"
-              yAxisTitle="USD (k)"
+              title='Regional Revenue Mix'
+              subtitle='Stacked by segment'
+              xAxisTitle='Region'
+              yAxisTitle='USD (k)'
               yIncludeZero
               formatX={indexFormatter(stackedBarLabels)}
               xTickValues={stackedBarTickValues}
-              xTickDomainMode="slots"
+              xTickDomainMode='slots'
               tickCounts={{ x: stackedBarLabels.length, y: 6 }}
               legend={{
                 items: stackedBarLegendItems,
                 interactive: true,
-                interactionMode: "isolate",
+                interactionMode: legendMode,
               }}
               interaction={indexInteraction}
               {...commonChartProps}
@@ -586,23 +691,23 @@ function GalleryApp() {
             </Chart>
           ) : null}
 
-          {activeView === "scatter" ? (
+          {activeView === 'scatter' ? (
             <Chart
-              width={360}
-              height={240}
+              width={chartWidth}
+              height={chartHeight}
               series={[scatterSeries]}
-              title="Signal Samples"
-              subtitle="Bucket index vs signal value"
-              xAxisTitle="Bucket"
-              yAxisTitle="Signal"
+              title='Signal Samples'
+              subtitle='Bucket index vs signal value'
+              xAxisTitle='Bucket'
+              yAxisTitle='Signal'
               formatX={indexFormatter(scatterLabels)}
               xTickValues={scatterTickValues}
-              xTickDomainMode="slots"
+              xTickDomainMode='slots'
               tickCounts={{ x: 8, y: 6 }}
               interaction={{
                 enabled: true,
-                crosshair: "xy",
-                snap: "nearest",
+                crosshair: 'xy',
+                snap: 'nearest',
                 tooltip: true,
               }}
               {...commonChartProps}
@@ -610,7 +715,7 @@ function GalleryApp() {
               <ScatterSeries
                 series={scatterSeries}
                 color={exampleChartTypeConfig.scatter.color}
-                symbol="plus"
+                symbol='plus'
                 size={9}
                 strokeWidth={1.7}
                 hitRadiusPx={22}
@@ -618,19 +723,19 @@ function GalleryApp() {
             </Chart>
           ) : null}
 
-          {activeView === "histogram" ? (
+          {activeView === 'histogram' ? (
             <Chart
-              width={360}
-              height={240}
+              width={chartWidth}
+              height={chartHeight}
               series={histogramSeries}
-              title="Sample Value Distribution"
-              subtitle="Histogram of sample values"
-              xAxisTitle="Value Bin"
-              yAxisTitle="Frequency"
+              title='Sample Value Distribution'
+              subtitle='Histogram of sample values'
+              xAxisTitle='Value Bin'
+              yAxisTitle='Frequency'
               yIncludeZero
-              formatX={() => ""}
+              formatX={() => ''}
               xTickValues={histogramTickValues}
-              xTickDomainMode="slots"
+              xTickDomainMode='slots'
               tickCounts={{ x: 6, y: 6 }}
               interaction={indexInteraction}
               {...commonChartProps}
@@ -643,21 +748,25 @@ function GalleryApp() {
             </Chart>
           ) : null}
 
-          {activeView === "a11yTheme" ? (
+          {activeView === 'a11yTheme' ? (
             <View style={styles.a11yPanel}>
               <Chart
-                width={360}
-                height={240}
+                width={chartWidth}
+                height={chartHeight}
                 series={sampleLineSeries}
-                title="Accessibility Theme Check"
+                title='Accessibility Theme Check'
                 subtitle={`Axis contrast ${accessibilityContrastRatio.toFixed(
                   1
                 )}:1 (target >= 4.5:1)`}
-                xAxisTitle="Date"
-                yAxisTitle="USD"
+                xAxisTitle='Date'
+                yAxisTitle='USD'
                 xTickValues={lineTickValues}
-                xTickDomainMode="exact"
-                legend={{ interactive: true, interactionMode: "isolate" }}
+                xTickDomainMode='exact'
+                legend={{
+                  items: accessibilityLegendItems,
+                  interactive: true,
+                  interactionMode: legendMode,
+                }}
                 interaction={indexInteraction}
                 colorScheme={chartColorScheme}
                 theme={accessibilityTheme}
@@ -682,38 +791,56 @@ function GalleryApp() {
               <Text
                 style={[
                   styles.a11yNote,
-                  { color: accessibilityContrastPass ? "#15803D" : "#B91C1C" },
+                  { color: accessibilityContrastPass ? '#15803D' : '#B91C1C' },
                 ]}
               >
                 {accessibilityContrastPass
-                  ? "Pass: axis label contrast meets 4.5:1 text target."
-                  : "Fail: axis label contrast below 4.5:1 text target."}
+                  ? 'Pass: axis label contrast meets 4.5:1 text target.'
+                  : 'Fail: axis label contrast below 4.5:1 text target.'}
               </Text>
             </View>
           ) : null}
 
-          {activeView === "perf" ? (
-            <View style={styles.perfPanel}>
-              <Text style={[styles.perfHeading, { color: headingColor }]}>
-                Interaction Perf Harness
-              </Text>
-              <Text style={[styles.perfCopy, { color: subtitleColor }]}>
+          {activeView === 'perf' ? (
+            <View
+              style={[
+                styles.perfPanel,
+                {
+                  borderColor: surface.shellBorder,
+                  backgroundColor: surface.perfPanel,
+                  width: chartWidth,
+                },
+              ]}
+            >
+              <Text style={[styles.perfHeading, { color: surface.heading }]}>Interaction Perf Harness</Text>
+              <Text style={[styles.perfCopy, { color: surface.body }]}>
                 Deterministic scenarios: 5k line index snap and 1k scatter nearest.
               </Text>
-              <Pressable onPress={runPerfHarness} style={styles.perfRunButton}>
+              <Pressable
+                onPress={runPerfHarness}
+                style={[styles.perfRunButton, { backgroundColor: surface.accent }]}
+              >
                 <Text style={styles.perfRunButtonLabel}>Run Harness</Text>
               </Pressable>
-              <Text style={[styles.perfStamp, { color: subtitleColor }]}>
-                {perfRunAt ? `Last run: ${perfRunAt}` : "Not run yet"}
+              <Text style={[styles.perfStamp, { color: surface.body }]}>
+                {perfRunAt ? `Last run: ${perfRunAt}` : 'Not run yet'}
               </Text>
               <View style={styles.perfResults}>
                 {perfResults.map((result) => (
-                  <View key={result.scenario} style={styles.perfRow}>
-                    <Text style={styles.perfScenario}>{result.scenario}</Text>
-                    <Text style={styles.perfMetric}>
+                  <View
+                    key={result.scenario}
+                    style={[
+                      styles.perfRow,
+                      { borderColor: surface.shellBorder, backgroundColor: surface.chipBg },
+                    ]}
+                  >
+                    <Text style={[styles.perfScenario, { color: surface.heading }]}>
+                      {result.scenario}
+                    </Text>
+                    <Text style={[styles.perfMetric, { color: surface.body }]}>
                       {result.totalMs.toFixed(2)} ms total
                     </Text>
-                    <Text style={styles.perfMetric}>
+                    <Text style={[styles.perfMetric, { color: surface.body }]}>
                       {result.avgMsPerIteration.toFixed(4)} ms/op
                     </Text>
                   </View>
@@ -723,16 +850,27 @@ function GalleryApp() {
           ) : null}
         </View>
 
-        <View style={styles.tabs}>
+        <View style={[styles.tabs, { width: chartWidth }]}>
           {viewOptions.map((option) => {
             const isActive = option.id === activeView;
             return (
               <Pressable
                 key={option.id}
                 onPress={() => setActiveView(option.id)}
-                style={[styles.tab, isActive && styles.tabActive]}
+                style={[
+                  styles.tab,
+                  {
+                    backgroundColor: isActive ? surface.chipActiveBg : surface.chipBg,
+                    borderColor: isActive ? surface.chipActiveBg : surface.chipBorder,
+                  },
+                ]}
               >
-                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    { color: isActive ? surface.chipActiveText : surface.chipText },
+                  ]}
+                >
                   {option.label}
                 </Text>
               </Pressable>
@@ -755,71 +893,117 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    position: 'relative',
+  },
+  backdropOrbA: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    top: -70,
+    right: -80,
+    opacity: 0.32,
+  },
+  backdropOrbB: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    bottom: 120,
+    left: -90,
+    opacity: 0.11,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    alignItems: "center",
-    gap: 10,
-    paddingTop: 8,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 12,
+    paddingTop: 10,
+    paddingBottom: 24,
+    paddingHorizontal: 12,
+  },
+  heroShell: {
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 6,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1F2937",
-    marginTop: 4,
+    fontSize: 23,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   subtitle: {
     fontSize: 13,
-    color: "#4B5563",
-    textAlign: "center",
+    lineHeight: 18,
+  },
+  legendModeRow: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendModeLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  legendModeOptions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  legendModeChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minHeight: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  legendModeChipLabel: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   chartPanel: {
-    width: "100%",
-    alignItems: "center",
-    minHeight: 250,
-    justifyContent: "center",
+    width: '100%',
+    alignItems: 'center',
+    minHeight: 272,
+    justifyContent: 'center',
   },
   a11yPanel: {
-    alignItems: "center",
+    alignItems: 'center',
     gap: 8,
   },
   a11yNote: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   perfPanel: {
-    width: 360,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.12)",
-    borderRadius: 12,
-    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
     padding: 12,
     gap: 8,
   },
   perfHeading: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   perfCopy: {
     fontSize: 12,
     lineHeight: 16,
   },
   perfRunButton: {
-    alignSelf: "flex-start",
+    alignSelf: 'flex-start',
     borderRadius: 8,
-    backgroundColor: "#2563EB",
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   perfRunButtonLabel: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   perfStamp: {
     fontSize: 11,
@@ -829,52 +1013,36 @@ const styles = StyleSheet.create({
   },
   perfRow: {
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.08)",
     borderRadius: 10,
-    backgroundColor: "#FFFFFF",
     padding: 8,
     gap: 2,
   },
   perfScenario: {
-    color: "#111827",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   perfMetric: {
-    color: "#374151",
     fontSize: 11,
   },
   tabs: {
-    width: "100%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 8,
     paddingVertical: 4,
   },
   tab: {
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.20)",
     borderRadius: 999,
-    width: 112,
+    width: 118,
     paddingVertical: 4,
     minHeight: 34,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-  },
-  tabActive: {
-    backgroundColor: "#2563EB",
-    borderColor: "#2563EB",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabLabel: {
     fontSize: 12,
-    color: "#374151",
-    fontWeight: "500",
+    fontWeight: '600',
     lineHeight: 16,
-  },
-  tabLabelActive: {
-    color: "#FFFFFF",
   },
 });

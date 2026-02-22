@@ -24,7 +24,13 @@ export type AreaSeriesProps = {
  * - Baseline defaults to `0` but can be overridden for specialized displays.
  */
 export function AreaSeries(props: AreaSeriesProps) {
-  const { scales, theme, hiddenSeriesIds, seriesColorById } = useChartContext();
+  const {
+    scales,
+    theme,
+    hiddenSeriesIds,
+    seriesColorById,
+    resolveSeriesEmphasis,
+  } = useChartContext();
   if (hiddenSeriesIds.has(props.series.id)) return null;
 
   const { d } = React.useMemo(
@@ -54,16 +60,23 @@ export function AreaSeries(props: AreaSeriesProps) {
   const fillOpacity = clampOpacity(props.fillOpacity ?? 0.18);
   const strokeColor = props.strokeColor ?? fillColor;
   const strokeWidth = props.strokeWidth ?? theme.series.strokeWidth;
+  const emphasis = resolveSeriesEmphasis(props.series.id);
 
   return (
     <>
-      <Path path={skPath} style="fill" color={fillColor} opacity={fillOpacity} />
+      <Path
+        path={skPath}
+        style="fill"
+        color={fillColor}
+        opacity={fillOpacity * emphasis.opacity}
+      />
       {strokeWidth > 0 ? (
         <Path
           path={skPath}
           style="stroke"
           color={strokeColor}
-          strokeWidth={strokeWidth}
+          strokeWidth={strokeWidth * emphasis.strokeWidthMultiplier}
+          opacity={emphasis.opacity}
         />
       ) : null}
       {props.marker
@@ -73,9 +86,9 @@ export function AreaSeries(props: AreaSeriesProps) {
               x={pt.x}
               y={pt.y}
               symbol={props.marker?.symbol}
-              size={props.marker?.size ?? 7}
+              size={(props.marker?.size ?? 7) * emphasis.markerSizeMultiplier}
               color={props.marker?.color ?? strokeColor}
-              opacity={props.marker?.opacity ?? 1}
+              opacity={(props.marker?.opacity ?? 1) * emphasis.opacity}
               strokeWidth={props.marker?.strokeWidth}
               filled={props.marker?.filled}
             />
