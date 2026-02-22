@@ -95,6 +95,43 @@ These are intentionally deferred to protect MVP scope:
 3. Expand RN smoke coverage to include legend tap mode assertions (`toggle` and `isolate`) in addition to current interaction responder coverage.
 4. Prepare MVP release checklist (versioning, changelog, publish dry-run).
 
+## Publish Readiness Checklist
+
+Use this as a strict go/no-go gate before publishing to npm.
+
+1. Versioning and changelog
+
+   - Package versions are set intentionally (`core` and `rn`), not placeholder values.
+   - Changelog/release notes summarize shipped behavior and known limitations.
+
+2. Package artifact integrity
+
+   - `main`, `module`, `types`, and `exports` resolve correctly from built output.
+   - `npm pack`/`pnpm pack` tarballs include required runtime files only.
+
+3. Dependency and peer contract
+
+   - Runtime dependencies are fully declared (no hidden workspace-only imports).
+   - `peerDependencies` are accurate for consumer React Native projects.
+
+4. External consumer validation
+
+   - Fresh project (outside monorepo) can install packaged artifacts.
+   - TypeScript compile succeeds in consumer setup.
+   - iOS simulator build succeeds.
+   - Android build succeeds.
+
+5. Monorepo quality gate
+
+   - `pnpm -r typecheck` passes.
+   - `pnpm -r test` passes.
+   - Examples app launches and basic interactions are verified.
+
+6. Publish workflow dry-run
+
+   - Release command path is documented and reproducible.
+   - At least one dry-run publish flow is executed before real publish.
+
 ## Risks To Monitor
 
 - Scope creep from theming redesign requests.
