@@ -33,7 +33,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace @rn-sane-charts/rn-example",
+    "example": "pnpm --dir example start",
     "clean": "del-cli lib",
     "prepare": "bob build",
     "typecheck": "tsc",
@@ -89,10 +89,7 @@
     "react": "*",
     "react-native": "*"
   },
-  "workspaces": [
-    "example"
-  ],
-  "packageManager": "yarn@4.11.0",
+  "packageManager": "pnpm@10.28.1",
   "react-native-builder-bob": {
     "source": "src",
     "output": "lib",
@@ -161,6 +158,7 @@
     "version": "0.57.0"
   },
   "dependencies": {
+    "@rn-sane-charts/core": "workspace:*",
     "@shopify/react-native-skia": "~2.4.14"
   }
 }
