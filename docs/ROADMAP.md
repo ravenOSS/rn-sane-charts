@@ -1,6 +1,6 @@
 # rn-sane-charts Roadmap
 
-Last updated: 2026-02-21
+Last updated: 2026-02-22
 
 Planning source of truth: this file is the single roadmap/task tracker.
 
@@ -16,37 +16,40 @@ Ship a solid MVP baseline with:
 ## Current Status
 
 - Completed: core chart set (line, area/stacked area, bar/grouped/stacked, scatter, histogram renderer), responsive chart wrapper, legend layout/hit testing, stack/downsample transforms, scatter spatial index, perf harness + baseline docs.
-- Completed: doc harmonization for current behavior (`DESIGN_GUIDE`, `PRD`, `API`, `USER_GUIDE`).
-- Open: visual/theming behavior gaps, RN test coverage, release-hardening work.
+- Completed: visual correctness fixes (x-label anchor alignment, multi-series palette progression, gridline rendering from `theme.grid`).
+- Completed: RN smoke tests under Vitest (chart render scaffolding + interaction responder path).
+- Completed: package/dependency hygiene for `@rn-sane-charts/rn` (workspace dependency declaration + pnpm-aligned package metadata).
+- Completed: examples interaction parity across gallery chart views.
+- Open: design-target theming evolution (`focus`/`muted` state tokens), optional interaction model refinement beyond current `toggle`/`isolate`, and broader MVP polish.
 
 ## MVP Push (Current)
 
 This push is focused on making MVP feel production-safe without expanding scope.
 
-### In Scope
+### In Scope (Execution Complete)
 
 1. Visual correctness and consistency
 
-   - Align x-axis rotated-label collision math and renderer anchoring so overlap decisions are reliable.
-   - Ensure multi-series defaults use palette progression by series index (not all series defaulting to palette slot 0).
-   - Wire gridline rendering to existing `theme.grid` tokens (currently tokenized but not rendered).
+   - Completed: aligned x-axis rotated-label collision math and renderer anchoring.
+   - Completed: multi-series defaults now use palette progression by series index.
+   - Completed: gridline rendering wired to `theme.grid` tokens.
 
 2. Interaction behavior baseline
 
-   - Keep existing legend `toggle`/`isolate` modes for compatibility.
-   - Add clear docs/examples that prefer focus + de-emphasis as the default comparison pattern.
-   - Ensure tooltip/legend interactions remain allocation-safe during gestures.
+   - Completed: kept existing legend `toggle`/`isolate` modes for compatibility.
+   - Completed: docs/examples emphasize focus + de-emphasis as preferred comparison pattern.
+   - Completed: interaction path remains allocation-safe in core/RN tests and perf harness baseline.
 
 3. Histogram ergonomics clarification
 
-   - Keep current renderer contract (`HistogramSeries` consumes bins).
-   - Keep core binning as the standard path (`binHistogram`), with examples/docs showing this flow consistently.
+   - Completed: kept current renderer contract (`HistogramSeries` consumes bins).
+   - Completed: kept core binning (`binHistogram`) as the standard path and documented flow consistently.
 
 4. Release hardening
 
-   - Add meaningful RN smoke tests (render + legend interaction + one interaction path).
-   - Resolve package/dependency hygiene items in `@rn-sane-charts/rn`.
-   - Confirm deterministic local workflow (`pnpm install`, `pnpm -r typecheck`, `pnpm -r test`).
+   - Completed: added RN smoke tests (render + interaction path) under Vitest.
+   - Completed: resolved package/dependency hygiene items in `@rn-sane-charts/rn`.
+   - Completed: validated deterministic local workflow (`pnpm -r typecheck`, `pnpm -r test`, examples iOS launch/install).
 
 ### Exit Criteria
 
@@ -85,12 +88,12 @@ These are intentionally deferred to protect MVP scope:
    - No full accessibility compliance pass (keep practical readability checks only).
    - No major perf architecture rewrite beyond regression prevention.
 
-## Execution Order
+## Next Execution Order
 
-1. Fix visual correctness gaps (x-label anchor, palette indexing, grid rendering).
-2. Add/upgrade RN tests to lock behavior.
-3. Complete package/dependency hygiene.
-4. Verify examples + docs alignment and run full validation commands.
+1. Decide whether to introduce first-class theme state tokens (`focus`/`muted`) in public API or keep policy-only guidance for MVP.
+2. If theme state tokens are deferred, add explicit examples of focus+de-emphasis behavior using current API surface.
+3. Expand RN smoke coverage to include legend tap mode assertions (`toggle` and `isolate`) in addition to current interaction responder coverage.
+4. Prepare MVP release checklist (versioning, changelog, publish dry-run).
 
 ## Risks To Monitor
 

@@ -197,10 +197,6 @@ Theme presets exported by `@rn-sane-charts/rn`:
 - `darkTheme`
 - `defaultTheme` (alias of `lightTheme`)
 
-Current rendering note:
-- `grid` tokens are part of the theme contract but grid lines are not rendered
-  by `Chart` yet.
-
 ## Chart Types
 
 ### Line

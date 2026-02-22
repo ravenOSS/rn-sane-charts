@@ -179,8 +179,15 @@ The gallery includes an `A11y Theme` tab that demonstrates:
 - A color-blind-friendly series palette
 - Higher-contrast axis tokens for light and dark schemes
 - A live axis-text contrast check against background (target: `>= 4.5:1`)
+- Legend touch focus/isolation behavior for series comparison
 
 Use this tab as a quick visual/functional gate before finalizing theme tokens.
+
+Interaction coverage in examples:
+
+- `line`, `area`, `stackedArea`, `bar`, `groupedBar`, `stackedBar`,
+  `histogram`, and `a11yTheme` are configured with interactive tooltip/crosshair
+  behavior in the gallery app.
 
 ## Styling After First Render
 
