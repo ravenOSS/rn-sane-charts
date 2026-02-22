@@ -657,6 +657,7 @@ function GalleryApp() {
                 yAxisTitle="USD"
                 xTickValues={lineTickValues}
                 xTickDomainMode="exact"
+                legend={{ interactive: true, interactionMode: "isolate" }}
                 interaction={indexInteraction}
                 colorScheme={chartColorScheme}
                 theme={accessibilityTheme}
