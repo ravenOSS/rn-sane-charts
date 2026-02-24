@@ -2,6 +2,15 @@
 
 React Native-first charting library for clear, professional data communication with sane defaults and a small API.
 
+## Start Here
+
+Choose the path that matches your experience level:
+
+1. New to the library or starting fresh:
+   - [GETTING_STARTED.md](docs/GETTING_STARTED.md)
+2. Integrating into an existing project (experienced devs):
+   - [USER_GUIDE.md](docs/USER_GUIDE.md)
+
 ## Objectives
 
 - Ship the 5 core business chart types: line, area, bar (grouped/stacked), scatter, histogram.
@@ -47,15 +56,15 @@ You can override only what you need:
 - Works with New Architecture assumptions in current RN/Expo stacks.
 - Core math/layout remains deterministic and testable, separate from RN UI rendering.
 
-## How To Use
+## Quick Usage
 
-### 1. Install (package usage)
+Install packages:
 
 ```bash
 pnpm add @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
 ```
 
-### 2. Compose charts with `ResponsiveChart` + series components
+Compose a basic chart:
 
 ```tsx
 import React from "react";
@@ -92,22 +101,9 @@ export function RevenueChart({ fonts }: { fonts: any }) {
 }
 ```
 
-### 3. Use explicit sizing when needed
+For setup flow, troubleshooting, and first-success checkpoints, use:
 
-Use `Chart` directly when layout must be fully deterministic (fixed-size exports, screenshot tests, exact dashboards).
-
-### 4. Render multiple chart types quickly
-
-Create one `Chart` per visualization and reuse shared `fonts`, theme, and formatting helpers.
-
-### 5. Example gallery aesthetic
-
-The examples app currently uses a softened, Apple-native-inspired surface and chart palette:
-
-- system-like neutral surfaces in light/dark
-- lower-chroma default series colors for calmer multi-series comparison
-- active controls (legend mode and chart type chips) matched to primary chart blue
-- explicit legend-item color wiring where examples use per-series color overrides
+- [GETTING_STARTED.md](docs/GETTING_STARTED.md)
 
 ## Current Status
 
@@ -115,13 +111,15 @@ The examples app currently uses a softened, Apple-native-inspired surface and ch
 - Implemented: line, area (single + stacked), bar/grouped/stacked, scatter, histogram, marker annotations.
 - Planned: deeper perf harnessing and additional interaction/perf optimizations.
 
-## Docs
+## Docs By Intent
 
-- Product goals: `docs/PRD.md`
-- Architecture: `docs/ARCHITECTURE.md`
-- API details: `docs/API.md`
-- Design guide: `docs/DESIGN_GUIDE.md`
-- User guide: `docs/USER_GUIDE.md`
+- First success (fresh project): [GETTING_STARTED.md](docs/GETTING_STARTED.md)
+- Experienced usage patterns: [USER_GUIDE.md](docs/USER_GUIDE.md)
+- Design policy and rationale: [DESIGN_GUIDE.md](docs/DESIGN_GUIDE.md)
+- API surface details: [API.md](docs/API.md)
+- Internal architecture: [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Product scope and goals: [PRD.md](docs/PRD.md)
+- Delivery status and release path: [ROADMAP.md](docs/ROADMAP.md)
 
 ## Contributing
 

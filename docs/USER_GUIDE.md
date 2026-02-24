@@ -14,7 +14,7 @@ Best fit:
 
 rn-sane-charts ships “sane defaults,” but many teams (especially small ones) need the library to also help them make good design decisions.
 
-- For **which chart to use**, **series limits**, **color roles**, and **light/dark parity**, see: `docs/DESIGN_GUIDE.md`.
+- For **which chart to use**, **series limits**, **color roles**, and **light/dark parity**, see: [DESIGN_GUIDE.md](DESIGN_GUIDE.md).
 
 Quick gut-check:
 
@@ -156,7 +156,7 @@ Use `Chart.annotations.markers` for lightweight in-plot callouts:
 
 The examples app includes ready-made datasets for each MVP chart type in:
 
-- `packages/examples/sampleDatasets.ts`
+- [packages/examples/sampleDatasets.ts](../packages/examples/sampleDatasets.ts)
 
 Included fixtures:
 
