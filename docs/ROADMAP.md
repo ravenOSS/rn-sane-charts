@@ -1,6 +1,6 @@
 # rn-sane-charts Roadmap
 
-Last updated: 2026-02-22
+Last updated: 2026-02-24
 
 Planning source of truth: this file is the single roadmap/task tracker.
 
@@ -22,6 +22,8 @@ Ship a solid MVP baseline with:
 - Completed: examples interaction parity across gallery chart views.
 - Completed: design-target theming evolution (`theme.state.focus` / `theme.state.muted`) and focus-first legend interaction (`focus` default, `toggle`/`isolate` optional).
 - Completed: examples gallery redesign to reflect DESIGN_GUIDE aesthetic across chart demos.
+- Completed: examples Apple-native visual pass (system-like surfaces, softened multi-series palette, active control/color alignment).
+- Completed: legend color consistency hardening in examples + RN smoke regression coverage.
 - Open: final release hardening and npm publish gate execution.
 
 ## MVP Push (Current)
@@ -92,10 +94,10 @@ These are intentionally deferred to protect MVP scope:
 
 ## Next Execution Order
 
-1. Expand RN smoke coverage with explicit legend mode assertions (`focus`, `toggle`, `isolate`).
-2. Run examples gallery visual QA in iOS + Android for redesigned aesthetic parity.
-3. Execute publish readiness checklist end-to-end (`pack`, external install, simulator build validation).
-4. Prepare MVP release notes and first public version tag.
+1. Run final examples gallery visual QA in iOS + Android (all chart tabs, all legend modes).
+2. Execute publish readiness checklist end-to-end (`pack`, external install, simulator build validation).
+3. Prepare MVP release notes and first public version tag.
+4. Publish dry-run and finalize first npm release.
 
 ## Publish Readiness Checklist
 

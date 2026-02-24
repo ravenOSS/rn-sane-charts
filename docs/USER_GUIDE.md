@@ -141,7 +141,7 @@ Use `Chart.annotations.markers` for lightweight in-plot callouts:
         id: "release-cutover",
         x: new Date(2026, 0, 25),
         y: 27.5,
-        label: "Release",
+        label: "Release cutover",
         color: "#DC2626",
       },
     ],
@@ -188,6 +188,12 @@ Interaction coverage in examples:
 - `line`, `area`, `stackedArea`, `bar`, `groupedBar`, `stackedBar`,
   `histogram`, and `a11yTheme` are configured with interactive tooltip/crosshair
   behavior in the gallery app.
+
+Visual behavior in examples:
+
+- Gallery surface styling is Apple-native-inspired (neutral cards/chips, lighter chrome).
+- Default series palette is intentionally softened to avoid over-saturation in multi-series charts.
+- Active UI chips use the same primary blue as chart content for visual consistency.
 
 ## Styling After First Render
 

@@ -13,9 +13,9 @@ React Native-first charting library for clear, professional data communication w
 ## Pragmatic Defaults (Fast Implementation)
 
 - Readability-first axis behavior: auto rotate labels (`0°`, `45°`, `90°`) + tick skipping.
-- Legend auto behavior: hidden for single series, auto position for multi-series, optional interactivity.
+- Legend auto behavior: hidden for single series, auto position for multi-series, interactive `focus` by default (`toggle`/`isolate` optional).
 - Built-in tooltip/crosshair interactions.
-- Light/dark theme presets with simple token overrides.
+- Light/dark theme presets with simple token overrides and focus/muted state tokens.
 - Opinionated layout so charts look professional with minimal props.
 
 ## Layered Architecture = Fast Delivery
@@ -99,6 +99,15 @@ Use `Chart` directly when layout must be fully deterministic (fixed-size exports
 ### 4. Render multiple chart types quickly
 
 Create one `Chart` per visualization and reuse shared `fonts`, theme, and formatting helpers.
+
+### 5. Example gallery aesthetic
+
+The examples app currently uses a softened, Apple-native-inspired surface and chart palette:
+
+- system-like neutral surfaces in light/dark
+- lower-chroma default series colors for calmer multi-series comparison
+- active controls (legend mode and chart type chips) matched to primary chart blue
+- explicit legend-item color wiring where examples use per-series color overrides
 
 ## Current Status
 

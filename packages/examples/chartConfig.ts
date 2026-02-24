@@ -10,34 +10,34 @@ import type { SaneChartFonts, SaneChartTheme } from '@rn-sane-charts/rn';
  */
 export const exampleSurfaceTokens = {
   light: {
-    pageStart: '#F4F8FF',
-    pageEnd: '#FFF8F1',
-    shell: '#FFFFFFE8',
-    shellBorder: 'rgba(15,23,42,0.10)',
-    heading: '#0F172A',
-    body: '#334155',
-    chipBg: '#FFFFFF',
-    chipBorder: 'rgba(15,23,42,0.14)',
-    chipText: '#334155',
-    chipActiveBg: '#0EA5E9',
+    pageStart: '#F2F2F7',
+    pageEnd: '#E5E5EA',
+    shell: '#FFFFFFD9',
+    shellBorder: 'rgba(60,60,67,0.20)',
+    heading: '#1C1C1E',
+    body: '#3A3A3C',
+    chipBg: 'rgba(118,118,128,0.12)',
+    chipBorder: 'rgba(60,60,67,0.16)',
+    chipText: '#3A3A3C',
+    chipActiveBg: '#3A8DDE',
     chipActiveText: '#FFFFFF',
-    accent: '#0EA5E9',
-    perfPanel: '#F8FAFF',
+    accent: '#3A8DDE',
+    perfPanel: '#FFFFFF',
   },
   dark: {
-    pageStart: '#030712',
-    pageEnd: '#0B1220',
-    shell: '#0F172AD6',
-    shellBorder: 'rgba(148,163,184,0.30)',
-    heading: '#F8FAFC',
-    body: '#CBD5E1',
-    chipBg: 'rgba(15,23,42,0.74)',
-    chipBorder: 'rgba(148,163,184,0.34)',
-    chipText: '#CBD5E1',
-    chipActiveBg: '#22D3EE',
-    chipActiveText: '#082F49',
-    accent: '#22D3EE',
-    perfPanel: '#111827',
+    pageStart: '#000000',
+    pageEnd: '#0B0B0F',
+    shell: '#1C1C1ED6',
+    shellBorder: 'rgba(255,255,255,0.20)',
+    heading: '#F2F2F7',
+    body: '#D1D1D6',
+    chipBg: 'rgba(118,118,128,0.24)',
+    chipBorder: 'rgba(255,255,255,0.20)',
+    chipText: '#D1D1D6',
+    chipActiveBg: '#3A8DDE',
+    chipActiveText: '#FFFFFF',
+    accent: '#3A8DDE',
+    perfPanel: '#1C1C1E',
   },
 } as const;
 
@@ -53,58 +53,58 @@ export function createExampleChartTheme(
 ): Partial<SaneChartTheme> {
   if (colorScheme === 'dark') {
     return {
-      frame: { strokeWidth: 1, stroke: 'rgba(148,163,184,0.34)' },
-      grid: { strokeWidth: 1, stroke: 'rgba(148,163,184,0.22)' },
+      frame: { strokeWidth: 0, stroke: 'rgba(255,255,255,0)' },
+      grid: { strokeWidth: 1, stroke: 'rgba(235,235,245,0.13)' },
       axis: {
-        tick: { color: 'rgba(241,245,249,0.94)' },
-        line: { stroke: 'rgba(148,163,184,0.72)', strokeWidth: 1.05 },
+        tick: { color: 'rgba(235,235,245,0.88)' },
+        line: { stroke: 'rgba(235,235,245,0.34)', strokeWidth: 1 },
       },
       series: {
         // Keep palette order aligned with Revenue -> Forecast -> Target mapping.
-        palette: ['#38BDF8', '#FB923C', '#34D399', '#A78BFA', '#FB7185', '#22D3EE'],
-        strokeWidth: 2.4,
+        palette: ['#5CA8ED', '#E5AC63', '#61BE88', '#8C88E8', '#E07A96', '#7EC9E8'],
+        strokeWidth: 2.3,
       },
       state: {
         focus: {
           seriesOpacity: 1,
-          strokeWidthMultiplier: 1.2,
-          markerSizeMultiplier: 1.14,
+          strokeWidthMultiplier: 1.14,
+          markerSizeMultiplier: 1.1,
           legendOpacity: 1,
         },
         muted: {
-          seriesOpacity: 0.28,
-          strokeWidthMultiplier: 0.92,
-          markerSizeMultiplier: 0.92,
-          legendOpacity: 0.5,
+          seriesOpacity: 0.3,
+          strokeWidthMultiplier: 0.94,
+          markerSizeMultiplier: 0.94,
+          legendOpacity: 0.54,
         },
       },
     };
   }
 
   return {
-    frame: { strokeWidth: 1, stroke: 'rgba(15,23,42,0.16)' },
-    grid: { strokeWidth: 1, stroke: 'rgba(15,23,42,0.12)' },
+    frame: { strokeWidth: 0, stroke: 'rgba(60,60,67,0)' },
+    grid: { strokeWidth: 1, stroke: 'rgba(60,60,67,0.12)' },
     axis: {
-      tick: { color: 'rgba(15,23,42,0.86)' },
-      line: { stroke: 'rgba(15,23,42,0.42)', strokeWidth: 1 },
+      tick: { color: 'rgba(28,28,30,0.82)' },
+      line: { stroke: 'rgba(60,60,67,0.34)', strokeWidth: 1 },
     },
     series: {
       // Keep palette order aligned with Revenue -> Forecast -> Target mapping.
-      palette: ['#0EA5E9', '#F97316', '#10B981', '#6366F1', '#F43F5E', '#14B8A6'],
-      strokeWidth: 2.3,
+      palette: ['#3A8DDE', '#D79A4A', '#53B67A', '#7D79DA', '#CF6B87', '#68B8DA'],
+      strokeWidth: 2.2,
     },
     state: {
       focus: {
         seriesOpacity: 1,
-        strokeWidthMultiplier: 1.18,
-        markerSizeMultiplier: 1.14,
+        strokeWidthMultiplier: 1.14,
+        markerSizeMultiplier: 1.1,
         legendOpacity: 1,
       },
       muted: {
-        seriesOpacity: 0.22,
-        strokeWidthMultiplier: 0.9,
-        markerSizeMultiplier: 0.9,
-        legendOpacity: 0.46,
+        seriesOpacity: 0.24,
+        strokeWidthMultiplier: 0.93,
+        markerSizeMultiplier: 0.93,
+        legendOpacity: 0.5,
       },
     },
   };
@@ -114,9 +114,9 @@ export function createExampleChartTheme(
  * Keep series colors centralized so multi-line charts stay consistent.
  */
 export const exampleSeriesColors = {
-  revenue: '#0EA5E9',
-  forecast: '#F97316',
-  target: '#10B981',
+  revenue: '#3A8DDE',
+  forecast: '#D79A4A',
+  target: '#53B67A',
 } as const;
 
 /**
@@ -170,7 +170,7 @@ export const exampleChartTypeConfig = {
     ],
   },
   area: {
-    fillOpacity: 0.2,
+    fillOpacity: 0.16,
     strokeWidth: 2.2,
     colors: [
       exampleSeriesColors.revenue,
@@ -180,7 +180,7 @@ export const exampleChartTypeConfig = {
     baselineY: 0,
   },
   bar: {
-    color: '#0EA5E9',
+    color: '#3A8DDE',
   },
   groupedBar: {
     colors: [
@@ -190,14 +190,14 @@ export const exampleChartTypeConfig = {
     ],
   },
   stackedBar: {
-    colors: ['#0EA5E9', '#10B981', '#F97316'],
+    colors: ['#3A8DDE', '#53B67A', '#D79A4A'],
   },
   scatter: {
-    color: '#0EA5E9',
+    color: '#3A8DDE',
   },
   histogram: {
     bins: 12,
-    color: '#0EA5E9',
+    color: '#3A8DDE',
     barGapPx: 2,
   },
 } as const;
@@ -211,11 +211,11 @@ export function createExampleChartFonts(input: {
 }): SaneChartFonts {
   return {
     measureText: input.measureText,
-    xTickFont: { size: 12, family: input.fontFamily },
-    yTickFont: { size: 12, family: input.fontFamily },
+    xTickFont: { size: 13, family: input.fontFamily },
+    yTickFont: { size: 13, family: input.fontFamily },
     titleFont: { size: 17, family: input.fontFamily, weight: 'semibold' },
-    subtitleFont: { size: 12, family: input.fontFamily },
-    xAxisTitleFont: { size: 12, family: input.fontFamily, weight: 'medium' },
-    yAxisTitleFont: { size: 12, family: input.fontFamily, weight: 'medium' },
+    subtitleFont: { size: 13, family: input.fontFamily },
+    xAxisTitleFont: { size: 13, family: input.fontFamily, weight: 'medium' },
+    yAxisTitleFont: { size: 13, family: input.fontFamily, weight: 'medium' },
   };
 }

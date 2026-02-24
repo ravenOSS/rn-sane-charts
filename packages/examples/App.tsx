@@ -145,15 +145,15 @@ function GalleryApp() {
       : exampleSurfaceTokens.light;
 
   const chartWidth = Math.min(
-    420,
-    Math.max(300, window.width - insets.left - insets.right - 24)
+    430,
+    Math.max(320, window.width - insets.left - insets.right - 20)
   );
-  const chartHeight = 262;
+  const chartHeight = 286;
 
   const fontFamily = Platform.select({
-    ios: 'Avenir Next',
-    android: 'serif',
-    default: 'serif',
+    ios: 'System',
+    android: 'sans-serif',
+    default: 'System',
   });
   const font = React.useMemo(
     () => matchFont({ fontFamily, fontSize: 12 }),
@@ -323,7 +323,7 @@ function GalleryApp() {
         id: 'release-cutover',
         x: sampleLineSeries[0].data[24]?.x ?? new Date(2026, 0, 25),
         y: (sampleLineSeries[0].data[24]?.y ?? 0) + 2,
-        label: 'Release',
+        label: 'Release cutover',
         color: '#DC2626',
       },
     ],
@@ -463,6 +463,11 @@ function GalleryApp() {
               backgroundColor: surface.shell,
               borderColor: surface.shellBorder,
               width: chartWidth,
+              shadowColor: chartColorScheme === 'dark' ? '#000000' : '#000000',
+              shadowOpacity: chartColorScheme === 'dark' ? 0.28 : 0.09,
+              shadowRadius: chartColorScheme === 'dark' ? 18 : 10,
+              shadowOffset: { width: 0, height: 5 },
+              elevation: chartColorScheme === 'dark' ? 10 : 4,
             },
           ]}
         >
@@ -511,7 +516,7 @@ function GalleryApp() {
               height={chartHeight}
               series={sampleLineSeries}
               title='Revenue Plan Tracking'
-              subtitle='Actual vs forecast vs target (last 50 days)'
+              subtitle='Actual vs forecast vs target (last 50 days) • Jan 25 release cutover'
               xAxisTitle='Date'
               yAxisTitle='USD'
               xTickValues={lineTickValues}
@@ -897,43 +902,43 @@ const styles = StyleSheet.create({
   },
   backdropOrbA: {
     position: 'absolute',
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    top: -70,
-    right: -80,
-    opacity: 0.32,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    top: -90,
+    right: -30,
+    opacity: 0.06,
   },
   backdropOrbB: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    bottom: 120,
-    left: -90,
-    opacity: 0.11,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    bottom: 210,
+    left: -65,
+    opacity: 0.05,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     alignItems: 'center',
-    gap: 12,
-    paddingTop: 10,
-    paddingBottom: 24,
-    paddingHorizontal: 12,
+    gap: 16,
+    paddingTop: 14,
+    paddingBottom: 28,
+    paddingHorizontal: 10,
   },
   heroShell: {
     borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 6,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 15,
+    gap: 8,
   },
   title: {
-    fontSize: 23,
+    fontSize: 21,
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.15,
   },
   subtitle: {
     fontSize: 13,
@@ -942,23 +947,22 @@ const styles = StyleSheet.create({
   legendModeRow: {
     width: '100%',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   legendModeLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    letterSpacing: 0.2,
   },
   legendModeOptions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   legendModeChip: {
     borderWidth: 1,
     borderRadius: 999,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 6,
-    minHeight: 34,
+    minHeight: 38,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -969,7 +973,7 @@ const styles = StyleSheet.create({
   chartPanel: {
     width: '100%',
     alignItems: 'center',
-    minHeight: 272,
+    minHeight: 296,
     justifyContent: 'center',
   },
   a11yPanel: {
@@ -977,7 +981,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   a11yNote: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
   },
   perfPanel: {
@@ -987,22 +991,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   perfHeading: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
   },
   perfCopy: {
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 16,
   },
   perfRunButton: {
     alignSelf: 'flex-start',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
   perfRunButtonLabel: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   perfStamp: {
@@ -1028,15 +1032,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 4,
+    gap: 10,
+    paddingVertical: 6,
   },
   tab: {
     borderWidth: 1,
     borderRadius: 999,
-    width: 118,
-    paddingVertical: 4,
-    minHeight: 34,
+    width: 120,
+    paddingVertical: 7,
+    minHeight: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
