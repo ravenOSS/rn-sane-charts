@@ -2,7 +2,7 @@
 
 rn-sane-charts is intentionally opinionated. This guide documents the design decisions behind the library’s defaults and provides practical UX rules that help a developer (often the designer in small teams) ship charts that look modern and remain readable on mobile.
 
-> This guide is **policy + rationale**. For hands-on usage (first render, props, theming overrides, interaction wiring, streaming inputs), see: `docs/USER_GUIDE.md`.
+> This guide is **policy + rationale**. For hands-on usage (first render, props, theming overrides, interaction wiring, streaming inputs), see: [USER_GUIDE.md](USER_GUIDE.md).
 
 ## Table of contents
 
@@ -192,7 +192,7 @@ This supports “sane defaults for speed” while keeping overrides straightforw
 
 If you’re looking for “how do I wire this up,” start here:
 
-- **Hands-on usage and examples**: `docs/USER_GUIDE.md`
+- **Hands-on usage and examples**: [USER_GUIDE.md](USER_GUIDE.md)
   - theming override layering (defaults → theme → per-series)
   - interaction props (snap modes, tooltips, highlight behavior)
   - streaming / live data patterns and transformations
