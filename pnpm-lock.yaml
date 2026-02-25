@@ -88,6 +88,9 @@ importers:
 
   packages/rn:
     dependencies:
+      '@rn-sane-charts/core':
+        specifier: workspace:*
+        version: link:../core
       '@shopify/react-native-skia':
         specifier: ~2.4.14
         version: 2.4.14(react-native-reanimated@4.2.1(react-native-worklets@0.7.2(@babel/core@7.28.6)(react-native@0.83.1(@babel/core@7.28.6)(@types/react@19.2.9)(react@19.2.0))(react@19.2.0))(react-native@0.83.1(@babel/core@7.28.6)(@types/react@19.2.9)(react@19.2.0))(react@19.2.0))(react-native@0.83.1(@babel/core@7.28.6)(@types/react@19.2.9)(react@19.2.0))(react@19.2.0)

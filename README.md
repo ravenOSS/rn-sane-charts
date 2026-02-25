@@ -115,6 +115,7 @@ For setup flow, troubleshooting, and first-success checkpoints, use:
 
 - First success (fresh project): [GETTING_STARTED.md](docs/GETTING_STARTED.md)
 - Experienced usage patterns: [USER_GUIDE.md](docs/USER_GUIDE.md)
+- Novice test workflow (examples + tarballs): [EXAMPLES_TARBALL_TESTING.md](docs/EXAMPLES_TARBALL_TESTING.md)
 - Design policy and rationale: [DESIGN_GUIDE.md](docs/DESIGN_GUIDE.md)
 - API surface details: [API.md](docs/API.md)
 - Internal architecture: [ARCHITECTURE.md](docs/ARCHITECTURE.md)
