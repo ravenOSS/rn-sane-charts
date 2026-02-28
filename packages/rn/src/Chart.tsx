@@ -743,7 +743,7 @@ export function Chart(props: ChartProps) {
             x={line.x}
             y={line.baselineY}
             color={theme.axis.tick.color}
-            opacity={0.92}
+            opacity={0.9}
           />
         ))}
         {props.xAxisTitle ? (

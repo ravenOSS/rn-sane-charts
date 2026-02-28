@@ -214,7 +214,8 @@ export function createExampleChartFonts(input: {
     xTickFont: { size: 13, family: input.fontFamily },
     yTickFont: { size: 13, family: input.fontFamily },
     titleFont: { size: 17, family: input.fontFamily, weight: 'semibold' },
-    subtitleFont: { size: 13, family: input.fontFamily },
+    subtitleFont: { size: 13, family: input.fontFamily, weight: 'medium' },
+    storyNoteFont: { size: 12, family: input.fontFamily, weight: 'medium' },
     xAxisTitleFont: { size: 13, family: input.fontFamily, weight: 'medium' },
     yAxisTitleFont: { size: 13, family: input.fontFamily, weight: 'medium' },
   };
