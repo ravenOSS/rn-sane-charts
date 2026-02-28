@@ -39,6 +39,28 @@ describe("legend layout", () => {
     expect(layout.reservedRight).toBeGreaterThan(0);
   });
 
+  it("falls back to bottom when right legend would squeeze plot too much", () => {
+    const layout = computeLegendLayout({
+      chartWidth: 520,
+      items: [
+        { id: "a", label: "Very Long Series Label A", color: "#2563EB" },
+        { id: "b", label: "Very Long Series Label B", color: "#16A34A" },
+      ],
+      measureText,
+      font: { family: "System", size: 12, weight: 400 },
+      metrics: {
+        rightPlacementMinChartWidthPx: 420,
+        rightPlacementMaxWidthRatio: 0.6,
+        rightPlacementMinPlotWidthPx: 360,
+      },
+    });
+
+    expect(layout.show).toBe(true);
+    expect(layout.position).toBe("bottom");
+    expect(layout.reservedBottom).toBeGreaterThan(0);
+    expect(layout.reservedRight).toBe(0);
+  });
+
   it("computes deterministic item boxes and legend hit testing", () => {
     const legend = computeLegendLayout({
       chartWidth: 360,

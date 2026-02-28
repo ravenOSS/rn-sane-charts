@@ -61,18 +61,25 @@ export function computeLayout(input: LayoutInput): LayoutOutput {
 
   const bounds: Rect = { x: 0, y: 0, width: input.width, height: input.height };
 
-  const headerHeight = measureHeaderHeight(input.measureText, input.text);
+  const yAxisWidth =
+    input.yAxis.show === false
+      ? 0
+      : measureYAxisWidth(input.measureText, input.yAxis, input.yTicks);
+  const plotWidthForHeader = Math.max(
+    0,
+    input.width - pad.left - pad.right - yAxisWidth
+  );
+  const headerHeight = measureHeaderHeight(
+    input.measureText,
+    input.text,
+    plotWidthForHeader
+  );
   const header: Rect = {
     x: pad.left,
     y: pad.top,
     width: Math.max(0, input.width - pad.left - pad.right),
     height: headerHeight,
   };
-
-  const yAxisWidth =
-    input.yAxis.show === false
-      ? 0
-      : measureYAxisWidth(input.measureText, input.yAxis, input.yTicks);
 
   const resolvedXAxis =
     input.xAxis.show === false
@@ -146,15 +153,42 @@ function normalizePadding(p?: ChartPadding): { top: number; right: number; botto
   };
 }
 
-function measureHeaderHeight(measureText: MeasureTextFn, text: ChartTextSpec): number {
+function measureHeaderHeight(
+  measureText: MeasureTextFn,
+  text: ChartTextSpec,
+  maxWidth: number
+): number {
   // Title/subtitle are optional; fonts are required for deterministic measurement.
-  const titleH = text.title ? measureText({ text: text.title, font: text.titleFont, angle: 0 }).height : 0;
+  const titleH = text.title
+    ? measureText({ text: text.title, font: text.titleFont, angle: 0 }).height
+    : 0;
   const subtitleH = text.subtitle
     ? measureText({ text: text.subtitle, font: text.subtitleFont, angle: 0 }).height
     : 0;
+  const storyFont = text.storyNoteFont ?? text.subtitleFont;
+  const storyLines =
+    text.storyNote && text.storyNote.trim().length > 0
+      ? wrapTextLines({
+          text: text.storyNote,
+          font: storyFont,
+          maxWidth,
+          measureText,
+        })
+      : [];
+  const storyLineGap = storyLines.length > 1 ? 2 : 0;
+  const storyH = storyLines.reduce((sum, line, index) => {
+    const measured = measureText({
+      text: line,
+      font: storyFont,
+      angle: 0,
+    });
+    return sum + measured.height + (index > 0 ? storyLineGap : 0);
+  }, 0);
 
   // Small spacing between title and subtitle when both exist.
   const gap = text.title && text.subtitle ? 4 : 0;
+  const storyGap =
+    storyH > 0 && (titleH > 0 || subtitleH > 0) ? 4 : 0;
 
   /**
    * Keep a dedicated header-to-plot gap so subtitles never feel "glued" to
@@ -163,7 +197,48 @@ function measureHeaderHeight(measureText: MeasureTextFn, text: ChartTextSpec): n
    */
   const headerBottomGap = titleH > 0 || subtitleH > 0 ? 8 : 0;
 
-  return Math.ceil(titleH + gap + subtitleH + headerBottomGap);
+  return Math.ceil(titleH + gap + subtitleH + storyGap + storyH + headerBottomGap);
+}
+
+/**
+ * Greedy word-wrap tuned for short chart annotation copy.
+ *
+ * Why this helper exists:
+ * - Story notes must stay readable without ellipsis.
+ * - Layout needs deterministic line count to reserve header height.
+ */
+function wrapTextLines(input: {
+  text: string;
+  font: AxisSpec["tickFont"];
+  maxWidth: number;
+  measureText: MeasureTextFn;
+}): string[] {
+  const normalized = input.text.trim().replace(/\s+/g, " ");
+  if (!normalized) return [];
+
+  if (input.maxWidth <= 0) return [normalized];
+
+  const words = normalized.split(" ");
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    const width = input.measureText({
+      text: candidate,
+      font: input.font,
+      angle: 0,
+    }).width;
+    if (width <= input.maxWidth || !current) {
+      current = candidate;
+      continue;
+    }
+    lines.push(current);
+    current = word;
+  }
+
+  if (current) lines.push(current);
+  return lines;
 }
 
 function measureYAxisWidth(measureText: MeasureTextFn, yAxis: AxisSpec, yTicks: YTick[]): number {

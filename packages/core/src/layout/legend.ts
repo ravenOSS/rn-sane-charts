@@ -27,6 +27,7 @@ export type LegendSizingOptions = {
   bottomReserveGapPx?: number;
   rightPlacementMinChartWidthPx?: number;
   rightPlacementMaxWidthRatio?: number;
+  rightPlacementMinPlotWidthPx?: number;
 };
 
 export type LegendLayoutResult = {
@@ -163,7 +164,10 @@ export function computeLegendItemBoxes(input: {
   const rowHeight = input.legend.rowHeight;
   const startX =
     input.legend.position === "right"
-      ? input.chartWidth - input.legend.width - input.legend.metrics.outerMarginPx
+      ? input.chartWidth -
+        input.legend.width -
+        input.legend.metrics.outerMarginPx -
+        2
       : input.layout.header.x +
         Math.max(0, (input.layout.header.width - input.legend.width) / 2);
   const startY =
@@ -222,9 +226,13 @@ function resolveLegendPosition(input: {
   legendWidth: number;
   metrics: Required<LegendSizingOptions>;
 }): LegendPosition {
+  const reservedRight = input.legendWidth + input.metrics.rightReserveGapPx;
+  const projectedPlotWidth = input.chartWidth - reservedRight - 24; // preserve both-side outer margins
+  const safeLegendWidth = input.legendWidth + input.metrics.outerMarginPx + 8;
   if (
     input.chartWidth >= input.metrics.rightPlacementMinChartWidthPx &&
-    input.legendWidth <= input.chartWidth * input.metrics.rightPlacementMaxWidthRatio
+    safeLegendWidth <= input.chartWidth * input.metrics.rightPlacementMaxWidthRatio &&
+    projectedPlotWidth >= input.metrics.rightPlacementMinPlotWidthPx
   ) {
     return "right";
   }
@@ -303,7 +311,7 @@ function withLegendMetricDefaults(
     rightReserveGapPx: metrics?.rightReserveGapPx ?? 12,
     bottomReserveGapPx: metrics?.bottomReserveGapPx ?? 10,
     rightPlacementMinChartWidthPx: metrics?.rightPlacementMinChartWidthPx ?? 420,
-    rightPlacementMaxWidthRatio: metrics?.rightPlacementMaxWidthRatio ?? 0.28,
+    rightPlacementMaxWidthRatio: metrics?.rightPlacementMaxWidthRatio ?? 0.24,
+    rightPlacementMinPlotWidthPx: metrics?.rightPlacementMinPlotWidthPx ?? 260,
   };
 }
-

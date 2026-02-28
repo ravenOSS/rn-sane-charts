@@ -1,9 +1,14 @@
 import React from 'react';
-import { Rect } from '@shopify/react-native-skia';
+import { Group, Rect, Text, matchFont } from '@shopify/react-native-skia';
 import type { Series } from '@rn-sane-charts/core';
 import { stackSeries } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
 import { computeBarSlotWidthPx } from './barGeometry';
+import {
+  resolveVerticalBarDataLabel,
+  toRNFontStyle,
+  type BarDataLabelsConfig,
+} from './dataLabels';
 
 export type StackedBarSeriesProps = {
   series: Series[];
@@ -11,6 +16,7 @@ export type StackedBarSeriesProps = {
   opacity?: number;
   widthRatio?: number;
   baselineY?: number;
+  dataLabels?: BarDataLabelsConfig;
 };
 
 /**
@@ -27,7 +33,7 @@ export type StackedBarSeriesProps = {
  * - `baselineY` offsets the rendered stack without changing the core transform.
  */
 export function StackedBarSeries(props: StackedBarSeriesProps) {
-  const { scales, theme, hiddenSeriesIds, resolveSeriesEmphasis } =
+  const { scales, theme, layout, fonts, hiddenSeriesIds, resolveSeriesEmphasis } =
     useChartContext();
   const opacity = clampOpacity(props.opacity ?? 0.92);
   const widthRatio = clampRatio(props.widthRatio ?? 0.72);
@@ -77,19 +83,54 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
           const rectH = Math.max(1, Math.abs(yStartPx - yEndPx));
           const color =
             props.colors?.[entry.sourceIndex] ??
-            theme.series.palette[entry.sourceIndex % theme.series.palette.length];
+            theme.series.palette[entry.sourceIndex % theme.series.palette.length] ??
+            '#2563EB';
           const emphasis = resolveSeriesEmphasis(entry.series.id);
+          const segmentValue = point.y1 - point.y0;
+          const label = resolveVerticalBarDataLabel({
+            dataLabels: props.dataLabels,
+            value: segmentValue,
+            datum: {
+              x: point.x,
+              y: segmentValue,
+            },
+            seriesId: entry.series.id,
+            rect: {
+              x: x - barWidth / 2,
+              y: rectY,
+              width: barWidth,
+              height: rectH,
+            },
+            outsideDirection: endValue <= startValue ? 'up' : 'down',
+            fillColor: color,
+            defaultTextColor: theme.axis.tick.color,
+            plot: layout.plot,
+            measureText: fonts.measureText,
+            baseFont: fonts.yTickFont,
+          });
+          const labelFont = label ? matchFont(toRNFontStyle(label.font)) : null;
 
           return (
-            <Rect
-              key={`stacked-${entry.series.id}-${index}-${visibleIndex}-${x}`}
-              x={x - barWidth / 2}
-              y={rectY}
-              width={barWidth}
-              height={rectH}
-              color={color}
-              opacity={opacity * emphasis.opacity}
-            />
+            <Group key={`stacked-${entry.series.id}-${index}-${visibleIndex}-${x}`}>
+              <Rect
+                x={x - barWidth / 2}
+                y={rectY}
+                width={barWidth}
+                height={rectH}
+                color={color}
+                opacity={opacity * emphasis.opacity}
+              />
+              {label && labelFont ? (
+                <Text
+                  text={label.text}
+                  font={labelFont}
+                  x={label.x}
+                  y={label.baselineY}
+                  color={label.color}
+                  opacity={opacity * emphasis.opacity}
+                />
+              ) : null}
+            </Group>
           );
         });
       })}

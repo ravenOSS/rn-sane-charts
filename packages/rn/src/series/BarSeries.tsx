@@ -1,8 +1,13 @@
 import React from 'react';
-import { Rect } from '@shopify/react-native-skia';
+import { Group, Rect, Text, matchFont } from '@shopify/react-native-skia';
 import type { Series } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
 import { computeBarSlotWidthPx, resolveBaselineYPx } from './barGeometry';
+import {
+  resolveVerticalBarDataLabel,
+  toRNFontStyle,
+  type BarDataLabelsConfig,
+} from './dataLabels';
 
 export type BarSeriesProps = {
   series: Series;
@@ -10,6 +15,7 @@ export type BarSeriesProps = {
   opacity?: number;
   widthRatio?: number;
   baselineY?: number;
+  dataLabels?: BarDataLabelsConfig;
 };
 
 /**
@@ -23,6 +29,8 @@ export function BarSeries(props: BarSeriesProps) {
   const {
     scales,
     theme,
+    layout,
+    fonts,
     hiddenSeriesIds,
     seriesColorById,
     resolveSeriesEmphasis,
@@ -31,7 +39,8 @@ export function BarSeries(props: BarSeriesProps) {
   const fillColor =
     props.color ??
     seriesColorById.get(props.series.id) ??
-    theme.series.palette[0];
+    theme.series.palette[0] ??
+    '#2563EB';
   const opacity = clampOpacity(props.opacity ?? 0.92);
   const widthRatio = clampWidthRatio(props.widthRatio ?? 0.72);
   const y0 = resolveBaselineYPx(scales.y, props.baselineY);
@@ -52,16 +61,47 @@ export function BarSeries(props: BarSeriesProps) {
 
         const rectY = Math.min(y0, y);
         const rectH = Math.max(1, Math.abs(y0 - y));
+        const label = resolveVerticalBarDataLabel({
+          dataLabels: props.dataLabels,
+          value: datum.y,
+          datum,
+          seriesId: props.series.id,
+          rect: {
+            x: x - barWidth / 2,
+            y: rectY,
+            width: barWidth,
+            height: rectH,
+          },
+          outsideDirection: y <= y0 ? 'up' : 'down',
+          fillColor,
+          defaultTextColor: theme.axis.tick.color,
+          plot: layout.plot,
+          measureText: fonts.measureText,
+          baseFont: fonts.yTickFont,
+        });
+        const labelFont = label ? matchFont(toRNFontStyle(label.font)) : null;
+
         return (
-          <Rect
-            key={`bar-${index}-${x}-${y}`}
-            x={x - barWidth / 2}
-            y={rectY}
-            width={barWidth}
-            height={rectH}
-            color={fillColor}
-            opacity={opacity * emphasis.opacity}
-          />
+          <Group key={`bar-${index}-${x}-${y}`}>
+            <Rect
+              x={x - barWidth / 2}
+              y={rectY}
+              width={barWidth}
+              height={rectH}
+              color={fillColor}
+              opacity={opacity * emphasis.opacity}
+            />
+            {label && labelFont ? (
+              <Text
+                text={label.text}
+                font={labelFont}
+                x={label.x}
+                y={label.baselineY}
+                color={label.color}
+                opacity={opacity * emphasis.opacity}
+              />
+            ) : null}
+          </Group>
         );
       })}
     </>

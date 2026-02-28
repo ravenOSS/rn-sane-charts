@@ -38,7 +38,7 @@ export function makeSkiaMeasureText(fallbackFont?: SkFont): MeasureTextFn {
 
     const resolved =
       matchFont({
-        fontFamily: font.family,
+        fontFamily: normalizeFontFamily(font.family),
         fontSize: font.size,
         fontStyle: font.style,
         fontWeight: normalizeFontWeight(font.weight),
@@ -81,11 +81,20 @@ export function makeSkiaMeasureText(fallbackFont?: SkFont): MeasureTextFn {
 
 function fontCacheKey(font: FontSpec) {
   return [
-    font.family ?? '',
+    normalizeFontFamily(font.family) ?? '',
     String(font.size),
     font.style ?? 'normal',
     String(normalizeFontWeight(font.weight)),
   ].join('|');
+}
+
+function normalizeFontFamily(family?: string) {
+  if (!family) return 'Helvetica';
+  const trimmed = family.trim();
+  if (!trimmed) return 'Helvetica';
+  // Skia resolves system fallback more reliably when family is omitted.
+  if (trimmed.toLowerCase() === 'system') return 'Helvetica';
+  return trimmed;
 }
 
 function normalizeFontWeight(
@@ -102,12 +111,14 @@ function normalizeFontWeight(
   | '700'
   | '800'
   | '900' {
-  if (weight === undefined || weight === 'normal') return '400';
+  if (weight === undefined || weight === 'normal') return 'normal';
   if (weight === 'medium') return '500';
   if (weight === 'semibold') return '600';
-  if (weight === 'bold') return '700';
+  if (weight === 'bold') return 'bold';
   if (typeof weight === 'number') {
-    const normalized = String(weight) as
+    if (weight <= 450) return 'normal';
+    if (weight >= 700) return 'bold';
+    const normalized = String(Math.round(weight / 100) * 100) as
       | '100'
       | '200'
       | '300'
@@ -117,9 +128,9 @@ function normalizeFontWeight(
       | '700'
       | '800'
       | '900';
-    return NUMERIC_WEIGHTS.has(normalized) ? normalized : '400';
+    return NUMERIC_WEIGHTS.has(normalized) ? normalized : 'normal';
   }
-  return '400';
+  return 'normal';
 }
 
 const NUMERIC_WEIGHTS = new Set([

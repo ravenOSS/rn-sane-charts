@@ -162,6 +162,7 @@ function GalleryApp() {
 
   const [activeView, setActiveView] = React.useState<GalleryView>('line');
   const [legendMode, setLegendMode] = React.useState<LegendMode>('focus');
+  const [barLabelsEnabled, setBarLabelsEnabled] = React.useState<boolean>(true);
   const [perfResults, setPerfResults] = React.useState<PerfRunResult[]>([]);
   const [perfRunAt, setPerfRunAt] = React.useState<string>('');
 
@@ -323,7 +324,6 @@ function GalleryApp() {
         id: 'release-cutover',
         x: sampleLineSeries[0].data[24]?.x ?? new Date(2026, 0, 25),
         y: (sampleLineSeries[0].data[24]?.y ?? 0) + 2,
-        label: 'Release cutover',
         color: '#DC2626',
       },
     ],
@@ -509,6 +509,72 @@ function GalleryApp() {
           </View>
         </View>
 
+        {activeView === 'bar' ||
+        activeView === 'groupedBar' ||
+        activeView === 'stackedBar' ? (
+          <View style={styles.legendModeRow}>
+            <Text style={[styles.legendModeLabel, { color: surface.body }]}>
+              Bar labels
+            </Text>
+            <View style={styles.legendModeOptions}>
+              <Pressable
+                onPress={() => setBarLabelsEnabled(true)}
+                style={[
+                  styles.legendModeChip,
+                  {
+                    backgroundColor: barLabelsEnabled
+                      ? surface.chipActiveBg
+                      : surface.chipBg,
+                    borderColor: barLabelsEnabled
+                      ? surface.chipActiveBg
+                      : surface.chipBorder,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.legendModeChipLabel,
+                    {
+                      color: barLabelsEnabled
+                        ? surface.chipActiveText
+                        : surface.chipText,
+                    },
+                  ]}
+                >
+                  On
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setBarLabelsEnabled(false)}
+                style={[
+                  styles.legendModeChip,
+                  {
+                    backgroundColor: !barLabelsEnabled
+                      ? surface.chipActiveBg
+                      : surface.chipBg,
+                    borderColor: !barLabelsEnabled
+                      ? surface.chipActiveBg
+                      : surface.chipBorder,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.legendModeChipLabel,
+                    {
+                      color: !barLabelsEnabled
+                        ? surface.chipActiveText
+                        : surface.chipText,
+                    },
+                  ]}
+                >
+                  Off
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.chartPanel}>
           {activeView === 'line' ? (
             <Chart
@@ -516,7 +582,8 @@ function GalleryApp() {
               height={chartHeight}
               series={sampleLineSeries}
               title='Revenue Plan Tracking'
-              subtitle='Actual vs forecast vs target (last 50 days) • Jan 25 release cutover'
+              subtitle='Actual vs forecast vs target (last 50 days)'
+              storyNote='Jan 25 release cutover'
               xAxisTitle='Date'
               yAxisTitle='USD'
               xTickValues={lineTickValues}
@@ -632,6 +699,9 @@ function GalleryApp() {
                 series={barSeries}
                 color={exampleChartTypeConfig.bar.color}
                 widthRatio={0.68}
+                dataLabels={{
+                  position: barLabelsEnabled ? 'inside' : 'none',
+                }}
               />
             </Chart>
           ) : null}
@@ -662,6 +732,9 @@ function GalleryApp() {
                 series={groupedBarSeries}
                 colors={[...exampleChartTypeConfig.groupedBar.colors]}
                 groupWidthRatio={0.82}
+                dataLabels={{
+                  position: barLabelsEnabled ? 'inside' : 'none',
+                }}
               />
             </Chart>
           ) : null}
@@ -692,6 +765,9 @@ function GalleryApp() {
                 series={stackedBarSeries}
                 colors={[...exampleChartTypeConfig.stackedBar.colors]}
                 widthRatio={0.7}
+                dataLabels={{
+                  position: barLabelsEnabled ? 'inside' : 'none',
+                }}
               />
             </Chart>
           ) : null}

@@ -77,6 +77,7 @@ type ChartProps = {
   series: Series[];
   title?: string;
   subtitle?: string;
+  storyNote?: string;
   xAxisTitle?: string;
   yAxisTitle?: string;
   yIncludeZero?: boolean;
@@ -89,7 +90,7 @@ type ChartProps = {
     show?: boolean;
     position?: "auto" | "right" | "bottom";
     interactive?: boolean;
-    interactionMode?: "toggle" | "isolate";
+    interactionMode?: "focus" | "toggle" | "isolate";
     items?: Array<{ id: string; label?: string; color?: string }>;
   };
   annotations?: {
@@ -119,9 +120,13 @@ Behavior:
 - Built-in defaults are always applied first.
 - `colorScheme` selects the base preset (`"system"` follows device appearance).
 - `theme` is a partial override of defaults.
+- `storyNote` renders concise narrative context under subtitle and wraps to fit
+  the plot width (no ellipsis).
 - Axis label orientation is auto-resolved (`0°`, `45°`, `90°`) with tick skipping.
 - Legend defaults to vertical and auto-positioned (`right` on wider charts,
   otherwise `bottom`), and is hidden for single-series charts unless `show` is forced.
+- Auto right-legend placement only occurs when enough plot width remains after
+  legend reservation; otherwise it falls back to bottom.
 - For bottom legends, label widths are measured and the legend switches to a
   horizontal row only when all items fit the available chart width.
 - `legend.interactive` enables legend tap interactions.
@@ -169,6 +174,7 @@ type SaneChartFonts = {
   yTickFont: FontSpec;
   titleFont: FontSpec;
   subtitleFont: FontSpec;
+  storyNoteFont?: FontSpec;
   xAxisTitleFont?: FontSpec;
   yAxisTitleFont?: FontSpec;
 };
@@ -271,12 +277,22 @@ Data shape:
 Current components:
 
 ```ts
+type BarDataLabelsConfig = {
+  position?: "outside" | "inside" | "none";
+  color?: string;
+  formatter?: (value: number, datum: Datum, seriesId: string) => string;
+  minFontSize?: number;
+  maxFontSize?: number;
+  padding?: number;
+};
+
 type BarSeriesProps = {
   series: Series;
   color?: string;
   opacity?: number;
   widthRatio?: number;
   baselineY?: number;
+  dataLabels?: BarDataLabelsConfig;
 };
 
 type GroupedBarSeriesProps = {
@@ -285,6 +301,7 @@ type GroupedBarSeriesProps = {
   opacity?: number;
   groupWidthRatio?: number;
   baselineY?: number;
+  dataLabels?: BarDataLabelsConfig;
 };
 
 type StackedBarSeriesProps = {
@@ -293,8 +310,15 @@ type StackedBarSeriesProps = {
   opacity?: number;
   widthRatio?: number;
   baselineY?: number;
+  dataLabels?: BarDataLabelsConfig;
 };
 ```
+
+Notes:
+- `dataLabels.position` defaults to `"none"` (opt-in labels).
+- `"outside"` places labels away from the bar baseline direction.
+- `"inside"` places labels near the top interior of each bar/segment.
+- Label font size is auto-fitted per bar and hidden when constraints are too tight.
 
 ---
 

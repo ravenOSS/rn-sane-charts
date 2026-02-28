@@ -43,6 +43,7 @@ export type ChartProps = {
 
   title?: string;
   subtitle?: string;
+  storyNote?: string;
   xAxisTitle?: string;
   yAxisTitle?: string;
   yIncludeZero?: boolean;
@@ -211,8 +212,10 @@ export function Chart(props: ChartProps) {
         text: {
           title: props.title,
           subtitle: props.subtitle,
+          storyNote: props.storyNote,
           titleFont: props.fonts.titleFont,
           subtitleFont: props.fonts.subtitleFont,
+          storyNoteFont: props.fonts.storyNoteFont ?? props.fonts.subtitleFont,
         },
         xAxis: {
           show: true,
@@ -241,6 +244,7 @@ export function Chart(props: ChartProps) {
     props.height,
     props.title,
     props.subtitle,
+    props.storyNote,
     props.xAxisTitle,
     props.yAxisTitle,
     props.yIncludeZero,
@@ -328,19 +332,25 @@ export function Chart(props: ChartProps) {
 
   const skiaFonts = React.useMemo(
     () => ({
-      xTick: matchFont(toSkiaFontStyle(props.fonts.xTickFont)),
-      yTick: matchFont(toSkiaFontStyle(props.fonts.yTickFont)),
-      title: matchFont(toSkiaFontStyle(props.fonts.titleFont)),
-      subtitle: matchFont(toSkiaFontStyle(props.fonts.subtitleFont)),
-      xAxisTitle: matchFont(toSkiaFontStyle(xAxisTitleFont)),
-      yAxisTitle: matchFont(toSkiaFontStyle(yAxisTitleFont)),
-      legend: matchFont(toSkiaFontStyle(props.fonts.yTickFont)),
+      xTick: resolveSkiaFont(props.fonts.xTickFont),
+      yTick: resolveSkiaFont(props.fonts.yTickFont),
+      tooltip: resolveSkiaFont({
+        ...props.fonts.yTickFont,
+        size: Math.max(15, props.fonts.yTickFont.size + 1),
+      }),
+      title: resolveSkiaFont(props.fonts.titleFont),
+      subtitle: resolveSkiaFont(props.fonts.subtitleFont),
+      storyNote: resolveSkiaFont(props.fonts.storyNoteFont ?? props.fonts.subtitleFont),
+      xAxisTitle: resolveSkiaFont(xAxisTitleFont),
+      yAxisTitle: resolveSkiaFont(yAxisTitleFont),
+      legend: resolveSkiaFont(props.fonts.yTickFont),
     }),
     [
       props.fonts.xTickFont,
       props.fonts.yTickFont,
       props.fonts.titleFont,
       props.fonts.subtitleFont,
+      props.fonts.storyNoteFont,
       xAxisTitleFont,
       yAxisTitleFont,
       props.fonts.yTickFont,
@@ -355,6 +365,7 @@ export function Chart(props: ChartProps) {
         yTicks: plan.ticks.y,
         title: props.title,
         subtitle: props.subtitle,
+        storyNote: props.storyNote,
         xAxisTitle: props.xAxisTitle,
         yAxisTitle: props.yAxisTitle,
         fonts: props.fonts,
@@ -365,6 +376,7 @@ export function Chart(props: ChartProps) {
       plan.ticks.y,
       props.title,
       props.subtitle,
+      props.storyNote,
       props.xAxisTitle,
       props.yAxisTitle,
       props.fonts,
@@ -555,7 +567,11 @@ export function Chart(props: ChartProps) {
   const handleTouch = React.useCallback(
     (x: number, y: number) => {
       if (!interactionEnabled || interactiveSeriesPoints.length === 0) return;
-      if (!isPointInRect(x, y, plan.layout.plot)) {
+      const plot = plan.layout.plot;
+      const clampedX = clamp(x, plot.x, plot.x + plot.width);
+      const clampedY = clamp(y, plot.y, plot.y + plot.height);
+
+      if (!isPointInRect(x, y, plot) && snapMode !== 'index') {
         setInteractionState(null);
         return;
       }
@@ -572,7 +588,7 @@ export function Chart(props: ChartProps) {
       }
 
       if (snapMode === 'index') {
-        const targetX = findNearestNumericValue(indexedXAnchors, x);
+        const targetX = findNearestNumericValue(indexedXAnchors, clampedX);
         if (!Number.isFinite(targetX)) {
           setInteractionState(null);
           return;
@@ -584,10 +600,10 @@ export function Chart(props: ChartProps) {
           return;
         }
 
-        const anchor = findNearestPoint(grouped, x, y) ?? grouped[0];
+        const anchor = findNearestPoint(grouped, clampedX, clampedY) ?? grouped[0];
         setInteractionState({
           crosshairX: targetX,
-          crosshairY: anchor?.y ?? y,
+          crosshairY: anchor?.y ?? clampedY,
           anchorXLabel: anchor?.xLabel ?? '',
           points: grouped,
         });
@@ -595,8 +611,8 @@ export function Chart(props: ChartProps) {
       }
 
       const nearest =
-        findNearestPointInScatterIndex(scatterIndex, x, y) ??
-        findNearestPoint(interactiveSeriesPoints, x, y);
+        findNearestPointInScatterIndex(scatterIndex, clampedX, clampedY) ??
+        findNearestPoint(interactiveSeriesPoints, clampedX, clampedY);
       if (!nearest) {
         setInteractionState(null);
         return;
@@ -719,6 +735,17 @@ export function Chart(props: ChartProps) {
             color={theme.axis.tick.color}
           />
         ) : null}
+        {axisGeometry.storyNoteLines.map((line, index) => (
+          <Text
+            key={`story-note-${index}`}
+            text={line.text}
+            font={skiaFonts.storyNote}
+            x={line.x}
+            y={line.baselineY}
+            color={theme.axis.tick.color}
+            opacity={0.92}
+          />
+        ))}
         {props.xAxisTitle ? (
           <Text
             text={props.xAxisTitle}
@@ -854,7 +881,7 @@ export function Chart(props: ChartProps) {
                   chartHeight: props.height,
                   plot: plan.layout.plot,
                   fonts: props.fonts,
-                  skiaFont: skiaFonts.yTick,
+                  skiaFont: skiaFonts.tooltip,
                   colorScheme: resolvedColorScheme,
                 })
               : null}
@@ -959,6 +986,7 @@ function buildAxisGeometry(input: {
   yTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['y'];
   title?: string;
   subtitle?: string;
+  storyNote?: string;
   xAxisTitle?: string;
   yAxisTitle?: string;
   fonts: SaneChartFonts;
@@ -1023,20 +1051,58 @@ function buildAxisGeometry(input: {
   const titleTopY = input.layout.header.y;
   const titleBaselineY =
     titleTopY + baselineOffsetFromTop(input.fonts.titleFont.size);
+  /**
+   * Center chart heading copy to the plot frame, not the full header band.
+   *
+   * Why:
+   * - With right-side legend placement, full-header center drifts away from
+   *   the plotted data center and feels visually offset.
+   * - Using plot center keeps title/subtitle/x-axis title on one shared datum.
+   */
   const titleX =
-    input.layout.header.x +
-    Math.max(0, (input.layout.header.width - (titleMeasured?.width ?? 0)) / 2);
+    input.layout.plot.x +
+    Math.max(0, (input.layout.plot.width - (titleMeasured?.width ?? 0)) / 2);
 
   const subtitleTopY =
     titleTopY + titleHeight + (input.title && input.subtitle ? 4 : 0);
   const subtitleBaselineY =
     subtitleTopY + baselineOffsetFromTop(input.fonts.subtitleFont.size);
   const subtitleX =
-    input.layout.header.x +
-    Math.max(
-      0,
-      (input.layout.header.width - (subtitleMeasured?.width ?? 0)) / 2
-    );
+    input.layout.plot.x +
+    Math.max(0, (input.layout.plot.width - (subtitleMeasured?.width ?? 0)) / 2);
+
+  const storyNoteFont = input.fonts.storyNoteFont ?? input.fonts.subtitleFont;
+  const storyNoteLines =
+    input.storyNote && input.storyNote.trim().length > 0
+      ? wrapTextLines({
+          text: input.storyNote,
+          font: storyNoteFont,
+          maxWidth: input.layout.plot.width,
+          measureText: input.fonts.measureText,
+        })
+      : [];
+  const storyNoteLineGapPx = 2;
+  const storyNoteStartTopY =
+    subtitleTopY +
+    (subtitleMeasured?.height ?? 0) +
+    (storyNoteLines.length > 0 && (input.title || input.subtitle) ? 4 : 0);
+  let storyLineTopY = storyNoteStartTopY;
+  const storyNotePositions = storyNoteLines.map((line) => {
+    const measured = input.fonts.measureText({
+      text: line,
+      font: storyNoteFont,
+      angle: 0,
+    });
+    const topY = storyLineTopY;
+    storyLineTopY += measured.height + storyNoteLineGapPx;
+    return {
+      text: line,
+      x:
+        input.layout.plot.x +
+        Math.max(0, (input.layout.plot.width - measured.width) / 2),
+      baselineY: topY + baselineOffsetFromTop(storyNoteFont.size),
+    };
+  });
 
   const xAxisTitleFont = input.fonts.xAxisTitleFont ?? input.fonts.subtitleFont;
   const yAxisTitleFont = input.fonts.yAxisTitleFont ?? input.fonts.subtitleFont;
@@ -1049,16 +1115,15 @@ function buildAxisGeometry(input: {
       })
     : null;
   /**
-   * Keep chart heading and x-axis title aligned to the same visual center datum.
+   * Center x-axis title to the actual plot width.
    *
    * Why:
-   * - Header text is centered within `layout.header` (full chart width minus padding).
-   * - If x-axis title centers on `layout.plot`, it shifts right whenever y-axis labels
-   *   consume left-side width, which feels unbalanced.
+   * - When legend is placed on the right, plot center diverges from header center.
+   * - Axis title is semantically tied to the x-axis baseline, not chart header.
    */
   const xAxisTitleX =
-    input.layout.header.x +
-    Math.max(0, (input.layout.header.width - (xAxisTitleMeasured?.width ?? 0)) / 2);
+    input.layout.plot.x +
+    Math.max(0, (input.layout.plot.width - (xAxisTitleMeasured?.width ?? 0)) / 2);
   const xAxisTitleTopY =
     input.layout.xAxis.y +
     Math.max(0, input.layout.xAxis.height - (xAxisTitleMeasured?.height ?? 0));
@@ -1097,6 +1162,7 @@ function buildAxisGeometry(input: {
     titleBaselineY,
     subtitleX,
     subtitleBaselineY,
+    storyNoteLines: storyNotePositions,
     xAxisTitleX,
     xAxisTitleBaselineY,
     yAxisTitleCenterX,
@@ -1104,6 +1170,41 @@ function buildAxisGeometry(input: {
     yAxisTitleLocalX,
     yAxisTitleBaselineOffset,
   };
+}
+
+function wrapTextLines(input: {
+  text: string;
+  font: SaneChartFonts['xTickFont'];
+  maxWidth: number;
+  measureText: SaneChartFonts['measureText'];
+}): string[] {
+  const normalized = input.text.trim().replace(/\s+/g, ' ');
+  if (!normalized) return [];
+  if (input.maxWidth <= 0) return [normalized];
+
+  const words = normalized.split(' ');
+  const lines: string[] = [];
+  let current = '';
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    const width = input.measureText({
+      text: candidate,
+      font: input.font,
+      angle: 0,
+    }).width;
+
+    if (width <= input.maxWidth || !current) {
+      current = candidate;
+      continue;
+    }
+
+    lines.push(current);
+    current = word;
+  }
+
+  if (current) lines.push(current);
+  return lines;
 }
 
 /**
@@ -1115,19 +1216,51 @@ function buildAxisGeometry(input: {
  */
 function toSkiaFontStyle(font: SaneChartFonts['xTickFont']) {
   return {
-    fontFamily: font.family,
+    fontFamily: normalizeFontFamily(font.family),
     fontSize: font.size,
-    fontStyle: font.style,
+    fontStyle: font.style ?? 'normal',
     fontWeight: normalizeFontWeight(font.weight),
   };
+}
+
+/**
+ * Resolve a Skia font defensively.
+ *
+ * Why:
+ * - Some environments/devices may not resolve family+weight combinations.
+ * - Rendering should degrade to a readable default font rather than dropping all
+ *   chart text (legend, tooltip, ticks, titles).
+ */
+function resolveSkiaFont(font: SaneChartFonts['xTickFont']) {
+  return (
+    matchFont(toSkiaFontStyle(font)) ??
+    matchFont({
+      fontFamily: 'Helvetica',
+      fontSize: font.size,
+      fontStyle: 'normal',
+      fontWeight: '400',
+    }) ??
+    matchFont({ fontSize: font.size }) ??
+    matchFont({ fontSize: 12 })
+  );
+}
+
+function normalizeFontFamily(family?: string) {
+  if (!family) return 'Helvetica';
+  const trimmed = family.trim();
+  if (!trimmed) return 'Helvetica';
+  if (trimmed.toLowerCase() === 'system') return 'Helvetica';
+  return trimmed;
 }
 
 function normalizeFontWeight(
   weight: SaneChartFonts['xTickFont']['weight']
 ): SkiaFontWeight {
-  if (weight === undefined) return '400';
+  if (weight === undefined) return 'normal';
   if (typeof weight === 'number') {
-    const normalized = String(weight) as SkiaFontWeight;
+    if (weight <= 450) return 'normal';
+    if (weight >= 700) return 'bold';
+    const normalized = String(Math.round(weight / 100) * 100) as SkiaFontWeight;
     const supportedWeights: SkiaFontWeight[] = [
       '100',
       '200',
@@ -1139,12 +1272,12 @@ function normalizeFontWeight(
       '800',
       '900',
     ];
-    return supportedWeights.includes(normalized) ? normalized : '400';
+    return supportedWeights.includes(normalized) ? normalized : 'normal';
   }
   if (weight === 'semibold') return '600';
   if (weight === 'medium') return '500';
   if (weight === 'bold') return '700';
-  return '400';
+  return 'normal';
 }
 
 type SkiaFontWeight =
@@ -1312,11 +1445,15 @@ function renderTooltip(input: {
   skiaFont: ReturnType<typeof matchFont>;
   colorScheme: 'light' | 'dark';
 }) {
-  const padding = 8;
-  const lineGap = 4;
+  const padding = 10;
+  const lineGap = 5;
   const rowPrefixGap = 6;
-  const swatchSize = 8;
-  const headerFont = input.fonts.yTickFont;
+  const swatchSize = 9;
+  const tooltipFont = {
+    ...input.fonts.yTickFont,
+    size: Math.max(15, input.fonts.yTickFont.size + 1),
+  };
+  const headerFont = tooltipFont;
 
   const title = input.active.anchorXLabel;
   const titleMeasure = input.fonts.measureText({
@@ -1328,14 +1465,14 @@ function renderTooltip(input: {
     const rowText = `${point.seriesId}: ${point.yLabel}`;
     const m = input.fonts.measureText({
       text: rowText,
-      font: input.fonts.yTickFont,
+      font: tooltipFont,
       angle: 0,
     });
     return { text: rowText, width: m.width, height: m.height, color: point.color };
   });
 
   const rowHeight = Math.max(
-    input.fonts.yTickFont.size,
+    tooltipFont.size,
     ...rowMeasures.map((row) => row.height)
   );
   const textWidth = Math.max(titleMeasure.width, ...rowMeasures.map((row) => row.width + swatchSize + rowPrefixGap));
@@ -1396,7 +1533,7 @@ function renderTooltip(input: {
       />
       {rowMeasures.map((row, index) => {
         const topY = rowsStartY + index * (rowHeight + 2);
-        const baselineY = topY + baselineOffsetFromTop(input.fonts.yTickFont.size);
+        const baselineY = topY + baselineOffsetFromTop(tooltipFont.size);
         const swatchY = topY + Math.max(0, (rowHeight - swatchSize) / 2);
         const textX = x + padding + swatchSize + rowPrefixGap;
         return (

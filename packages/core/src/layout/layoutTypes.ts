@@ -53,8 +53,10 @@ export type AxisSpec = {
 export type ChartTextSpec = {
   title?: string;
   subtitle?: string;
+  storyNote?: string;
   titleFont: FontSpec;
   subtitleFont: FontSpec;
+  storyNoteFont?: FontSpec;
 };
 
 /**

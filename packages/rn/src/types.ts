@@ -56,6 +56,7 @@ export type SaneChartFonts = {
   yTickFont: FontSpec;
   titleFont: FontSpec;
   subtitleFont: FontSpec;
+  storyNoteFont?: FontSpec;
 
   /**
    * Optional axis title fonts.

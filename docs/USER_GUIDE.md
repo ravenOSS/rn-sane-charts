@@ -152,6 +152,63 @@ Use `Chart.annotations.markers` for lightweight in-plot callouts:
 </Chart>
 ```
 
+## Story Note (Narrative Context)
+
+Use `storyNote` when the chart needs a short, readable narrative cue.
+
+```tsx
+<Chart
+  title='Revenue Plan Tracking'
+  subtitle='Actual vs forecast vs target (last 50 days)'
+  storyNote='Jan 25 release cutover'
+  {...rest}
+>
+  ...
+</Chart>
+```
+
+Behavior:
+
+- Renders under subtitle, above plot.
+- Auto-wraps to available plot width (no ellipsis).
+- Adds no extra header gap when omitted.
+
+Optional font override:
+
+```tsx
+fonts={{
+  ...fonts,
+  storyNoteFont: { size: 12, family: fontFamily, weight: "medium" },
+}}
+```
+
+## Bar Data Labels
+
+Bar renderers support optional value labels:
+
+```tsx
+<BarSeries
+  series={barSeries}
+  dataLabels={{ position: "inside" }}
+/>
+```
+
+Supported positions:
+
+- `"none"` (default)
+- `"inside"` (near bar top interior)
+- `"outside"` (away from bar baseline direction)
+
+Also available on `GroupedBarSeries` and `StackedBarSeries`.
+
+Optional controls:
+
+- `color`
+- `formatter(value, datum, seriesId)`
+- `minFontSize`
+- `maxFontSize`
+- `padding`
+
 ## Sample Dataset Catalog
 
 The examples app includes ready-made datasets for each MVP chart type in:

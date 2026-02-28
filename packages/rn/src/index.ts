@@ -10,6 +10,10 @@ export { GroupedBarSeries } from './series/GroupedBarSeries';
 export { StackedBarSeries } from './series/StackedBarSeries';
 export { HistogramSeries } from './series/HistogramSeries';
 export type { MarkerStyle, MarkerSymbol } from './series/markerSymbol';
+export type {
+  BarDataLabelPosition,
+  BarDataLabelsConfig,
+} from './series/dataLabels';
 
 export { darkTheme, defaultTheme, lightTheme } from './theme/defaultTheme';
 
