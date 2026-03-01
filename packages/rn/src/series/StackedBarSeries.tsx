@@ -1,9 +1,15 @@
 import React from 'react';
 import { Group, Rect, Text, matchFont } from '@shopify/react-native-skia';
-import type { Series } from '@rn-sane-charts/core';
-import { stackSeries } from '@rn-sane-charts/core';
+import {
+  sortCategoricalSeries,
+  stackSeries,
+  type BarSortBy,
+  type BarSortDirection,
+  type MultiSeriesSortMetric,
+  type Series,
+} from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
-import { computeBarSlotWidthPx } from './barGeometry';
+import { computeBarDensity, resolveAutoBarWidthPx } from './barGeometry';
 import {
   resolveVerticalBarDataLabel,
   toRNFontStyle,
@@ -14,6 +20,9 @@ export type StackedBarSeriesProps = {
   series: Series[];
   colors?: readonly string[];
   opacity?: number;
+  sort?: BarSortDirection;
+  sortBy?: BarSortBy;
+  sortMetric?: MultiSeriesSortMetric;
   widthRatio?: number;
   baselineY?: number;
   dataLabels?: BarDataLabelsConfig;
@@ -36,7 +45,6 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
   const { scales, theme, layout, fonts, hiddenSeriesIds, resolveSeriesEmphasis } =
     useChartContext();
   const opacity = clampOpacity(props.opacity ?? 0.92);
-  const widthRatio = clampRatio(props.widthRatio ?? 0.72);
   const baselineValue = props.baselineY ?? 0;
   const visibleSeries = React.useMemo(
     () =>
@@ -45,15 +53,54 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
         .filter((entry) => !hiddenSeriesIds.has(entry.series.id)),
     [props.series, hiddenSeriesIds]
   );
-
-  const slotWidth = React.useMemo(
-    () => computeBarSlotWidthPx(visibleSeries.map((entry) => entry.series), scales.x),
-    [visibleSeries, scales.x]
+  const sortedVisibleSeries = React.useMemo(
+    () =>
+      sortCategoricalSeries(
+        visibleSeries.map((entry) => entry.series),
+        {
+          direction: props.sort ?? 'none',
+          by: props.sortBy ?? 'value',
+          metric: props.sortMetric ?? 'sum',
+        }
+      ),
+    [visibleSeries, props.sort, props.sortBy, props.sortMetric]
   );
-  const barWidth = Math.max(2, slotWidth * widthRatio);
-  const stacked = React.useMemo(
-    () => stackSeries(visibleSeries.map((entry) => entry.series)),
+  const visibleSeriesById = React.useMemo(
+    () => new Map(visibleSeries.map((entry) => [entry.series.id, entry] as const)),
     [visibleSeries]
+  );
+  const orderedEntries = React.useMemo(
+    () =>
+      sortedVisibleSeries
+        .map((series) => {
+          const source = visibleSeriesById.get(series.id);
+          if (!source) return null;
+          return { ...source, series };
+        })
+        .filter(
+          (
+            entry
+          ): entry is {
+            series: Series;
+            sourceIndex: number;
+          } => entry !== null
+        ),
+    [sortedVisibleSeries, visibleSeriesById]
+  );
+
+  const density = React.useMemo(
+    () => computeBarDensity(orderedEntries.map((entry) => entry.series), scales.x),
+    [orderedEntries, scales.x]
+  );
+  const barWidth = React.useMemo(() => {
+    if (props.widthRatio !== undefined) {
+      return Math.max(2, density.slotWidthPx * clampRatio(props.widthRatio));
+    }
+    return resolveAutoBarWidthPx(density);
+  }, [density, props.widthRatio]);
+  const stacked = React.useMemo(
+    () => stackSeries(orderedEntries.map((entry) => entry.series)),
+    [orderedEntries]
   );
   const maxLen = Math.max(0, ...stacked.map((entry) => entry.data.length));
 
@@ -65,7 +112,7 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
         const x = scales.x(xDatum.x as number | Date);
         if (!Number.isFinite(x)) return null;
 
-        return visibleSeries.map((entry, visibleIndex) => {
+        return orderedEntries.map((entry, visibleIndex) => {
           const stackedLayer = stacked[visibleIndex];
           const point = stackedLayer?.data[index];
           if (!point || !Number.isFinite(point.y)) return null;
@@ -108,7 +155,11 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
             measureText: fonts.measureText,
             baseFont: fonts.yTickFont,
           });
-          const labelFont = label ? matchFont(toRNFontStyle(label.font)) : null;
+          const labelFont = label
+            ? matchFont(toRNFontStyle(label.font)) ??
+              matchFont({ fontSize: label.font.size }) ??
+              matchFont({ fontSize: 12 })
+            : null;
 
           return (
             <Group key={`stacked-${entry.series.id}-${index}-${visibleIndex}-${x}`}>

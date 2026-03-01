@@ -15,7 +15,7 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
-import type { Series } from '@rn-sane-charts/core';
+import type { BarSortBy, BarSortDirection, Series } from '@rn-sane-charts/core';
 import { binHistogram, stackSeries } from '@rn-sane-charts/core';
 import {
   AreaSeries,
@@ -81,6 +81,15 @@ const legendModeOptions: { id: LegendMode; label: string }[] = [
   { id: 'focus', label: 'Focus' },
   { id: 'toggle', label: 'Toggle' },
   { id: 'isolate', label: 'Isolate' },
+];
+const barSortDirectionOptions: { id: BarSortDirection; label: string }[] = [
+  { id: 'none', label: 'None' },
+  { id: 'desc', label: 'Desc' },
+  { id: 'asc', label: 'Asc' },
+];
+const barSortByOptions: { id: BarSortBy; label: string }[] = [
+  { id: 'value', label: 'Value' },
+  { id: 'label', label: 'Label' },
 ];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -163,6 +172,9 @@ function GalleryApp() {
   const [activeView, setActiveView] = React.useState<GalleryView>('line');
   const [legendMode, setLegendMode] = React.useState<LegendMode>('focus');
   const [barLabelsEnabled, setBarLabelsEnabled] = React.useState<boolean>(true);
+  const [barSortDirection, setBarSortDirection] =
+    React.useState<BarSortDirection>('none');
+  const [barSortBy, setBarSortBy] = React.useState<BarSortBy>('value');
   const [perfResults, setPerfResults] = React.useState<PerfRunResult[]>([]);
   const [perfRunAt, setPerfRunAt] = React.useState<string>('');
 
@@ -310,6 +322,10 @@ function GalleryApp() {
           ],
       })),
     [stackedAreaSeries]
+  );
+  const stackedAreaChartSeries = React.useMemo<Series[]>(
+    () => [...stackedAreaSeries, ...stackedAreaDomainSeries],
+    [stackedAreaSeries, stackedAreaDomainSeries]
   );
   const lineTickValues = React.useMemo(
     () =>
@@ -514,6 +530,80 @@ function GalleryApp() {
         activeView === 'stackedBar' ? (
           <View style={styles.legendModeRow}>
             <Text style={[styles.legendModeLabel, { color: surface.body }]}>
+              Sort direction
+            </Text>
+            <View style={styles.legendModeOptions}>
+              {barSortDirectionOptions.map((option) => {
+                const isActive = option.id === barSortDirection;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => setBarSortDirection(option.id)}
+                    style={[
+                      styles.legendModeChip,
+                      {
+                        backgroundColor: isActive ? surface.chipActiveBg : surface.chipBg,
+                        borderColor: isActive ? surface.chipActiveBg : surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.legendModeChipLabel,
+                        { color: isActive ? surface.chipActiveText : surface.chipText },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
+        {activeView === 'bar' ||
+        activeView === 'groupedBar' ||
+        activeView === 'stackedBar' ? (
+          <View style={styles.legendModeRow}>
+            <Text style={[styles.legendModeLabel, { color: surface.body }]}>
+              Sort by
+            </Text>
+            <View style={styles.legendModeOptions}>
+              {barSortByOptions.map((option) => {
+                const isActive = option.id === barSortBy;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => setBarSortBy(option.id)}
+                    style={[
+                      styles.legendModeChip,
+                      {
+                        backgroundColor: isActive ? surface.chipActiveBg : surface.chipBg,
+                        borderColor: isActive ? surface.chipActiveBg : surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.legendModeChipLabel,
+                        { color: isActive ? surface.chipActiveText : surface.chipText },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
+        {activeView === 'bar' ||
+        activeView === 'groupedBar' ||
+        activeView === 'stackedBar' ? (
+          <View style={styles.legendModeRow}>
+            <Text style={[styles.legendModeLabel, { color: surface.body }]}>
               Bar labels
             </Text>
             <View style={styles.legendModeOptions}>
@@ -654,7 +744,7 @@ function GalleryApp() {
             <Chart
               width={chartWidth}
               height={chartHeight}
-              series={stackedAreaDomainSeries}
+              series={stackedAreaChartSeries}
               title='Traffic Source Mix'
               subtitle='Stacked daily contribution by channel'
               xAxisTitle='Date'
@@ -698,7 +788,8 @@ function GalleryApp() {
               <BarSeries
                 series={barSeries}
                 color={exampleChartTypeConfig.bar.color}
-                widthRatio={0.68}
+                sort={barSortDirection}
+                sortBy={barSortBy}
                 dataLabels={{
                   position: barLabelsEnabled ? 'inside' : 'none',
                 }}
@@ -731,7 +822,9 @@ function GalleryApp() {
               <GroupedBarSeries
                 series={groupedBarSeries}
                 colors={[...exampleChartTypeConfig.groupedBar.colors]}
-                groupWidthRatio={0.82}
+                sort={barSortDirection}
+                sortBy={barSortBy}
+                sortMetric='sum'
                 dataLabels={{
                   position: barLabelsEnabled ? 'inside' : 'none',
                 }}
@@ -764,7 +857,9 @@ function GalleryApp() {
               <StackedBarSeries
                 series={stackedBarSeries}
                 colors={[...exampleChartTypeConfig.stackedBar.colors]}
-                widthRatio={0.7}
+                sort={barSortDirection}
+                sortBy={barSortBy}
+                sortMetric='sum'
                 dataLabels={{
                   position: barLabelsEnabled ? 'inside' : 'none',
                 }}

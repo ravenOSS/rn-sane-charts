@@ -290,6 +290,8 @@ type BarSeriesProps = {
   series: Series;
   color?: string;
   opacity?: number;
+  sort?: "none" | "asc" | "desc";
+  sortBy?: "value" | "label";
   widthRatio?: number;
   baselineY?: number;
   dataLabels?: BarDataLabelsConfig;
@@ -299,6 +301,9 @@ type GroupedBarSeriesProps = {
   series: Series[];
   colors?: readonly string[];
   opacity?: number;
+  sort?: "none" | "asc" | "desc";
+  sortBy?: "value" | "label";
+  sortMetric?: "sum" | "firstSeries";
   groupWidthRatio?: number;
   baselineY?: number;
   dataLabels?: BarDataLabelsConfig;
@@ -308,6 +313,9 @@ type StackedBarSeriesProps = {
   series: Series[];
   colors?: readonly string[];
   opacity?: number;
+  sort?: "none" | "asc" | "desc";
+  sortBy?: "value" | "label";
+  sortMetric?: "sum" | "firstSeries";
   widthRatio?: number;
   baselineY?: number;
   dataLabels?: BarDataLabelsConfig;
@@ -319,6 +327,10 @@ Notes:
 - `"outside"` places labels away from the bar baseline direction.
 - `"inside"` places labels near the top interior of each bar/segment.
 - Label font size is auto-fitted per bar and hidden when constraints are too tight.
+- `sort` defaults to `"none"` and preserves input category order.
+- `sortBy: "value"` orders by bar value (single series) or per-category aggregate
+  (`GroupedBarSeries`/`StackedBarSeries` use `sortMetric`).
+- `sortBy: "label"` orders by category key (`x`) using deterministic stable sort.
 
 ---
 

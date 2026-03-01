@@ -209,6 +209,30 @@ Optional controls:
 - `maxFontSize`
 - `padding`
 
+## Bar Sorting (Single, Grouped, Stacked)
+
+Bar renderers support optional deterministic category sorting:
+
+```tsx
+<GroupedBarSeries
+  series={groupedSeries}
+  sort='desc'
+  sortBy='value'
+  sortMetric='sum'
+/>
+```
+
+Options:
+
+- `sort`: `"none"` (default), `"asc"`, `"desc"`
+- `sortBy`: `"value"` (default), `"label"`
+- `sortMetric` (grouped/stacked only): `"sum"` (default), `"firstSeries"`
+
+Notes:
+
+- Sorting is stable for equal keys (input order preserved).
+- With `sortBy='label'`, categories are ordered by `x` values.
+
 ## Sample Dataset Catalog
 
 The examples app includes ready-made datasets for each MVP chart type in:

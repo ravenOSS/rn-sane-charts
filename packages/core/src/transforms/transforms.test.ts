@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Series } from "../model/types";
 import { downsampleSeries } from "./downsample";
+import { sortCategoricalSeries } from "./sortCategoricalSeries";
 import { stackSeries } from "./stack";
 
 describe("stackSeries", () => {
@@ -82,3 +83,70 @@ describe("downsampleSeries", () => {
   });
 });
 
+describe("sortCategoricalSeries", () => {
+  it("sorts single-series categories by value descending", () => {
+    const source: Series[] = [
+      {
+        id: "Revenue",
+        data: [
+          { x: 0, y: 20 },
+          { x: 1, y: 10 },
+          { x: 2, y: 30 },
+        ],
+      },
+    ];
+
+    const out = sortCategoricalSeries(source, {
+      direction: "desc",
+      by: "value",
+    });
+    expect(out[0]?.data.map((d) => d.x)).toEqual([2, 0, 1]);
+    expect(out[0]?.data.map((d) => d.y)).toEqual([30, 20, 10]);
+  });
+
+  it("sorts multi-series categories by row sum ascending", () => {
+    const source: Series[] = [
+      {
+        id: "A",
+        data: [
+          { x: 0, y: 8 },
+          { x: 1, y: 4 },
+          { x: 2, y: 3 },
+        ],
+      },
+      {
+        id: "B",
+        data: [
+          { x: 0, y: 1 },
+          { x: 1, y: 2 },
+          { x: 2, y: 5 },
+        ],
+      },
+    ];
+
+    const out = sortCategoricalSeries(source, {
+      direction: "asc",
+      by: "value",
+      metric: "sum",
+    });
+
+    expect(out[0]?.data.map((d) => d.x)).toEqual([1, 2, 0]);
+    expect(out[1]?.data.map((d) => d.x)).toEqual([1, 2, 0]);
+    expect(out[0]?.data.map((d) => d.y)).toEqual([4, 3, 8]);
+    expect(out[1]?.data.map((d) => d.y)).toEqual([2, 5, 1]);
+  });
+
+  it("preserves input order when direction is none", () => {
+    const source: Series[] = [
+      {
+        id: "S",
+        data: [
+          { x: 2, y: 3 },
+          { x: 0, y: 9 },
+        ],
+      },
+    ];
+    const out = sortCategoricalSeries(source, { direction: "none", by: "label" });
+    expect(out[0]?.data.map((d) => d.x)).toEqual([2, 0]);
+  });
+});

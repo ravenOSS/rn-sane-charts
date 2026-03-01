@@ -187,9 +187,9 @@ function chooseAutoFontSpec(input: {
 
 export function toRNFontStyle(font: FontSpec): RNFontStyle {
   return {
-    fontFamily: font.family,
+    fontFamily: normalizeFontFamily(font.family),
     fontSize: font.size,
-    fontStyle: font.style,
+    fontStyle: font.style ?? 'normal',
     fontWeight: normalizeFontWeight(font.weight),
   };
 }
@@ -270,7 +270,15 @@ function normalizeFontWeight(
   if (weight === 'bold' || weight === 'normal') return weight;
   if (weight === 'medium') return '500';
   if (weight === 'semibold') return '600';
-  return undefined;
+  return 'normal';
+}
+
+function normalizeFontFamily(family?: string): string {
+  if (!family) return 'Helvetica';
+  const trimmed = family.trim();
+  if (!trimmed) return 'Helvetica';
+  if (trimmed.toLowerCase() === 'system') return 'Helvetica';
+  return trimmed;
 }
 
 /**

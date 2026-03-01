@@ -1,8 +1,17 @@
 import React from 'react';
 import { Group, Rect, Text, matchFont } from '@shopify/react-native-skia';
-import type { Series } from '@rn-sane-charts/core';
+import {
+  sortCategoricalSeries,
+  type BarSortDirection,
+  type BarSortBy,
+  type Series,
+} from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
-import { computeBarSlotWidthPx, resolveBaselineYPx } from './barGeometry';
+import {
+  computeBarDensity,
+  resolveAutoBarWidthPx,
+  resolveBaselineYPx,
+} from './barGeometry';
 import {
   resolveVerticalBarDataLabel,
   toRNFontStyle,
@@ -13,6 +22,8 @@ export type BarSeriesProps = {
   series: Series;
   color?: string;
   opacity?: number;
+  sort?: BarSortDirection;
+  sortBy?: BarSortBy;
   widthRatio?: number;
   baselineY?: number;
   dataLabels?: BarDataLabelsConfig;
@@ -22,8 +33,8 @@ export type BarSeriesProps = {
  * Draw a single bar series against the chart x/y scales.
  *
  * Width heuristic:
- * - We infer slot width from neighboring x positions and apply `widthRatio`.
- * - This keeps bars legible across dense and sparse domains without extra props.
+ * - Default behavior uses adaptive width from slot density + category count.
+ * - `widthRatio` remains an override for callers that need a specific ratio.
  */
 export function BarSeries(props: BarSeriesProps) {
   const {
@@ -36,25 +47,37 @@ export function BarSeries(props: BarSeriesProps) {
     resolveSeriesEmphasis,
   } = useChartContext();
   if (hiddenSeriesIds.has(props.series.id)) return null;
+  const sortedSeries = React.useMemo(() => {
+    const out = sortCategoricalSeries([props.series], {
+      direction: props.sort ?? 'none',
+      by: props.sortBy ?? 'value',
+    });
+    return out[0] ?? props.series;
+  }, [props.series, props.sort, props.sortBy]);
+
   const fillColor =
     props.color ??
     seriesColorById.get(props.series.id) ??
     theme.series.palette[0] ??
     '#2563EB';
   const opacity = clampOpacity(props.opacity ?? 0.92);
-  const widthRatio = clampWidthRatio(props.widthRatio ?? 0.72);
   const y0 = resolveBaselineYPx(scales.y, props.baselineY);
 
-  const slotWidth = React.useMemo(
-    () => computeBarSlotWidthPx([props.series], scales.x),
-    [props.series, scales.x]
+  const density = React.useMemo(
+    () => computeBarDensity([sortedSeries], scales.x),
+    [sortedSeries, scales.x]
   );
-  const barWidth = Math.max(2, slotWidth * widthRatio);
+  const barWidth = React.useMemo(() => {
+    if (props.widthRatio !== undefined) {
+      return Math.max(2, density.slotWidthPx * clampWidthRatio(props.widthRatio));
+    }
+    return resolveAutoBarWidthPx(density);
+  }, [density, props.widthRatio]);
   const emphasis = resolveSeriesEmphasis(props.series.id);
 
   return (
     <>
-      {props.series.data.map((datum, index) => {
+      {sortedSeries.data.map((datum, index) => {
         const x = scales.x(datum.x);
         const y = scales.y(datum.y);
         if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
@@ -79,7 +102,11 @@ export function BarSeries(props: BarSeriesProps) {
           measureText: fonts.measureText,
           baseFont: fonts.yTickFont,
         });
-        const labelFont = label ? matchFont(toRNFontStyle(label.font)) : null;
+        const labelFont = label
+          ? matchFont(toRNFontStyle(label.font)) ??
+            matchFont({ fontSize: label.font.size }) ??
+            matchFont({ fontSize: 12 })
+          : null;
 
         return (
           <Group key={`bar-${index}-${x}-${y}`}>

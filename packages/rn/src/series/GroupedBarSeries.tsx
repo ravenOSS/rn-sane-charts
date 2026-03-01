@@ -1,8 +1,18 @@
 import React from 'react';
 import { Group, Rect, Text, matchFont } from '@shopify/react-native-skia';
-import type { Series } from '@rn-sane-charts/core';
+import {
+  sortCategoricalSeries,
+  type BarSortBy,
+  type BarSortDirection,
+  type MultiSeriesSortMetric,
+  type Series,
+} from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
-import { computeBarSlotWidthPx, resolveBaselineYPx } from './barGeometry';
+import {
+  computeBarDensity,
+  resolveAutoGroupedBarGeometry,
+  resolveBaselineYPx,
+} from './barGeometry';
 import {
   resolveVerticalBarDataLabel,
   toRNFontStyle,
@@ -13,6 +23,9 @@ export type GroupedBarSeriesProps = {
   series: Series[];
   colors?: readonly string[];
   opacity?: number;
+  sort?: BarSortDirection;
+  sortBy?: BarSortBy;
+  sortMetric?: MultiSeriesSortMetric;
   groupWidthRatio?: number;
   baselineY?: number;
   dataLabels?: BarDataLabelsConfig;
@@ -29,7 +42,6 @@ export function GroupedBarSeries(props: GroupedBarSeriesProps) {
   const { scales, theme, layout, fonts, hiddenSeriesIds, resolveSeriesEmphasis } =
     useChartContext();
   const opacity = clampOpacity(props.opacity ?? 0.92);
-  const groupWidthRatio = clampRatio(props.groupWidthRatio ?? 0.82);
   const y0 = resolveBaselineYPx(scales.y, props.baselineY);
   const visibleSeries = React.useMemo(
     () =>
@@ -38,26 +50,78 @@ export function GroupedBarSeries(props: GroupedBarSeriesProps) {
         .filter((entry) => !hiddenSeriesIds.has(entry.series.id)),
     [props.series, hiddenSeriesIds]
   );
-
-  const slotWidth = React.useMemo(
-    () => computeBarSlotWidthPx(visibleSeries.map((entry) => entry.series), scales.x),
-    [visibleSeries, scales.x]
+  const sortedVisibleSeries = React.useMemo(
+    () =>
+      sortCategoricalSeries(
+        visibleSeries.map((entry) => entry.series),
+        {
+          direction: props.sort ?? 'none',
+          by: props.sortBy ?? 'value',
+          metric: props.sortMetric ?? 'sum',
+        }
+      ),
+    [visibleSeries, props.sort, props.sortBy, props.sortMetric]
+  );
+  const visibleSeriesById = React.useMemo(
+    () => new Map(visibleSeries.map((entry) => [entry.series.id, entry] as const)),
+    [visibleSeries]
+  );
+  const orderedEntries = React.useMemo(
+    () =>
+      sortedVisibleSeries
+        .map((series) => {
+          const source = visibleSeriesById.get(series.id);
+          if (!source) return null;
+          return { ...source, series };
+        })
+        .filter(
+          (
+            entry
+          ): entry is {
+            series: Series;
+            sourceIndex: number;
+          } => entry !== null
+        ),
+    [sortedVisibleSeries, visibleSeriesById]
   );
 
-  const groupWidth = Math.max(4, slotWidth * groupWidthRatio);
-  const seriesCount = Math.max(1, visibleSeries.length);
-  const barWidth = Math.max(2, groupWidth / seriesCount);
+  const density = React.useMemo(
+    () => computeBarDensity(orderedEntries.map((entry) => entry.series), scales.x),
+    [orderedEntries, scales.x]
+  );
+  const seriesCount = Math.max(1, orderedEntries.length);
+  const geometry = React.useMemo(() => {
+    if (props.groupWidthRatio !== undefined) {
+      const groupWidth = Math.max(
+        4,
+        density.slotWidthPx * clampRatio(props.groupWidthRatio)
+      );
+      return {
+        groupWidthPx: groupWidth,
+        innerGapPx: 0,
+        barWidthPx: Math.max(2, groupWidth / seriesCount),
+      };
+    }
+    return resolveAutoGroupedBarGeometry({
+      slotWidthPx: density.slotWidthPx,
+      categoryCount: density.categoryCount,
+      seriesCount,
+    });
+  }, [density, props.groupWidthRatio, seriesCount]);
+  const groupWidth = geometry.groupWidthPx;
+  const barWidth = geometry.barWidthPx;
+  const innerGap = geometry.innerGapPx;
 
   return (
     <>
-      {visibleSeries.map((entry, visibleIndex) =>
+      {orderedEntries.map((entry, visibleIndex) =>
         entry.series.data.map((datum, index) => {
           const x = scales.x(datum.x);
           const y = scales.y(datum.y);
           if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
 
           const startX = x - groupWidth / 2;
-          const barX = startX + visibleIndex * barWidth;
+          const barX = startX + visibleIndex * (barWidth + innerGap);
           const rectY = Math.min(y0, y);
           const rectH = Math.max(1, Math.abs(y0 - y));
 
@@ -84,7 +148,11 @@ export function GroupedBarSeries(props: GroupedBarSeriesProps) {
             measureText: fonts.measureText,
             baseFont: fonts.yTickFont,
           });
-          const labelFont = label ? matchFont(toRNFontStyle(label.font)) : null;
+          const labelFont = label
+            ? matchFont(toRNFontStyle(label.font)) ??
+              matchFont({ fontSize: label.font.size }) ??
+              matchFont({ fontSize: 12 })
+            : null;
 
           return (
             <Group key={`grouped-${entry.series.id}-${index}-${barX}-${rectY}`}>

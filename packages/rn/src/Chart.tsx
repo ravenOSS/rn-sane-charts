@@ -420,6 +420,9 @@ export function Chart(props: ChartProps) {
     );
 
     seriesForPlan.forEach((series, seriesIndex) => {
+      // Internal helper series (domain anchors, synthetic totals) should affect
+      // layout domains but must never leak into user-facing tooltip content.
+      if (isInternalSeriesId(series.id)) return;
       const sourceIndex =
         sourceSeriesIndexById.get(series.id) ?? seriesIndex;
       const color =
@@ -907,6 +910,17 @@ export function Chart(props: ChartProps) {
       </Canvas>
     </View>
   );
+}
+
+/**
+ * Internal helper series naming convention.
+ *
+ * Why this guard exists:
+ * - Examples and future adapters may include synthetic series for domain shaping.
+ * - Prefixing with "__" keeps this opt-in and deterministic without expanding API.
+ */
+function isInternalSeriesId(id: string): boolean {
+  return id.startsWith('__');
 }
 
 /**
