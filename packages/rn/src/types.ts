@@ -1,6 +1,7 @@
 import type { FontSpec, MeasureTextFn } from '@rn-sane-charts/core';
 
 export type ChartColorScheme = 'light' | 'dark' | 'system';
+export type ChartOrientation = 'vertical' | 'horizontal';
 
 export type ChartInteraction = {
   enabled?: boolean;

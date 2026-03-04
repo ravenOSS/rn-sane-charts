@@ -154,6 +154,114 @@ export function resolveVerticalBarDataLabel(input: {
   };
 }
 
+/**
+ * Resolve one data label for a horizontal bar geometry.
+ *
+ * Strategy mirrors vertical bars but swaps axis logic:
+ * - Width constraints dominate for inside labels.
+ * - Outside labels are placed at bar-end direction (left/right).
+ */
+export function resolveHorizontalBarDataLabel(input: {
+  dataLabels?: BarDataLabelsConfig;
+  value: number;
+  datum: Datum;
+  seriesId: string;
+  rect: { x: number; y: number; width: number; height: number };
+  outsideDirection: 'left' | 'right';
+  fillColor: string;
+  defaultTextColor: string;
+  plot: { x: number; y: number; width: number; height: number };
+  measureText: MeasureTextFn;
+  baseFont: FontSpec;
+}): ResolvedBarDataLabel | null {
+  const config = input.dataLabels;
+  const position = config?.position ?? 'none';
+  if (position === 'none') return null;
+
+  const text = formatLabelText(input.value, input.datum, input.seriesId, config);
+  if (!text) return null;
+
+  const padding = clampFinite(config?.padding, 2, 0, 12);
+  const minFontSize = clampFinite(config?.minFontSize, 6, 6, 24);
+  const defaultMax = Math.max(input.baseFont.size, 12);
+  const maxFontSize = clampFinite(config?.maxFontSize, defaultMax, minFontSize, 32);
+
+  const maxWidth =
+    position === 'inside'
+      ? Math.max(0, input.rect.width - padding * 2)
+      : Number.POSITIVE_INFINITY;
+  if (position === 'inside' && maxWidth <= 2) return null;
+  const maxHeight =
+    position === 'inside'
+      ? Math.max(0, input.rect.height - padding * 2)
+      : Number.POSITIVE_INFINITY;
+  if (position === 'inside' && maxHeight <= 4) return null;
+
+  const chosen = chooseAutoFontSpec({
+    text,
+    minFontSize,
+    maxFontSize,
+    maxWidth,
+    maxHeight,
+    baseFont: input.baseFont,
+    measureText: input.measureText,
+  });
+  if (!chosen && input.rect.height < minFontSize + padding) return null;
+  const resolved =
+    chosen ??
+    (() => {
+      const fallbackFont: FontSpec = { ...input.baseFont, size: minFontSize };
+      const measured = input.measureText({ text, font: fallbackFont, angle: 0 });
+      return { font: fallbackFont, width: measured.width, height: measured.height };
+    })();
+
+  const baselineOffset = baselineOffsetFromTop(resolved.font.size);
+  const plotRight = input.plot.x + input.plot.width;
+  const plotBottom = input.plot.y + input.plot.height;
+  const centerY = input.rect.y + input.rect.height / 2;
+  const topY = clamp(
+    centerY - resolved.height / 2,
+    input.plot.y,
+    plotBottom - resolved.height
+  );
+
+  let x = input.rect.x + padding;
+  if (position === 'inside') {
+    if (input.outsideDirection === 'right') {
+      x = input.rect.x + input.rect.width - padding - resolved.width;
+    } else {
+      x = input.rect.x + padding;
+    }
+  } else {
+    const gap = 2;
+    if (input.outsideDirection === 'right') {
+      x = input.rect.x + input.rect.width + gap;
+    } else {
+      x = input.rect.x - resolved.width - gap;
+    }
+  }
+
+  if (position === 'outside' && (x < input.plot.x || x + resolved.width > plotRight)) {
+    x = input.outsideDirection === 'right'
+      ? input.rect.x + input.rect.width - padding - resolved.width
+      : input.rect.x + padding;
+  }
+
+  if (x < input.plot.x || x + resolved.width > plotRight) return null;
+
+  return {
+    text,
+    x,
+    baselineY: topY + baselineOffset,
+    font: resolved.font,
+    color:
+      config?.color ??
+      (position === 'inside'
+        ? resolveContrastingTextColor(input.fillColor, input.defaultTextColor)
+        : input.defaultTextColor),
+  };
+}
+
 function chooseAutoFontSpec(input: {
   text: string;
   minFontSize: number;

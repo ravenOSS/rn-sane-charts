@@ -209,6 +209,34 @@ Optional controls:
 - `maxFontSize`
 - `padding`
 
+## Horizontal Bars
+
+Use horizontal orientation when category labels are long or rank comparison is
+the main task:
+
+```tsx
+<Chart
+  orientation='horizontal'
+  series={groupedSeries}
+  xAxisTitle='USD (k)'
+  yAxisTitle='Region'
+  {...rest}
+>
+  <GroupedBarSeries
+    series={groupedSeries}
+    orientation='horizontal'
+    sort='desc'
+    sortBy='value'
+    sortMetric='sum'
+  />
+</Chart>
+```
+
+Notes:
+
+- Keep `Chart.orientation` and bar-series `orientation` aligned.
+- Horizontal mode works with `BarSeries`, `GroupedBarSeries`, and `StackedBarSeries`.
+
 ## Bar Sorting (Single, Grouped, Stacked)
 
 Bar renderers support optional deterministic category sorting:

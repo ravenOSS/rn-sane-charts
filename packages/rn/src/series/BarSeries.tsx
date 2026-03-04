@@ -13,10 +13,12 @@ import {
   resolveBaselineYPx,
 } from './barGeometry';
 import {
+  resolveHorizontalBarDataLabel,
   resolveVerticalBarDataLabel,
   toRNFontStyle,
   type BarDataLabelsConfig,
 } from './dataLabels';
+import type { ChartOrientation } from '../types';
 
 export type BarSeriesProps = {
   series: Series;
@@ -24,6 +26,7 @@ export type BarSeriesProps = {
   opacity?: number;
   sort?: BarSortDirection;
   sortBy?: BarSortBy;
+  orientation?: ChartOrientation;
   widthRatio?: number;
   baselineY?: number;
   dataLabels?: BarDataLabelsConfig;
@@ -45,6 +48,9 @@ export function BarSeries(props: BarSeriesProps) {
     hiddenSeriesIds,
     seriesColorById,
     resolveSeriesEmphasis,
+    chartOrientation,
+    projectCategoryXToY,
+    projectValueYToX,
   } = useChartContext();
   if (hiddenSeriesIds.has(props.series.id)) return null;
   const sortedSeries = React.useMemo(() => {
@@ -61,18 +67,26 @@ export function BarSeries(props: BarSeriesProps) {
     theme.series.palette[0] ??
     '#2563EB';
   const opacity = clampOpacity(props.opacity ?? 0.92);
+  const orientation = props.orientation ?? chartOrientation;
   const y0 = resolveBaselineYPx(scales.y, props.baselineY);
 
   const density = React.useMemo(
     () => computeBarDensity([sortedSeries], scales.x),
     [sortedSeries, scales.x]
   );
+  const categorySlotPx =
+    orientation === 'horizontal'
+      ? density.slotWidthPx * (layout.plot.height / Math.max(1, layout.plot.width))
+      : density.slotWidthPx;
   const barWidth = React.useMemo(() => {
     if (props.widthRatio !== undefined) {
-      return Math.max(2, density.slotWidthPx * clampWidthRatio(props.widthRatio));
+      return Math.max(2, categorySlotPx * clampWidthRatio(props.widthRatio));
     }
-    return resolveAutoBarWidthPx(density);
-  }, [density, props.widthRatio]);
+    return resolveAutoBarWidthPx({
+      ...density,
+      slotWidthPx: categorySlotPx,
+    });
+  }, [density, categorySlotPx, props.widthRatio]);
   const emphasis = resolveSeriesEmphasis(props.series.id);
 
   return (
@@ -82,18 +96,46 @@ export function BarSeries(props: BarSeriesProps) {
         const y = scales.y(datum.y);
         if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
 
-        const rectY = Math.min(y0, y);
-        const rectH = Math.max(1, Math.abs(y0 - y));
-        const label = resolveVerticalBarDataLabel({
+        const rectXVertical = x - barWidth / 2;
+        const rectYVertical = Math.min(y0, y);
+        const rectHVertical = Math.max(1, Math.abs(y0 - y));
+        const xHorizontal = projectValueYToX(y);
+        const x0Horizontal = projectValueYToX(y0);
+        const yHorizontal = projectCategoryXToY(x);
+        const rectXHorizontal = Math.min(x0Horizontal, xHorizontal);
+        const rectYHorizontal = yHorizontal - barWidth / 2;
+        const rectWHorizontal = Math.max(1, Math.abs(x0Horizontal - xHorizontal));
+        const rectHHorizontal = barWidth;
+        const label =
+          orientation === 'horizontal'
+            ? resolveHorizontalBarDataLabel({
+                dataLabels: props.dataLabels,
+                value: datum.y,
+                datum,
+                seriesId: props.series.id,
+                rect: {
+                  x: rectXHorizontal,
+                  y: rectYHorizontal,
+                  width: rectWHorizontal,
+                  height: rectHHorizontal,
+                },
+                outsideDirection: xHorizontal >= x0Horizontal ? 'right' : 'left',
+                fillColor,
+                defaultTextColor: theme.axis.tick.color,
+                plot: layout.plot,
+                measureText: fonts.measureText,
+                baseFont: fonts.yTickFont,
+              })
+            : resolveVerticalBarDataLabel({
           dataLabels: props.dataLabels,
           value: datum.y,
           datum,
           seriesId: props.series.id,
           rect: {
-            x: x - barWidth / 2,
-            y: rectY,
+            x: rectXVertical,
+            y: rectYVertical,
             width: barWidth,
-            height: rectH,
+            height: rectHVertical,
           },
           outsideDirection: y <= y0 ? 'up' : 'down',
           fillColor,
@@ -111,10 +153,10 @@ export function BarSeries(props: BarSeriesProps) {
         return (
           <Group key={`bar-${index}-${x}-${y}`}>
             <Rect
-              x={x - barWidth / 2}
-              y={rectY}
-              width={barWidth}
-              height={rectH}
+              x={orientation === 'horizontal' ? rectXHorizontal : rectXVertical}
+              y={orientation === 'horizontal' ? rectYHorizontal : rectYVertical}
+              width={orientation === 'horizontal' ? rectWHorizontal : barWidth}
+              height={orientation === 'horizontal' ? rectHHorizontal : rectHVertical}
               color={fillColor}
               opacity={opacity * emphasis.opacity}
             />

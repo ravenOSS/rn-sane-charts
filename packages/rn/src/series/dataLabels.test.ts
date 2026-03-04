@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Datum } from '@rn-sane-charts/core';
-import { resolveVerticalBarDataLabel } from './dataLabels';
+import {
+  resolveHorizontalBarDataLabel,
+  resolveVerticalBarDataLabel,
+} from './dataLabels';
 
 const datum: Datum = { x: new Date('2026-01-01T00:00:00.000Z'), y: 42 };
 
@@ -91,5 +94,24 @@ describe('bar data labels', () => {
 
     expect(label).not.toBeNull();
     expect(label!.font.size).toBe(10);
+  });
+
+  it('places outside labels at the end of horizontal bars', () => {
+    const label = resolveHorizontalBarDataLabel({
+      dataLabels: { position: 'outside' },
+      value: 42,
+      datum,
+      seriesId: 'Revenue',
+      rect: { x: 100, y: 44, width: 70, height: 22 },
+      outsideDirection: 'right',
+      fillColor: '#3B82F6',
+      defaultTextColor: '#111827',
+      plot: { x: 0, y: 0, width: 320, height: 220 },
+      measureText,
+      baseFont: { size: 12, family: 'System' },
+    });
+
+    expect(label).not.toBeNull();
+    expect(label!.x).toBeGreaterThan(165);
   });
 });

@@ -197,4 +197,37 @@ describe('rn smoke tests', () => {
     expect(interactionPayload).toBeDefined();
     expect(interactionPayload?.points[0]?.color).toBe(customLegendColor);
   });
+
+  it('renders in horizontal orientation without axis/interaction crashes', async () => {
+    const { Chart } = await import('../Chart');
+    const { BarSeries } = await import('../series/BarSeries');
+
+    const horizontalData: Series = {
+      id: 'Cash',
+      data: [
+        { x: new Date('2026-01-01T00:00:00.000Z'), y: 12 },
+        { x: new Date('2026-01-02T00:00:00.000Z'), y: -4 },
+        { x: new Date('2026-01-03T00:00:00.000Z'), y: 8 },
+      ],
+    };
+
+    const element = Chart({
+      width: 360,
+      height: 240,
+      orientation: 'horizontal',
+      series: [horizontalData],
+      fonts,
+      interaction: { enabled: true, snap: 'index' },
+      children: React.createElement(BarSeries, {
+        series: horizontalData,
+        orientation: 'horizontal',
+      }),
+    });
+
+    const axes = collectElements(
+      element,
+      (entry) => entry.type === 'Line' && entry.props.strokeWidth === 1
+    );
+    expect(axes.length).toBeGreaterThan(0);
+  });
 });

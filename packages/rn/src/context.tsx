@@ -1,6 +1,7 @@
 import React from 'react';
 import type { LayoutResult } from '@rn-sane-charts/core';
 import type {
+  ChartOrientation,
   LegendInteractionMode,
   SaneChartFonts,
   SaneChartTheme,
@@ -23,6 +24,9 @@ export type ChartContextValue = {
     x: (v: any) => number;
     y: (v: number) => number;
   };
+  chartOrientation: ChartOrientation;
+  projectCategoryXToY: (x: number) => number;
+  projectValueYToX: (y: number) => number;
 };
 
 export const ChartContext = React.createContext<ChartContextValue | null>(null);

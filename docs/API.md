@@ -75,6 +75,7 @@ type ChartProps = {
   width: number;
   height: number;
   series: Series[];
+  orientation?: "vertical" | "horizontal";
   title?: string;
   subtitle?: string;
   storyNote?: string;
@@ -122,6 +123,8 @@ Behavior:
 - `theme` is a partial override of defaults.
 - `storyNote` renders concise narrative context under subtitle and wraps to fit
   the plot width (no ellipsis).
+- `orientation` defaults to `"vertical"`. Use `"horizontal"` for bar-oriented
+  charts where category labels are easier to scan on the y-axis.
 - Axis label orientation is auto-resolved (`0°`, `45°`, `90°`) with tick skipping.
 - Legend defaults to vertical and auto-positioned (`right` on wider charts,
   otherwise `bottom`), and is hidden for single-series charts unless `show` is forced.
@@ -290,6 +293,7 @@ type BarSeriesProps = {
   series: Series;
   color?: string;
   opacity?: number;
+  orientation?: "vertical" | "horizontal";
   sort?: "none" | "asc" | "desc";
   sortBy?: "value" | "label";
   widthRatio?: number;
@@ -301,6 +305,7 @@ type GroupedBarSeriesProps = {
   series: Series[];
   colors?: readonly string[];
   opacity?: number;
+  orientation?: "vertical" | "horizontal";
   sort?: "none" | "asc" | "desc";
   sortBy?: "value" | "label";
   sortMetric?: "sum" | "firstSeries";
@@ -313,6 +318,7 @@ type StackedBarSeriesProps = {
   series: Series[];
   colors?: readonly string[];
   opacity?: number;
+  orientation?: "vertical" | "horizontal";
   sort?: "none" | "asc" | "desc";
   sortBy?: "value" | "label";
   sortMetric?: "sum" | "firstSeries";

@@ -19,6 +19,7 @@ export { darkTheme, defaultTheme, lightTheme } from './theme/defaultTheme';
 
 export type {
   ChartColorScheme,
+  ChartOrientation,
   ChartInteraction,
   LegendInteractionMode,
   SaneChartTheme,

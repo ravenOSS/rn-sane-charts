@@ -27,6 +27,7 @@ import {
 } from '@rn-sane-charts/core';
 import type {
   ChartColorScheme,
+  ChartOrientation,
   ChartInteraction,
   LegendInteractionMode,
   SaneChartFonts,
@@ -46,6 +47,7 @@ export type ChartProps = {
   storyNote?: string;
   xAxisTitle?: string;
   yAxisTitle?: string;
+  orientation?: ChartOrientation;
   yIncludeZero?: boolean;
   formatX?: (d: Date) => string;
   formatY?: (v: number) => string;
@@ -99,6 +101,7 @@ export function Chart(props: ChartProps) {
   const systemColorScheme = useColorScheme();
   const xAxisTitleFont = props.fonts.xAxisTitleFont ?? props.fonts.subtitleFont;
   const yAxisTitleFont = props.fonts.yAxisTitleFont ?? props.fonts.subtitleFont;
+  const orientation = props.orientation ?? 'vertical';
 
   const resolvedColorScheme: Exclude<ChartColorScheme, 'system'> =
     props.colorScheme === 'dark' ||
@@ -260,6 +263,28 @@ export function Chart(props: ChartProps) {
     props.fonts,
   ]);
 
+  /**
+   * Coordinate projector used by horizontal-bar mode.
+   *
+   * Why this exists:
+   * - Core planning currently resolves one canonical orientation
+   *   (x = category, y = value). Horizontal bars transpose those coordinates at
+   *   render/interaction time while preserving core scale determinism.
+   */
+  const projection = React.useMemo(() => {
+    const plot = plan.layout.plot;
+    const width = Math.max(1, plot.width);
+    const height = Math.max(1, plot.height);
+    const categoryXToY = (x: number) =>
+      plot.y + ((x - plot.x) / width) * height;
+    const valueYToX = (y: number) =>
+      plot.x + (1 - (y - plot.y) / height) * width;
+    return {
+      categoryXToY,
+      valueYToX,
+    };
+  }, [plan.layout.plot]);
+
   const resolveSeriesEmphasis = React.useCallback(
     (seriesId: string) => {
       if (hiddenSeriesIdSet.has(seriesId)) {
@@ -316,6 +341,9 @@ export function Chart(props: ChartProps) {
       seriesColorById,
       resolveSeriesEmphasis,
       scales: plan.scales,
+      chartOrientation: orientation,
+      projectCategoryXToY: projection.categoryXToY,
+      projectValueYToX: projection.valueYToX,
     }),
     [
       plan.layout,
@@ -327,6 +355,9 @@ export function Chart(props: ChartProps) {
       legendInteractionMode,
       seriesColorById,
       resolveSeriesEmphasis,
+      orientation,
+      projection.categoryXToY,
+      projection.valueYToX,
     ]
   );
 
@@ -441,8 +472,12 @@ export function Chart(props: ChartProps) {
           datumIndex,
           xValue: datum.x,
           yValue: datum.y,
-          x: px,
-          y: py,
+          x: orientation === 'horizontal' ? projection.valueYToX(py) : px,
+          y: orientation === 'horizontal' ? projection.categoryXToY(px) : py,
+          anchorCoord:
+            orientation === 'horizontal'
+              ? projection.categoryXToY(px)
+              : px,
           color,
           xLabel: formatInteractiveXLabel(datum.x, props.formatX),
           yLabel: formatInteractiveYLabel(datum.y, props.formatY),
@@ -460,11 +495,14 @@ export function Chart(props: ChartProps) {
     props.formatY,
     seriesColorById,
     theme.series.palette,
+    orientation,
+    projection.valueYToX,
+    projection.categoryXToY,
   ]);
 
-  const indexedXAnchors = React.useMemo(() => {
+  const indexedAnchors = React.useMemo(() => {
     const anchors = new Set<number>();
-    for (const point of interactiveSeriesPoints) anchors.add(point.x);
+    for (const point of interactiveSeriesPoints) anchors.add(point.anchorCoord);
     return Array.from(anchors).sort((a, b) => a - b);
   }, [interactiveSeriesPoints]);
 
@@ -476,12 +514,12 @@ export function Chart(props: ChartProps) {
    * - Building grouped arrays once avoids per-frame allocations from repeatedly
    *   filtering the full point list during scrubbing.
    */
-  const pointsByAnchorX = React.useMemo(() => {
+  const pointsByAnchor = React.useMemo(() => {
     const grouped = new Map<number, InteractivePoint[]>();
     for (const point of interactiveSeriesPoints) {
-      const existing = grouped.get(point.x);
+      const existing = grouped.get(point.anchorCoord);
       if (existing) existing.push(point);
-      else grouped.set(point.x, [point]);
+      else grouped.set(point.anchorCoord, [point]);
     }
     for (const pointsAtAnchor of grouped.values()) {
       pointsAtAnchor.sort((a, b) => a.seriesIndex - b.seriesIndex);
@@ -591,13 +629,14 @@ export function Chart(props: ChartProps) {
       }
 
       if (snapMode === 'index') {
-        const targetX = findNearestNumericValue(indexedXAnchors, clampedX);
-        if (!Number.isFinite(targetX)) {
+        const anchorInput = orientation === 'horizontal' ? clampedY : clampedX;
+        const targetAnchor = findNearestNumericValue(indexedAnchors, anchorInput);
+        if (!Number.isFinite(targetAnchor)) {
           setInteractionState(null);
           return;
         }
 
-        const grouped = pointsByAnchorX.get(targetX);
+        const grouped = pointsByAnchor.get(targetAnchor);
         if (!grouped || grouped.length === 0) {
           setInteractionState(null);
           return;
@@ -605,8 +644,14 @@ export function Chart(props: ChartProps) {
 
         const anchor = findNearestPoint(grouped, clampedX, clampedY) ?? grouped[0];
         setInteractionState({
-          crosshairX: targetX,
-          crosshairY: anchor?.y ?? clampedY,
+          crosshairX:
+            orientation === 'horizontal'
+              ? anchor?.x ?? clampedX
+              : targetAnchor,
+          crosshairY:
+            orientation === 'horizontal'
+              ? targetAnchor
+              : anchor?.y ?? clampedY,
           anchorXLabel: anchor?.xLabel ?? '',
           points: grouped,
         });
@@ -633,13 +678,14 @@ export function Chart(props: ChartProps) {
       interactiveSeriesPoints,
       plan.layout.plot,
       snapMode,
-      indexedXAnchors,
-      pointsByAnchorX,
+      indexedAnchors,
+      pointsByAnchor,
       scatterIndex,
       legendInteractive,
       legendInteractionMode,
       hiddenSeriesIds.length,
       clearLegendIsolation,
+      orientation,
     ]
   );
 
@@ -647,7 +693,17 @@ export function Chart(props: ChartProps) {
     <View
       style={{ width: props.width, height: props.height }}
       onStartShouldSetResponder={() => responderEnabled}
+      onStartShouldSetResponderCapture={() => responderEnabled}
       onMoveShouldSetResponder={() => interactionEnabled}
+      onMoveShouldSetResponderCapture={() => interactionEnabled}
+      onResponderTerminationRequest={() => false}
+      onTouchStart={(event) =>
+        handleTouch(event.nativeEvent.locationX, event.nativeEvent.locationY)
+      }
+      onTouchMove={(event) =>
+        handleTouch(event.nativeEvent.locationX, event.nativeEvent.locationY)
+      }
+      onTouchEnd={() => setInteractionState(null)}
       onResponderGrant={(event) => {
         const x = event.nativeEvent.locationX;
         const y = event.nativeEvent.locationY;
@@ -695,6 +751,9 @@ export function Chart(props: ChartProps) {
               yTicks: plan.ticks.y,
               stroke: theme.grid.stroke,
               strokeWidth: theme.grid.strokeWidth,
+              orientation,
+              projectCategoryXToY: projection.categoryXToY,
+              projectValueYToX: projection.valueYToX,
             })
           : null}
 
@@ -776,107 +835,40 @@ export function Chart(props: ChartProps) {
           </Group>
         ) : null}
 
-        {/* Axes */}
-        <Line
-          p1={{ x: axisGeometry.yAxisX, y: plan.layout.plot.y }}
-          p2={{
-            x: axisGeometry.yAxisX,
-            y: plan.layout.plot.y + plan.layout.plot.height,
-          }}
-          color={theme.axis.line.stroke}
-          strokeWidth={theme.axis.line.strokeWidth}
-        />
-        <Line
-          p1={{ x: plan.layout.plot.x, y: axisGeometry.xAxisY }}
-          p2={{
-            x: plan.layout.plot.x + plan.layout.plot.width,
-            y: axisGeometry.xAxisY,
-          }}
-          color={theme.axis.line.stroke}
-          strokeWidth={theme.axis.line.strokeWidth}
-        />
-
-        {/* Y ticks + labels */}
-        {plan.ticks.y.map((tick, index) => (
-          <Group key={`y-${index}-${tick.value}`}>
-            <Line
-              p1={{ x: axisGeometry.yAxisX - AXIS_TICK_SIZE_PX, y: tick.y }}
-              p2={{ x: axisGeometry.yAxisX, y: tick.y }}
-              color={theme.axis.line.stroke}
-              strokeWidth={theme.axis.line.strokeWidth}
-            />
-            <Text
-              text={tick.label}
-              font={skiaFonts.yTick}
-              x={axisGeometry.yLabels[index]?.x ?? axisGeometry.yAxisX}
-              y={axisGeometry.yLabels[index]?.baselineY ?? tick.y}
-              color={theme.axis.tick.color}
-            />
-          </Group>
-        ))}
-
-        {/* X ticks + labels. Rotation follows core's collision decision. */}
-        {plan.ticks.x.map((tick, index) => (
-          <Group key={`x-${index}-${String(tick.value)}`}>
-            <Line
-              p1={{ x: tick.x, y: axisGeometry.xAxisY }}
-              p2={{ x: tick.x, y: axisGeometry.xAxisY + AXIS_TICK_SIZE_PX }}
-              color={theme.axis.line.stroke}
-              strokeWidth={theme.axis.line.strokeWidth}
-            />
-            <Group
-              transform={[
-                { translateX: tick.x },
-                { translateY: axisGeometry.xLabelTopY },
-                { rotate: axisGeometry.xLabelAngleRad },
-              ]}
-            >
-              <Text
-                text={tick.label}
-                font={skiaFonts.xTick}
-                x={axisGeometry.xLabels[index]?.localX ?? 0}
-                y={
-                  axisGeometry.xLabels[index]?.baselineOffset ??
-                  baselineOffsetFromTop(props.fonts.xTickFont.size)
-                }
-                color={theme.axis.tick.color}
-              />
-            </Group>
-          </Group>
-        ))}
+        {orientation === 'horizontal'
+          ? renderHorizontalAxes({
+              layout: plan.layout,
+              axis: axisGeometry,
+              xTicks: plan.ticks.x,
+              yTicks: plan.ticks.y,
+              xTickFont: skiaFonts.xTick,
+              yTickFont: skiaFonts.yTick,
+              xTickFontSize: props.fonts.xTickFont.size,
+              yTickFontSize: props.fonts.yTickFont.size,
+              theme,
+              projectCategoryXToY: projection.categoryXToY,
+              projectValueYToX: projection.valueYToX,
+            })
+          : renderVerticalAxes({
+              layout: plan.layout,
+              axis: axisGeometry,
+              xTicks: plan.ticks.x,
+              yTicks: plan.ticks.y,
+              xTickFont: skiaFonts.xTick,
+              yTickFont: skiaFonts.yTick,
+              xTickFontSize: props.fonts.xTickFont.size,
+              theme,
+            })}
 
         {interactionEnabled && interactionState ? (
           <Group>
-            {crosshairMode === 'x' || crosshairMode === 'xy' ? (
-              <Line
-                p1={{
-                  x: interactionState.crosshairX,
-                  y: plan.layout.plot.y,
-                }}
-                p2={{
-                  x: interactionState.crosshairX,
-                  y: plan.layout.plot.y + plan.layout.plot.height,
-                }}
-                color={theme.axis.line.stroke}
-                opacity={0.75}
-                strokeWidth={1}
-              />
-            ) : null}
-            {crosshairMode === 'xy' ? (
-              <Line
-                p1={{
-                  x: plan.layout.plot.x,
-                  y: interactionState.crosshairY,
-                }}
-                p2={{
-                  x: plan.layout.plot.x + plan.layout.plot.width,
-                  y: interactionState.crosshairY,
-                }}
-                color={theme.axis.line.stroke}
-                opacity={0.6}
-                strokeWidth={1}
-              />
-            ) : null}
+            {renderCrosshair({
+              mode: crosshairMode,
+              orientation,
+              state: interactionState,
+              plot: plan.layout.plot,
+              color: theme.axis.line.stroke,
+            })}
             {showTooltip
               ? renderTooltip({
                   active: interactionState,
@@ -972,6 +964,7 @@ type InteractivePoint = {
   yValue: number;
   x: number;
   y: number;
+  anchorCoord: number;
   color: string;
   xLabel: string;
   yLabel: string;
@@ -1333,9 +1326,41 @@ function renderPlotGrid(input: {
   yTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['y'];
   stroke: string;
   strokeWidth: number;
+  orientation: ChartOrientation;
+  projectCategoryXToY: (x: number) => number;
+  projectValueYToX: (y: number) => number;
 }) {
   const plotRight = input.layout.plot.x + input.layout.plot.width;
   const plotBottom = input.layout.plot.y + input.layout.plot.height;
+
+  if (input.orientation === 'horizontal') {
+    return (
+      <Group>
+        {input.yTicks.map((tick, index) =>
+          Number.isFinite(tick.y) ? (
+            <Line
+              key={`grid-hx-${index}-${tick.value}`}
+              p1={{ x: input.projectValueYToX(tick.y), y: input.layout.plot.y }}
+              p2={{ x: input.projectValueYToX(tick.y), y: plotBottom }}
+              color={input.stroke}
+              strokeWidth={input.strokeWidth}
+            />
+          ) : null
+        )}
+        {input.xTicks.map((tick, index) =>
+          Number.isFinite(tick.x) ? (
+            <Line
+              key={`grid-hy-${index}-${String(tick.value)}`}
+              p1={{ x: input.layout.plot.x, y: input.projectCategoryXToY(tick.x) }}
+              p2={{ x: plotRight, y: input.projectCategoryXToY(tick.x) }}
+              color={input.stroke}
+              strokeWidth={input.strokeWidth}
+            />
+          ) : null
+        )}
+      </Group>
+    );
+  }
 
   return (
     <Group>
@@ -1362,6 +1387,225 @@ function renderPlotGrid(input: {
         ) : null
       )}
     </Group>
+  );
+}
+
+function renderVerticalAxes(input: {
+  layout: ReturnType<typeof buildTimeSeriesPlan>['layout'];
+  axis: ReturnType<typeof buildAxisGeometry>;
+  xTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['x'];
+  yTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['y'];
+  xTickFont: ReturnType<typeof matchFont>;
+  yTickFont: ReturnType<typeof matchFont>;
+  xTickFontSize: number;
+  theme: SaneChartTheme;
+}) {
+  return (
+    <>
+      <Line
+        p1={{ x: input.axis.yAxisX, y: input.layout.plot.y }}
+        p2={{
+          x: input.axis.yAxisX,
+          y: input.layout.plot.y + input.layout.plot.height,
+        }}
+        color={input.theme.axis.line.stroke}
+        strokeWidth={input.theme.axis.line.strokeWidth}
+      />
+      <Line
+        p1={{ x: input.layout.plot.x, y: input.axis.xAxisY }}
+        p2={{
+          x: input.layout.plot.x + input.layout.plot.width,
+          y: input.axis.xAxisY,
+        }}
+        color={input.theme.axis.line.stroke}
+        strokeWidth={input.theme.axis.line.strokeWidth}
+      />
+
+      {input.yTicks.map((tick, index) => (
+        <Group key={`y-${index}-${tick.value}`}>
+          <Line
+            p1={{ x: input.axis.yAxisX - AXIS_TICK_SIZE_PX, y: tick.y }}
+            p2={{ x: input.axis.yAxisX, y: tick.y }}
+            color={input.theme.axis.line.stroke}
+            strokeWidth={input.theme.axis.line.strokeWidth}
+          />
+          <Text
+            text={tick.label}
+            font={input.yTickFont}
+            x={input.axis.yLabels[index]?.x ?? input.axis.yAxisX}
+            y={input.axis.yLabels[index]?.baselineY ?? tick.y}
+            color={input.theme.axis.tick.color}
+          />
+        </Group>
+      ))}
+
+      {input.xTicks.map((tick, index) => (
+        <Group key={`x-${index}-${String(tick.value)}`}>
+          <Line
+            p1={{ x: tick.x, y: input.axis.xAxisY }}
+            p2={{ x: tick.x, y: input.axis.xAxisY + AXIS_TICK_SIZE_PX }}
+            color={input.theme.axis.line.stroke}
+            strokeWidth={input.theme.axis.line.strokeWidth}
+          />
+          <Group
+            transform={[
+              { translateX: tick.x },
+              { translateY: input.axis.xLabelTopY },
+              { rotate: input.axis.xLabelAngleRad },
+            ]}
+          >
+            <Text
+              text={tick.label}
+              font={input.xTickFont}
+              x={input.axis.xLabels[index]?.localX ?? 0}
+              y={
+                input.axis.xLabels[index]?.baselineOffset ??
+                baselineOffsetFromTop(input.xTickFontSize)
+              }
+              color={input.theme.axis.tick.color}
+            />
+          </Group>
+        </Group>
+      ))}
+    </>
+  );
+}
+
+function renderHorizontalAxes(input: {
+  layout: ReturnType<typeof buildTimeSeriesPlan>['layout'];
+  axis: ReturnType<typeof buildAxisGeometry>;
+  xTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['x'];
+  yTicks: ReturnType<typeof buildTimeSeriesPlan>['ticks']['y'];
+  xTickFont: ReturnType<typeof matchFont>;
+  yTickFont: ReturnType<typeof matchFont>;
+  xTickFontSize: number;
+  yTickFontSize: number;
+  theme: SaneChartTheme;
+  projectCategoryXToY: (x: number) => number;
+  projectValueYToX: (y: number) => number;
+}) {
+  const categoryAxisX = input.axis.yAxisX;
+  const valueAxisY = input.axis.xAxisY;
+  return (
+    <>
+      <Line
+        p1={{ x: categoryAxisX, y: input.layout.plot.y }}
+        p2={{ x: categoryAxisX, y: input.layout.plot.y + input.layout.plot.height }}
+        color={input.theme.axis.line.stroke}
+        strokeWidth={input.theme.axis.line.strokeWidth}
+      />
+      <Line
+        p1={{ x: input.layout.plot.x, y: valueAxisY }}
+        p2={{ x: input.layout.plot.x + input.layout.plot.width, y: valueAxisY }}
+        color={input.theme.axis.line.stroke}
+        strokeWidth={input.theme.axis.line.strokeWidth}
+      />
+
+      {input.xTicks.map((tick, index) => {
+        const y = input.projectCategoryXToY(tick.x);
+        const measured = measureTickText(tick.label, input.xTickFontSize);
+        return (
+          <Group key={`hy-${index}-${String(tick.value)}`}>
+            <Line
+              p1={{ x: categoryAxisX - AXIS_TICK_SIZE_PX, y }}
+              p2={{ x: categoryAxisX, y }}
+              color={input.theme.axis.line.stroke}
+              strokeWidth={input.theme.axis.line.strokeWidth}
+            />
+            <Text
+              text={tick.label}
+              font={input.xTickFont}
+              x={categoryAxisX - AXIS_TICK_SIZE_PX - AXIS_LABEL_GAP_PX - measured.width}
+              y={y - measured.height / 2 + baselineOffsetFromTop(input.xTickFontSize)}
+              color={input.theme.axis.tick.color}
+            />
+          </Group>
+        );
+      })}
+
+      {input.yTicks.map((tick, index) => {
+        const x = input.projectValueYToX(tick.y);
+        const measured = measureTickText(tick.label, input.yTickFontSize);
+        return (
+          <Group key={`hx-${index}-${tick.value}`}>
+            <Line
+              p1={{ x, y: valueAxisY }}
+              p2={{ x, y: valueAxisY + AXIS_TICK_SIZE_PX }}
+              color={input.theme.axis.line.stroke}
+              strokeWidth={input.theme.axis.line.strokeWidth}
+            />
+            <Text
+              text={tick.label}
+              font={input.yTickFont}
+              x={x - measured.width / 2}
+              y={
+                valueAxisY +
+                AXIS_TICK_SIZE_PX +
+                AXIS_LABEL_GAP_PX +
+                baselineOffsetFromTop(input.yTickFontSize)
+              }
+              color={input.theme.axis.tick.color}
+            />
+          </Group>
+        );
+      })}
+    </>
+  );
+}
+
+function renderCrosshair(input: {
+  mode: NonNullable<ChartInteraction['crosshair']>;
+  orientation: ChartOrientation;
+  state: InteractionState;
+  plot: ReturnType<typeof buildTimeSeriesPlan>['layout']['plot'];
+  color: string;
+}) {
+  if (input.orientation === 'horizontal') {
+    return (
+      <>
+        {input.mode === 'x' || input.mode === 'xy' ? (
+          <Line
+            p1={{ x: input.plot.x, y: input.state.crosshairY }}
+            p2={{ x: input.plot.x + input.plot.width, y: input.state.crosshairY }}
+            color={input.color}
+            opacity={0.75}
+            strokeWidth={1}
+          />
+        ) : null}
+        {input.mode === 'xy' ? (
+          <Line
+            p1={{ x: input.state.crosshairX, y: input.plot.y }}
+            p2={{ x: input.state.crosshairX, y: input.plot.y + input.plot.height }}
+            color={input.color}
+            opacity={0.6}
+            strokeWidth={1}
+          />
+        ) : null}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {input.mode === 'x' || input.mode === 'xy' ? (
+        <Line
+          p1={{ x: input.state.crosshairX, y: input.plot.y }}
+          p2={{ x: input.state.crosshairX, y: input.plot.y + input.plot.height }}
+          color={input.color}
+          opacity={0.75}
+          strokeWidth={1}
+        />
+      ) : null}
+      {input.mode === 'xy' ? (
+        <Line
+          p1={{ x: input.plot.x, y: input.state.crosshairY }}
+          p2={{ x: input.plot.x + input.plot.width, y: input.state.crosshairY }}
+          color={input.color}
+          opacity={0.6}
+          strokeWidth={1}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -1643,4 +1887,19 @@ function formatInteractiveYLabel(
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * Lightweight text measure fallback for axis labels inside renderer-only helpers.
+ *
+ * Why:
+ * - Axis helpers need width/height for label anchoring but do not receive core
+ *   measureText dependency directly.
+ * - This conservative estimate avoids layout thrash and keeps labels readable.
+ */
+function measureTickText(text: string, fontSize: number) {
+  return {
+    width: text.length * fontSize * 0.58,
+    height: fontSize,
+  };
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -29,6 +30,7 @@ import {
   StackedBarSeries,
   makeSkiaMeasureText,
 } from '@rn-sane-charts/rn';
+import type { ChartOrientation } from '@rn-sane-charts/rn';
 import {
   accessibilityPalette,
   createAccessibilityTheme,
@@ -90,6 +92,14 @@ const barSortDirectionOptions: { id: BarSortDirection; label: string }[] = [
 const barSortByOptions: { id: BarSortBy; label: string }[] = [
   { id: 'value', label: 'Value' },
   { id: 'label', label: 'Label' },
+];
+const barOrientationOptions: { id: ChartOrientation; label: string }[] = [
+  { id: 'vertical', label: 'Vertical' },
+  { id: 'horizontal', label: 'Horizontal' },
+];
+const barLabelOptions: { id: boolean; label: string }[] = [
+  { id: true, label: 'On' },
+  { id: false, label: 'Off' },
 ];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -157,7 +167,6 @@ function GalleryApp() {
     430,
     Math.max(320, window.width - insets.left - insets.right - 20)
   );
-  const chartHeight = 286;
 
   const fontFamily = Platform.select({
     ios: 'System',
@@ -175,8 +184,35 @@ function GalleryApp() {
   const [barSortDirection, setBarSortDirection] =
     React.useState<BarSortDirection>('none');
   const [barSortBy, setBarSortBy] = React.useState<BarSortBy>('value');
+  const [barOrientation, setBarOrientation] =
+    React.useState<ChartOrientation>('vertical');
+  const [showChartTypePicker, setShowChartTypePicker] = React.useState(false);
+  const [showLegendModePicker, setShowLegendModePicker] = React.useState(false);
+  const [showBarLabelsPicker, setShowBarLabelsPicker] = React.useState(false);
+  const [showBarOrientationPicker, setShowBarOrientationPicker] = React.useState(false);
+  const [showBarSortDirectionPicker, setShowBarSortDirectionPicker] =
+    React.useState(false);
+  const [showBarSortByPicker, setShowBarSortByPicker] = React.useState(false);
+  const [showDisplayOptions, setShowDisplayOptions] = React.useState(false);
+  const [showBarLayoutOptions, setShowBarLayoutOptions] = React.useState(false);
   const [perfResults, setPerfResults] = React.useState<PerfRunResult[]>([]);
   const [perfRunAt, setPerfRunAt] = React.useState<string>('');
+  const isBarView =
+    activeView === 'bar' || activeView === 'groupedBar' || activeView === 'stackedBar';
+  const isCompactScreen = window.height < 900;
+  const chartHeight = isBarView && isCompactScreen ? 250 : 286;
+  const activeViewLabel =
+    viewOptions.find((option) => option.id === activeView)?.label ?? 'Line';
+  const legendModeLabel =
+    legendModeOptions.find((option) => option.id === legendMode)?.label ?? 'Focus';
+  const barSortDirectionLabel =
+    barSortDirectionOptions.find((option) => option.id === barSortDirection)?.label ??
+    'None';
+  const barSortByLabel =
+    barSortByOptions.find((option) => option.id === barSortBy)?.label ?? 'Value';
+  const barOrientationLabel =
+    barOrientationOptions.find((option) => option.id === barOrientation)?.label ??
+    'Vertical';
 
   const barSeries = React.useMemo<Series>(
     () => ({
@@ -494,176 +530,242 @@ function GalleryApp() {
           </Text>
         </View>
 
-        <View style={styles.legendModeRow}>
-          <Text style={[styles.legendModeLabel, { color: surface.body }]}>Legend mode</Text>
-          <View style={styles.legendModeOptions}>
-            {legendModeOptions.map((option) => {
-              const isActive = option.id === legendMode;
-              return (
+        <View
+          style={[
+            styles.controlsCard,
+            {
+              width: chartWidth,
+              backgroundColor: surface.shell,
+              borderColor: surface.shellBorder,
+            },
+          ]}
+        >
+          <Pressable
+            onPress={() => setShowChartTypePicker(true)}
+            style={styles.controlHeader}
+          >
+            <View style={styles.controlHeaderTop}>
+              <Text style={[styles.controlHeaderLabel, { color: surface.body }]}>
+                Chart
+              </Text>
+              <View style={styles.controlHeaderAction}>
+                <Text style={[styles.controlHeaderActionLabel, { color: surface.body }]}>
+                  Change
+                </Text>
+                <Text style={[styles.controlHeaderChevron, { color: surface.body }]}>
+                  ⌄
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.controlHeaderValue, { color: surface.heading }]}>
+              {activeViewLabel}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setShowDisplayOptions((prev) => !prev)}
+            style={styles.controlHeader}
+          >
+            <View style={styles.controlHeaderTop}>
+              <Text style={[styles.controlHeaderLabel, { color: surface.body }]}>
+                Options
+              </Text>
+              <View style={styles.controlHeaderAction}>
+                <Text style={[styles.controlHeaderActionLabel, { color: surface.body }]}>
+                  {showDisplayOptions ? 'Less' : 'More'}
+                </Text>
+                <Text style={[styles.controlHeaderChevron, { color: surface.body }]}>
+                  {showDisplayOptions ? '⌃' : '⌄'}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.controlHeaderValue, { color: surface.heading }]}>
+              {legendModeLabel}
+              {isBarView ? ` • Lbl ${barLabelsEnabled ? 'On' : 'Off'}` : ''}
+            </Text>
+          </Pressable>
+
+          {showDisplayOptions ? (
+            <View style={styles.controlBody}>
+              <Pressable
+                onPress={() => setShowLegendModePicker(true)}
+                style={[
+                  styles.inlineSelector,
+                  {
+                    backgroundColor: surface.chipBg,
+                    borderColor: surface.chipBorder,
+                  },
+                ]}
+              >
+                <View style={styles.controlHeaderTop}>
+                  <Text style={[styles.controlHeaderLabel, { color: surface.body }]}>
+                    Legend
+                  </Text>
+                  <View style={styles.controlHeaderAction}>
+                    <Text style={[styles.controlHeaderActionLabel, { color: surface.body }]}>
+                      Change
+                    </Text>
+                    <Text style={[styles.controlHeaderChevron, { color: surface.body }]}>
+                      ⌄
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.controlHeaderValue, { color: surface.heading }]}>
+                  {legendModeLabel}
+                </Text>
+              </Pressable>
+
+              {isBarView ? (
                 <Pressable
-                  key={option.id}
-                  onPress={() => setLegendMode(option.id)}
+                  onPress={() => setShowBarLabelsPicker(true)}
                   style={[
-                    styles.legendModeChip,
+                    styles.inlineSelector,
                     {
-                      backgroundColor: isActive ? surface.chipActiveBg : surface.chipBg,
-                      borderColor: isActive ? surface.chipActiveBg : surface.chipBorder,
+                      backgroundColor: surface.chipBg,
+                      borderColor: surface.chipBorder,
                     },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.legendModeChipLabel,
-                      { color: isActive ? surface.chipActiveText : surface.chipText },
-                    ]}
-                  >
-                    {option.label}
+                  <View style={styles.controlHeaderTop}>
+                    <Text style={[styles.controlHeaderLabel, { color: surface.body }]}>
+                      Labels
+                    </Text>
+                    <View style={styles.controlHeaderAction}>
+                      <Text
+                        style={[styles.controlHeaderActionLabel, { color: surface.body }]}
+                      >
+                        Change
+                      </Text>
+                      <Text style={[styles.controlHeaderChevron, { color: surface.body }]}>
+                        ⌄
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.controlHeaderValue, { color: surface.heading }]}>
+                    {barLabelsEnabled ? 'On' : 'Off'}
                   </Text>
                 </Pressable>
-              );
-            })}
-          </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {isBarView ? (
+            <>
+              <Pressable
+                onPress={() => setShowBarLayoutOptions((prev) => !prev)}
+                style={styles.controlHeader}
+              >
+                <View style={styles.controlHeaderTop}>
+                  <Text style={[styles.controlHeaderLabel, { color: surface.body }]}>
+                    Layout
+                  </Text>
+                  <View style={styles.controlHeaderAction}>
+                    <Text style={[styles.controlHeaderActionLabel, { color: surface.body }]}>
+                      {showBarLayoutOptions ? 'Less' : 'More'}
+                    </Text>
+                    <Text style={[styles.controlHeaderChevron, { color: surface.body }]}>
+                      {showBarLayoutOptions ? '⌃' : '⌄'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.controlHeaderValue, { color: surface.heading }]}>
+                  {barOrientationLabel} • {barSortDirectionLabel} • {barSortByLabel}
+                </Text>
+              </Pressable>
+              {showBarLayoutOptions ? (
+                <View style={styles.controlBody}>
+                  <Pressable
+                    onPress={() => setShowBarOrientationPicker(true)}
+                    style={[
+                      styles.inlineSelector,
+                      {
+                        backgroundColor: surface.chipBg,
+                        borderColor: surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <View style={styles.controlHeaderTop}>
+                      <Text style={[styles.controlHeaderLabel, { color: surface.body }]}>
+                        Orientation
+                      </Text>
+                      <View style={styles.controlHeaderAction}>
+                        <Text
+                          style={[styles.controlHeaderActionLabel, { color: surface.body }]}
+                        >
+                          Change
+                        </Text>
+                        <Text style={[styles.controlHeaderChevron, { color: surface.body }]}>
+                          ⌄
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.controlHeaderValue, { color: surface.heading }]}>
+                      {barOrientationLabel}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setShowBarSortDirectionPicker(true)}
+                    style={[
+                      styles.inlineSelector,
+                      {
+                        backgroundColor: surface.chipBg,
+                        borderColor: surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <View style={styles.controlHeaderTop}>
+                      <Text style={[styles.controlHeaderLabel, { color: surface.body }]}>
+                        Sort dir
+                      </Text>
+                      <View style={styles.controlHeaderAction}>
+                        <Text
+                          style={[styles.controlHeaderActionLabel, { color: surface.body }]}
+                        >
+                          Change
+                        </Text>
+                        <Text style={[styles.controlHeaderChevron, { color: surface.body }]}>
+                          ⌄
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.controlHeaderValue, { color: surface.heading }]}>
+                      {barSortDirectionLabel}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setShowBarSortByPicker(true)}
+                    style={[
+                      styles.inlineSelector,
+                      {
+                        backgroundColor: surface.chipBg,
+                        borderColor: surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <View style={styles.controlHeaderTop}>
+                      <Text style={[styles.controlHeaderLabel, { color: surface.body }]}>
+                        Sort key
+                      </Text>
+                      <View style={styles.controlHeaderAction}>
+                        <Text
+                          style={[styles.controlHeaderActionLabel, { color: surface.body }]}
+                        >
+                          Change
+                        </Text>
+                        <Text style={[styles.controlHeaderChevron, { color: surface.body }]}>
+                          ⌄
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.controlHeaderValue, { color: surface.heading }]}>
+                      {barSortByLabel}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </>
+          ) : null}
         </View>
-
-        {activeView === 'bar' ||
-        activeView === 'groupedBar' ||
-        activeView === 'stackedBar' ? (
-          <View style={styles.legendModeRow}>
-            <Text style={[styles.legendModeLabel, { color: surface.body }]}>
-              Sort direction
-            </Text>
-            <View style={styles.legendModeOptions}>
-              {barSortDirectionOptions.map((option) => {
-                const isActive = option.id === barSortDirection;
-                return (
-                  <Pressable
-                    key={option.id}
-                    onPress={() => setBarSortDirection(option.id)}
-                    style={[
-                      styles.legendModeChip,
-                      {
-                        backgroundColor: isActive ? surface.chipActiveBg : surface.chipBg,
-                        borderColor: isActive ? surface.chipActiveBg : surface.chipBorder,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.legendModeChipLabel,
-                        { color: isActive ? surface.chipActiveText : surface.chipText },
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        ) : null}
-
-        {activeView === 'bar' ||
-        activeView === 'groupedBar' ||
-        activeView === 'stackedBar' ? (
-          <View style={styles.legendModeRow}>
-            <Text style={[styles.legendModeLabel, { color: surface.body }]}>
-              Sort by
-            </Text>
-            <View style={styles.legendModeOptions}>
-              {barSortByOptions.map((option) => {
-                const isActive = option.id === barSortBy;
-                return (
-                  <Pressable
-                    key={option.id}
-                    onPress={() => setBarSortBy(option.id)}
-                    style={[
-                      styles.legendModeChip,
-                      {
-                        backgroundColor: isActive ? surface.chipActiveBg : surface.chipBg,
-                        borderColor: isActive ? surface.chipActiveBg : surface.chipBorder,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.legendModeChipLabel,
-                        { color: isActive ? surface.chipActiveText : surface.chipText },
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        ) : null}
-
-        {activeView === 'bar' ||
-        activeView === 'groupedBar' ||
-        activeView === 'stackedBar' ? (
-          <View style={styles.legendModeRow}>
-            <Text style={[styles.legendModeLabel, { color: surface.body }]}>
-              Bar labels
-            </Text>
-            <View style={styles.legendModeOptions}>
-              <Pressable
-                onPress={() => setBarLabelsEnabled(true)}
-                style={[
-                  styles.legendModeChip,
-                  {
-                    backgroundColor: barLabelsEnabled
-                      ? surface.chipActiveBg
-                      : surface.chipBg,
-                    borderColor: barLabelsEnabled
-                      ? surface.chipActiveBg
-                      : surface.chipBorder,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.legendModeChipLabel,
-                    {
-                      color: barLabelsEnabled
-                        ? surface.chipActiveText
-                        : surface.chipText,
-                    },
-                  ]}
-                >
-                  On
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setBarLabelsEnabled(false)}
-                style={[
-                  styles.legendModeChip,
-                  {
-                    backgroundColor: !barLabelsEnabled
-                      ? surface.chipActiveBg
-                      : surface.chipBg,
-                    borderColor: !barLabelsEnabled
-                      ? surface.chipActiveBg
-                      : surface.chipBorder,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.legendModeChipLabel,
-                    {
-                      color: !barLabelsEnabled
-                        ? surface.chipActiveText
-                        : surface.chipText,
-                    },
-                  ]}
-                >
-                  Off
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        ) : null}
 
         <View style={styles.chartPanel}>
           {activeView === 'line' ? (
@@ -772,11 +874,12 @@ function GalleryApp() {
             <Chart
               width={chartWidth}
               height={chartHeight}
+              orientation={barOrientation}
               series={[barSeries]}
               title='Daily Net Cash Flow'
               subtitle='Inflows minus outflows by weekday'
-              xAxisTitle='Day'
-              yAxisTitle='USD (k)'
+              xAxisTitle={barOrientation === 'horizontal' ? 'USD (k)' : 'Day'}
+              yAxisTitle={barOrientation === 'horizontal' ? 'Day' : 'USD (k)'}
               yIncludeZero
               formatX={indexFormatter(barLabels)}
               xTickValues={barTickValues}
@@ -790,6 +893,7 @@ function GalleryApp() {
                 color={exampleChartTypeConfig.bar.color}
                 sort={barSortDirection}
                 sortBy={barSortBy}
+                orientation={barOrientation}
                 dataLabels={{
                   position: barLabelsEnabled ? 'inside' : 'none',
                 }}
@@ -801,11 +905,12 @@ function GalleryApp() {
             <Chart
               width={chartWidth}
               height={chartHeight}
+              orientation={barOrientation}
               series={groupedBarSeries}
               title='Quarterly Revenue Plan'
               subtitle='Actual vs forecast vs target'
-              xAxisTitle='Quarter'
-              yAxisTitle='USD (k)'
+              xAxisTitle={barOrientation === 'horizontal' ? 'USD (k)' : 'Quarter'}
+              yAxisTitle={barOrientation === 'horizontal' ? 'Quarter' : 'USD (k)'}
               yIncludeZero
               formatX={indexFormatter(groupedBarLabels)}
               xTickValues={groupedBarTickValues}
@@ -825,6 +930,7 @@ function GalleryApp() {
                 sort={barSortDirection}
                 sortBy={barSortBy}
                 sortMetric='sum'
+                orientation={barOrientation}
                 dataLabels={{
                   position: barLabelsEnabled ? 'inside' : 'none',
                 }}
@@ -836,11 +942,12 @@ function GalleryApp() {
             <Chart
               width={chartWidth}
               height={chartHeight}
+              orientation={barOrientation}
               series={stackedBarChartSeries}
               title='Regional Revenue Mix'
               subtitle='Stacked by segment'
-              xAxisTitle='Region'
-              yAxisTitle='USD (k)'
+              xAxisTitle={barOrientation === 'horizontal' ? 'USD (k)' : 'Region'}
+              yAxisTitle={barOrientation === 'horizontal' ? 'Region' : 'USD (k)'}
               yIncludeZero
               formatX={indexFormatter(stackedBarLabels)}
               xTickValues={stackedBarTickValues}
@@ -860,6 +967,7 @@ function GalleryApp() {
                 sort={barSortDirection}
                 sortBy={barSortBy}
                 sortMetric='sum'
+                orientation={barOrientation}
                 dataLabels={{
                   position: barLabelsEnabled ? 'inside' : 'none',
                 }}
@@ -1026,33 +1134,353 @@ function GalleryApp() {
           ) : null}
         </View>
 
-        <View style={[styles.tabs, { width: chartWidth }]}>
-          {viewOptions.map((option) => {
-            const isActive = option.id === activeView;
-            return (
-              <Pressable
-                key={option.id}
-                onPress={() => setActiveView(option.id)}
-                style={[
-                  styles.tab,
-                  {
-                    backgroundColor: isActive ? surface.chipActiveBg : surface.chipBg,
-                    borderColor: isActive ? surface.chipActiveBg : surface.chipBorder,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    { color: isActive ? surface.chipActiveText : surface.chipText },
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Modal
+          transparent
+          visible={showChartTypePicker}
+          animationType='fade'
+          onRequestClose={() => setShowChartTypePicker(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowChartTypePicker(false)}
+          >
+            <View
+              style={[
+                styles.modalSheet,
+                {
+                  backgroundColor: surface.shell,
+                  borderColor: surface.shellBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: surface.heading }]}>
+                Chart
+              </Text>
+              {viewOptions.map((option) => {
+                const isActive = option.id === activeView;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => {
+                      setActiveView(option.id);
+                      setShowChartTypePicker(false);
+                    }}
+                    style={[
+                      styles.modalOption,
+                      {
+                        backgroundColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBg,
+                        borderColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.modalOptionLabel,
+                        { color: isActive ? surface.chipActiveText : surface.chipText },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          transparent
+          visible={showLegendModePicker}
+          animationType='fade'
+          onRequestClose={() => setShowLegendModePicker(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowLegendModePicker(false)}
+          >
+            <View
+              style={[
+                styles.modalSheet,
+                {
+                  backgroundColor: surface.shell,
+                  borderColor: surface.shellBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: surface.heading }]}>
+                Legend Mode
+              </Text>
+              {legendModeOptions.map((option) => {
+                const isActive = option.id === legendMode;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => {
+                      setLegendMode(option.id);
+                      setShowLegendModePicker(false);
+                    }}
+                    style={[
+                      styles.modalOption,
+                      {
+                        backgroundColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBg,
+                        borderColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.modalOptionLabel,
+                        { color: isActive ? surface.chipActiveText : surface.chipText },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          transparent
+          visible={showBarLabelsPicker}
+          animationType='fade'
+          onRequestClose={() => setShowBarLabelsPicker(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowBarLabelsPicker(false)}
+          >
+            <View
+              style={[
+                styles.modalSheet,
+                {
+                  backgroundColor: surface.shell,
+                  borderColor: surface.shellBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: surface.heading }]}>
+                Labels
+              </Text>
+              {barLabelOptions.map((option) => {
+                const isActive = option.id === barLabelsEnabled;
+                return (
+                  <Pressable
+                    key={option.label}
+                    onPress={() => {
+                      setBarLabelsEnabled(option.id);
+                      setShowBarLabelsPicker(false);
+                    }}
+                    style={[
+                      styles.modalOption,
+                      {
+                        backgroundColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBg,
+                        borderColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.modalOptionLabel,
+                        { color: isActive ? surface.chipActiveText : surface.chipText },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          transparent
+          visible={showBarOrientationPicker}
+          animationType='fade'
+          onRequestClose={() => setShowBarOrientationPicker(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowBarOrientationPicker(false)}
+          >
+            <View
+              style={[
+                styles.modalSheet,
+                {
+                  backgroundColor: surface.shell,
+                  borderColor: surface.shellBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: surface.heading }]}>
+                Orientation
+              </Text>
+              {barOrientationOptions.map((option) => {
+                const isActive = option.id === barOrientation;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => {
+                      setBarOrientation(option.id);
+                      setShowBarOrientationPicker(false);
+                    }}
+                    style={[
+                      styles.modalOption,
+                      {
+                        backgroundColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBg,
+                        borderColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.modalOptionLabel,
+                        { color: isActive ? surface.chipActiveText : surface.chipText },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          transparent
+          visible={showBarSortDirectionPicker}
+          animationType='fade'
+          onRequestClose={() => setShowBarSortDirectionPicker(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowBarSortDirectionPicker(false)}
+          >
+            <View
+              style={[
+                styles.modalSheet,
+                {
+                  backgroundColor: surface.shell,
+                  borderColor: surface.shellBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: surface.heading }]}>
+                Sort Direction
+              </Text>
+              {barSortDirectionOptions.map((option) => {
+                const isActive = option.id === barSortDirection;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => {
+                      setBarSortDirection(option.id);
+                      setShowBarSortDirectionPicker(false);
+                    }}
+                    style={[
+                      styles.modalOption,
+                      {
+                        backgroundColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBg,
+                        borderColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.modalOptionLabel,
+                        { color: isActive ? surface.chipActiveText : surface.chipText },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          transparent
+          visible={showBarSortByPicker}
+          animationType='fade'
+          onRequestClose={() => setShowBarSortByPicker(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowBarSortByPicker(false)}
+          >
+            <View
+              style={[
+                styles.modalSheet,
+                {
+                  backgroundColor: surface.shell,
+                  borderColor: surface.shellBorder,
+                },
+              ]}
+            >
+              <Text style={[styles.modalTitle, { color: surface.heading }]}>
+                Sort Key
+              </Text>
+              {barSortByOptions.map((option) => {
+                const isActive = option.id === barSortBy;
+                return (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => {
+                      setBarSortBy(option.id);
+                      setShowBarSortByPicker(false);
+                    }}
+                    style={[
+                      styles.modalOption,
+                      {
+                        backgroundColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBg,
+                        borderColor: isActive
+                          ? surface.chipActiveBg
+                          : surface.chipBorder,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.modalOptionLabel,
+                        { color: isActive ? surface.chipActiveText : surface.chipText },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Modal>
       </ScrollView>
     </View>
   );
@@ -1094,9 +1522,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
     paddingTop: 14,
-    paddingBottom: 28,
+    paddingBottom: 20,
     paddingHorizontal: 10,
   },
   heroShell: {
@@ -1106,34 +1534,89 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     gap: 8,
   },
+  controlsCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 4,
+    overflow: 'hidden',
+  },
+  controlHeader: {
+    minHeight: 44,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    justifyContent: 'center',
+    gap: 2,
+  },
+  controlHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  controlHeaderAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  controlHeaderLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  controlHeaderActionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    opacity: 0.8,
+  },
+  controlHeaderChevron: {
+    fontSize: 14,
+    lineHeight: 14,
+    fontWeight: '600',
+    transform: [{ translateY: -1 }],
+  },
+  controlHeaderValue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  controlBody: {
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    gap: 8,
+  },
+  inlineSelector: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    gap: 2,
+  },
   title: {
     fontSize: 21,
     fontWeight: '700',
     letterSpacing: 0.15,
   },
   subtitle: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   legendModeRow: {
     width: '100%',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   legendModeLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   legendModeOptions: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   legendModeChip: {
     borderWidth: 1,
     borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    minHeight: 38,
+    paddingHorizontal: 13,
+    paddingVertical: 5,
+    minHeight: 34,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1152,7 +1635,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   a11yNote: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
   },
   perfPanel: {
@@ -1166,8 +1649,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   perfCopy: {
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   perfRunButton: {
     alignSelf: 'flex-start',
@@ -1177,11 +1661,12 @@ const styles = StyleSheet.create({
   },
   perfRunButtonLabel: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   perfStamp: {
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '500',
   },
   perfResults: {
     gap: 8,
@@ -1197,27 +1682,38 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   perfMetric: {
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '500',
   },
-  tabs: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 6,
-  },
-  tab: {
-    borderWidth: 1,
-    borderRadius: 999,
-    width: 120,
-    paddingVertical: 7,
-    minHeight: 40,
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  tabLabel: {
+  modalSheet: {
+    borderWidth: 1,
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 360,
+    padding: 12,
+    gap: 8,
+  },
+  modalTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  modalOption: {
+    borderWidth: 1,
+    borderRadius: 12,
+    minHeight: 40,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+  },
+  modalOptionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    lineHeight: 16,
   },
 });

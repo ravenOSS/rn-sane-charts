@@ -11,10 +11,12 @@ import {
 import { useChartContext } from '../context';
 import { computeBarDensity, resolveAutoBarWidthPx } from './barGeometry';
 import {
+  resolveHorizontalBarDataLabel,
   resolveVerticalBarDataLabel,
   toRNFontStyle,
   type BarDataLabelsConfig,
 } from './dataLabels';
+import type { ChartOrientation } from '../types';
 
 export type StackedBarSeriesProps = {
   series: Series[];
@@ -23,6 +25,7 @@ export type StackedBarSeriesProps = {
   sort?: BarSortDirection;
   sortBy?: BarSortBy;
   sortMetric?: MultiSeriesSortMetric;
+  orientation?: ChartOrientation;
   widthRatio?: number;
   baselineY?: number;
   dataLabels?: BarDataLabelsConfig;
@@ -42,9 +45,19 @@ export type StackedBarSeriesProps = {
  * - `baselineY` offsets the rendered stack without changing the core transform.
  */
 export function StackedBarSeries(props: StackedBarSeriesProps) {
-  const { scales, theme, layout, fonts, hiddenSeriesIds, resolveSeriesEmphasis } =
-    useChartContext();
+  const {
+    scales,
+    theme,
+    layout,
+    fonts,
+    hiddenSeriesIds,
+    resolveSeriesEmphasis,
+    chartOrientation,
+    projectCategoryXToY,
+    projectValueYToX,
+  } = useChartContext();
   const opacity = clampOpacity(props.opacity ?? 0.92);
+  const orientation = props.orientation ?? chartOrientation;
   const baselineValue = props.baselineY ?? 0;
   const visibleSeries = React.useMemo(
     () =>
@@ -92,12 +105,19 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
     () => computeBarDensity(orderedEntries.map((entry) => entry.series), scales.x),
     [orderedEntries, scales.x]
   );
+  const categorySlotPx =
+    orientation === 'horizontal'
+      ? density.slotWidthPx * (layout.plot.height / Math.max(1, layout.plot.width))
+      : density.slotWidthPx;
   const barWidth = React.useMemo(() => {
     if (props.widthRatio !== undefined) {
-      return Math.max(2, density.slotWidthPx * clampRatio(props.widthRatio));
+      return Math.max(2, categorySlotPx * clampRatio(props.widthRatio));
     }
-    return resolveAutoBarWidthPx(density);
-  }, [density, props.widthRatio]);
+    return resolveAutoBarWidthPx({
+      ...density,
+      slotWidthPx: categorySlotPx,
+    });
+  }, [density, categorySlotPx, props.widthRatio]);
   const stacked = React.useMemo(
     () => stackSeries(orderedEntries.map((entry) => entry.series)),
     [orderedEntries]
@@ -128,33 +148,62 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
           // When scale projection collapses near baseline, keep a visible sliver.
           const rectY = Math.min(yStartPx, yEndPx);
           const rectH = Math.max(1, Math.abs(yStartPx - yEndPx));
+          const horizontalStart = projectValueYToX(yStartPx);
+          const horizontalEnd = projectValueYToX(yEndPx);
+          const rectXHorizontal = Math.min(horizontalStart, horizontalEnd);
+          const rectWHorizontal = Math.max(1, Math.abs(horizontalStart - horizontalEnd));
+          const yHorizontal = projectCategoryXToY(x) - barWidth / 2;
           const color =
             props.colors?.[entry.sourceIndex] ??
             theme.series.palette[entry.sourceIndex % theme.series.palette.length] ??
             '#2563EB';
           const emphasis = resolveSeriesEmphasis(entry.series.id);
           const segmentValue = point.y1 - point.y0;
-          const label = resolveVerticalBarDataLabel({
-            dataLabels: props.dataLabels,
-            value: segmentValue,
-            datum: {
-              x: point.x,
-              y: segmentValue,
-            },
-            seriesId: entry.series.id,
-            rect: {
-              x: x - barWidth / 2,
-              y: rectY,
-              width: barWidth,
-              height: rectH,
-            },
-            outsideDirection: endValue <= startValue ? 'up' : 'down',
-            fillColor: color,
-            defaultTextColor: theme.axis.tick.color,
-            plot: layout.plot,
-            measureText: fonts.measureText,
-            baseFont: fonts.yTickFont,
-          });
+          const label =
+            orientation === 'horizontal'
+              ? resolveHorizontalBarDataLabel({
+                  dataLabels: props.dataLabels,
+                  value: segmentValue,
+                  datum: {
+                    x: point.x,
+                    y: segmentValue,
+                  },
+                  seriesId: entry.series.id,
+                  rect: {
+                    x: rectXHorizontal,
+                    y: yHorizontal,
+                    width: rectWHorizontal,
+                    height: barWidth,
+                  },
+                  outsideDirection:
+                    horizontalEnd >= horizontalStart ? 'right' : 'left',
+                  fillColor: color,
+                  defaultTextColor: theme.axis.tick.color,
+                  plot: layout.plot,
+                  measureText: fonts.measureText,
+                  baseFont: fonts.yTickFont,
+                })
+              : resolveVerticalBarDataLabel({
+                  dataLabels: props.dataLabels,
+                  value: segmentValue,
+                  datum: {
+                    x: point.x,
+                    y: segmentValue,
+                  },
+                  seriesId: entry.series.id,
+                  rect: {
+                    x: x - barWidth / 2,
+                    y: rectY,
+                    width: barWidth,
+                    height: rectH,
+                  },
+                  outsideDirection: endValue <= startValue ? 'up' : 'down',
+                  fillColor: color,
+                  defaultTextColor: theme.axis.tick.color,
+                  plot: layout.plot,
+                  measureText: fonts.measureText,
+                  baseFont: fonts.yTickFont,
+                });
           const labelFont = label
             ? matchFont(toRNFontStyle(label.font)) ??
               matchFont({ fontSize: label.font.size }) ??
@@ -164,10 +213,10 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
           return (
             <Group key={`stacked-${entry.series.id}-${index}-${visibleIndex}-${x}`}>
               <Rect
-                x={x - barWidth / 2}
-                y={rectY}
-                width={barWidth}
-                height={rectH}
+                x={orientation === 'horizontal' ? rectXHorizontal : x - barWidth / 2}
+                y={orientation === 'horizontal' ? yHorizontal : rectY}
+                width={orientation === 'horizontal' ? rectWHorizontal : barWidth}
+                height={orientation === 'horizontal' ? barWidth : rectH}
                 color={color}
                 opacity={opacity * emphasis.opacity}
               />
