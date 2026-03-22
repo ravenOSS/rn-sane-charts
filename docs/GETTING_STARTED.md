@@ -186,7 +186,7 @@ You may need Apple signing setup in Xcode.
 adb devices
 ```
 
-3. Run:
+1. Run:
 
 ```bash
 pnpm android
@@ -241,7 +241,7 @@ Fixes:
 pnpm start -- --clear
 ```
 
-3. Re-run platform command.
+1. Re-run platform command.
 
 ### Problem: native dependency mismatch after upgrades
 

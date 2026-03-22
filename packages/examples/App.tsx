@@ -25,6 +25,8 @@ import {
   GroupedBarSeries,
   HistogramSeries,
   LineSeries,
+  LinkedChartPair,
+  ResponsiveChart,
   ScatterSeries,
   StackedAreaSeries,
   StackedBarSeries,
@@ -46,6 +48,8 @@ import {
   sampleGroupedBarData,
   sampleHistogramValues,
   sampleLineSeries,
+  sampleLinkedMarginSeries,
+  sampleLinkedRevenueSeries,
   sampleScatterData,
   sampleStackedAreaSeries,
   sampleStackedBarData,
@@ -61,6 +65,7 @@ type GalleryView =
   | 'stackedBar'
   | 'scatter'
   | 'histogram'
+  | 'linked'
   | 'a11yTheme'
   | 'perf';
 
@@ -75,6 +80,7 @@ const viewOptions: { id: GalleryView; label: string }[] = [
   { id: 'stackedBar', label: 'Stacked Bar' },
   { id: 'scatter', label: 'Scatter' },
   { id: 'histogram', label: 'Histogram' },
+  { id: 'linked', label: 'Linked charts' },
   { id: 'a11yTheme', label: 'A11y Theme' },
   { id: 'perf', label: 'Perf' },
 ];
@@ -296,20 +302,18 @@ function GalleryApp() {
 
   const scatterSeries = React.useMemo<Series>(
     () => ({
-      id: 'Signal',
+      id: 'Samples',
       data: sampleScatterData.map((pt) => ({
-        x: toSlotDate(pt.x),
+        // Chart uses a time scale; encode sample index i as Date(i) so getTime() === i for axis labels.
+        x: new Date(pt.x),
         y: pt.y,
       })),
     }),
     []
   );
-  const scatterLabels = React.useMemo(
-    () => Array.from({ length: 16 }, (_, i) => `X${i}`),
-    []
-  );
+  const scatterFormatX = React.useCallback((d: Date) => String(d.getTime()), []);
   const scatterTickValues = React.useMemo(
-    () => Array.from({ length: 16 }, (_, i) => toSlotDate(i)),
+    () => [0, 8, 16, 24, 32, 40, 48, 56, 63].map((n) => new Date(n)),
     []
   );
 
@@ -370,6 +374,21 @@ function GalleryApp() {
         .filter((x): x is Date => x instanceof Date),
     []
   );
+  const linkedTickValues = React.useMemo(
+    () =>
+      sampleLinkedRevenueSeries.data
+        .map((d) => d.x)
+        .filter((x): x is Date => x instanceof Date),
+    []
+  );
+  const formatLinkedRevenueUsd = React.useCallback((v: number) => {
+    if (Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(1)}k`;
+    return `$${v.toFixed(0)}`;
+  }, []);
+  const formatLinkedMarginPercent = React.useCallback(
+    (v: number) => `${Math.round(v)}%`,
+    []
+  );
   const lineAnnotations = React.useMemo(
     () => [
       {
@@ -383,9 +402,9 @@ function GalleryApp() {
   );
   const lineLegendItems = React.useMemo(
     () => [
-      { id: sampleLineSeries[0].id, label: sampleLineSeries[0].id, color: exampleSeriesColors.revenue },
-      { id: sampleLineSeries[1].id, label: sampleLineSeries[1].id, color: exampleSeriesColors.forecast },
-      { id: sampleLineSeries[2].id, label: sampleLineSeries[2].id, color: exampleSeriesColors.target },
+      { id: sampleLineSeries[0].id, label: sampleLineSeries[0].id, color: exampleSeriesColors.east },
+      { id: sampleLineSeries[1].id, label: sampleLineSeries[1].id, color: exampleSeriesColors.central },
+      { id: sampleLineSeries[2].id, label: sampleLineSeries[2].id, color: exampleSeriesColors.west },
     ],
     []
   );
@@ -773,11 +792,11 @@ function GalleryApp() {
               width={chartWidth}
               height={chartHeight}
               series={sampleLineSeries}
-              title='Revenue Plan Tracking'
-              subtitle='Actual vs forecast vs target (last 50 days)'
-              storyNote='Jan 25 release cutover'
+              title='Regional trends (demo)'
+              subtitle='Three daily series (last 50 days)'
+              storyNote='Example annotation marker'
               xAxisTitle='Date'
-              yAxisTitle='USD'
+              yAxisTitle='Value (demo)'
               xTickValues={lineTickValues}
               xTickDomainMode='exact'
               legend={{
@@ -796,17 +815,17 @@ function GalleryApp() {
             >
               <LineSeries
                 series={sampleLineSeries[0]}
-                color={exampleSeriesColors.revenue}
+                color={exampleSeriesColors.east}
                 strokeWidth={exampleChartTypeConfig.line.strokeWidth}
               />
               <LineSeries
                 series={sampleLineSeries[1]}
-                color={exampleSeriesColors.forecast}
+                color={exampleSeriesColors.central}
                 strokeWidth={exampleChartTypeConfig.line.strokeWidth}
               />
               <LineSeries
                 series={sampleLineSeries[2]}
-                color={exampleSeriesColors.target}
+                color={exampleSeriesColors.west}
                 strokeWidth={exampleChartTypeConfig.line.strokeWidth}
               />
             </Chart>
@@ -828,15 +847,15 @@ function GalleryApp() {
             >
               <AreaSeries
                 series={sampleAreaSeries}
-                fillColor={exampleSeriesColors.revenue}
+                fillColor={exampleSeriesColors.east}
                 fillOpacity={exampleChartTypeConfig.area.fillOpacity}
-                strokeColor={exampleSeriesColors.revenue}
+                strokeColor={exampleSeriesColors.east}
                 strokeWidth={exampleChartTypeConfig.area.strokeWidth}
                 baselineY={exampleChartTypeConfig.area.baselineY}
               />
               <LineSeries
                 series={sampleAreaSeries}
-                color={exampleSeriesColors.revenue}
+                color={exampleSeriesColors.east}
                 strokeWidth={exampleChartTypeConfig.line.strokeWidth}
               />
             </Chart>
@@ -907,8 +926,8 @@ function GalleryApp() {
               height={chartHeight}
               orientation={barOrientation}
               series={groupedBarSeries}
-              title='Quarterly Revenue Plan'
-              subtitle='Actual vs forecast vs target'
+              title='Quarterly comparison (demo)'
+              subtitle='East · Central · West by quarter'
               xAxisTitle={barOrientation === 'horizontal' ? 'USD (k)' : 'Quarter'}
               yAxisTitle={barOrientation === 'horizontal' ? 'Quarter' : 'USD (k)'}
               yIncludeZero
@@ -980,11 +999,11 @@ function GalleryApp() {
               width={chartWidth}
               height={chartHeight}
               series={[scatterSeries]}
-              title='Signal Samples'
-              subtitle='Bucket index vs signal value'
-              xAxisTitle='Bucket'
-              yAxisTitle='Signal'
-              formatX={indexFormatter(scatterLabels)}
+              title='Scatter (demo)'
+              subtitle='Sample index vs measurement'
+              xAxisTitle='Sample index'
+              yAxisTitle='Value (demo)'
+              formatX={scatterFormatX}
               xTickValues={scatterTickValues}
               xTickDomainMode='slots'
               tickCounts={{ x: 8, y: 6 }}
@@ -1012,10 +1031,10 @@ function GalleryApp() {
               width={chartWidth}
               height={chartHeight}
               series={histogramSeries}
-              title='Sample Value Distribution'
-              subtitle='Histogram of sample values'
-              xAxisTitle='Value Bin'
-              yAxisTitle='Frequency'
+              title='Histogram (demo)'
+              subtitle='Demo data — counts by value bin'
+              xAxisTitle='Value (bin range)'
+              yAxisTitle='Count'
               yIncludeZero
               formatX={() => ''}
               xTickValues={histogramTickValues}
@@ -1032,6 +1051,64 @@ function GalleryApp() {
             </Chart>
           ) : null}
 
+          {activeView === 'linked' ? (
+            <LinkedChartPair
+              gap={12}
+              caption='Same dates on both charts; separate y-scales and formatY units replace a dual y-axis.'
+              captionStyle={{ color: surface.body, fontSize: 12, lineHeight: 16 }}
+              accessibilityLabel='Linked revenue and gross margin charts, demo data'
+              top={
+                <ResponsiveChart
+                  width={chartWidth}
+                  aspectRatio={1.75}
+                  minHeight={168}
+                  maxHeight={280}
+                  series={[sampleLinkedRevenueSeries]}
+                  title='Revenue (demo)'
+                  subtitle='Weekly totals'
+                  yAxisTitle='USD'
+                  formatY={formatLinkedRevenueUsd}
+                  xTickValues={linkedTickValues}
+                  xTickDomainMode='exact'
+                  tickCounts={{ x: 6, y: 5 }}
+                  interaction={indexInteraction}
+                  {...commonChartProps}
+                >
+                  <LineSeries
+                    series={sampleLinkedRevenueSeries}
+                    color={exampleSeriesColors.east}
+                    strokeWidth={exampleChartTypeConfig.line.strokeWidth}
+                  />
+                </ResponsiveChart>
+              }
+              bottom={
+                <ResponsiveChart
+                  width={chartWidth}
+                  aspectRatio={1.75}
+                  minHeight={168}
+                  maxHeight={280}
+                  series={[sampleLinkedMarginSeries]}
+                  title='Gross margin (demo)'
+                  subtitle='Same period as chart above'
+                  xAxisTitle='Date'
+                  yAxisTitle='Percent'
+                  formatY={formatLinkedMarginPercent}
+                  xTickValues={linkedTickValues}
+                  xTickDomainMode='exact'
+                  tickCounts={{ x: 6, y: 5 }}
+                  interaction={indexInteraction}
+                  {...commonChartProps}
+                >
+                  <LineSeries
+                    series={sampleLinkedMarginSeries}
+                    color={exampleSeriesColors.central}
+                    strokeWidth={exampleChartTypeConfig.line.strokeWidth}
+                  />
+                </ResponsiveChart>
+              }
+            />
+          ) : null}
+
           {activeView === 'a11yTheme' ? (
             <View style={styles.a11yPanel}>
               <Chart
@@ -1043,7 +1120,7 @@ function GalleryApp() {
                   1
                 )}:1 (target >= 4.5:1)`}
                 xAxisTitle='Date'
-                yAxisTitle='USD'
+                yAxisTitle='Value (demo)'
                 xTickValues={lineTickValues}
                 xTickDomainMode='exact'
                 legend={{

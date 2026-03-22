@@ -3,6 +3,7 @@ import { Path, Skia } from '@shopify/react-native-skia';
 import type { Series } from '@rn-sane-charts/core';
 import { buildLinePath, buildPoints } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
+import { DEFAULT_SERIES_ACCENT } from '../theme/defaultTheme';
 import { MarkerGlyph, type MarkerStyle } from './markerSymbol';
 
 export type LineSeriesProps = {
@@ -48,7 +49,7 @@ export function LineSeries(props: LineSeriesProps) {
     props.color ??
     seriesColorById.get(props.series.id) ??
     theme.series.palette[0] ??
-    '#2563EB';
+    DEFAULT_SERIES_ACCENT;
   const emphasis = resolveSeriesEmphasis(props.series.id);
 
   return (

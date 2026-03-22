@@ -7,6 +7,7 @@ import {
   type Series,
 } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
+import { DEFAULT_SERIES_ACCENT } from '../theme/defaultTheme';
 import {
   computeBarDensity,
   resolveAutoBarWidthPx,
@@ -65,7 +66,7 @@ export function BarSeries(props: BarSeriesProps) {
     props.color ??
     seriesColorById.get(props.series.id) ??
     theme.series.palette[0] ??
-    '#2563EB';
+    DEFAULT_SERIES_ACCENT;
   const opacity = clampOpacity(props.opacity ?? 0.92);
   const orientation = props.orientation ?? chartOrientation;
   const y0 = resolveBaselineYPx(scales.y, props.baselineY);

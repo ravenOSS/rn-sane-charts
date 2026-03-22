@@ -116,7 +116,8 @@ A contribution is considered complete when:
 ## Markdown Style
 
 * Use **GitHub Flavored Markdown (GFM)** for all `.md` files in this repository.
-* Follow markdownlint defaults used in CI, including list-spacing rules (for example, `MD032`).
+* **Canonical rules:** [`.markdownlint.yml`](.markdownlint.yml) at the repo root (markdownlint; aligns with GitHub’s documented GFM behavior).
+* Notable rules: **`MD032`** — blank lines around lists (fixes common GFM parsing ambiguity); line length checks off (`MD013`) for long tables/URLs; inline HTML allowed per GFM (`MD033` off).
 * Keep formatting consistent across `README.md`, `docs/*`, issue templates, and contributor guides.
 
 ---

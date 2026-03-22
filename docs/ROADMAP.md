@@ -82,7 +82,7 @@ These are intentionally deferred to protect MVP scope:
 
 3. New chart types or renderer targets
 
-   - No horizontal bar series in this push.
+   - No new chart types beyond the MVP set (horizontal bars are already covered via `orientation="horizontal"` on bar renderers, not a separate series type).
    - No web renderer.
    - No financial/candlestick charts.
 

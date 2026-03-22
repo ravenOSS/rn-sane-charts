@@ -158,9 +158,9 @@ Use `storyNote` when the chart needs a short, readable narrative cue.
 
 ```tsx
 <Chart
-  title='Revenue Plan Tracking'
-  subtitle='Actual vs forecast vs target (last 50 days)'
-  storyNote='Jan 25 release cutover'
+  title='Regional trends (demo)'
+  subtitle='Three daily series (last 50 days)'
+  storyNote='Example annotation marker'
   {...rest}
 >
   ...
@@ -277,9 +277,21 @@ Included fixtures:
 6. `sampleStackedBarData`
 7. `sampleScatterData`
 8. `sampleHistogramValues`
+9. `sampleLinkedRevenueSeries` / `sampleLinkedMarginSeries` (same dates; use with **Linked charts** gallery tab — two y-scales without a dual axis)
 
 Use these fixtures to validate renderer behavior and visual defaults across the
 example gallery tabs.
+
+## Linked charts (no dual y-axis)
+
+For **two metrics with incompatible units** (e.g. revenue vs margin %), prefer **two stacked charts** with aligned x domains instead of one chart with two y-axes.
+
+- Use `LinkedChartPair` from `@rn-sane-charts/rn` to stack a top and bottom `ResponsiveChart`.
+- Match **`xTickValues`** and **`xTickDomainMode`** on both charts.
+- Set **`yAxisTitle`** and **`formatY`** per chart so units are explicit.
+- Put the shared time/category label on **`xAxisTitle`** (often on the bottom chart only).
+
+See the examples app **Linked charts** tab for a full demo.
 
 ## Accessibility Theme Check (Examples)
 

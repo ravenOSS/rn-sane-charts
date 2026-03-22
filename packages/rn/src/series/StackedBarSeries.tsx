@@ -9,6 +9,7 @@ import {
   type Series,
 } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
+import { DEFAULT_SERIES_ACCENT } from '../theme/defaultTheme';
 import { computeBarDensity, resolveAutoBarWidthPx } from './barGeometry';
 import {
   resolveHorizontalBarDataLabel,
@@ -156,7 +157,7 @@ export function StackedBarSeries(props: StackedBarSeriesProps) {
           const color =
             props.colors?.[entry.sourceIndex] ??
             theme.series.palette[entry.sourceIndex % theme.series.palette.length] ??
-            '#2563EB';
+            DEFAULT_SERIES_ACCENT;
           const emphasis = resolveSeriesEmphasis(entry.series.id);
           const segmentValue = point.y1 - point.y0;
           const label =

@@ -23,6 +23,7 @@ import {
   findNearestNumericValue,
   findNearestPointInScatterIndex,
   findNearestPoint,
+  applyInteractiveHitRadius,
   isPointInRect,
 } from '@rn-sane-charts/core';
 import type {
@@ -33,8 +34,12 @@ import type {
   SaneChartFonts,
   SaneChartTheme,
 } from './types';
-import { darkTheme, lightTheme } from './theme/defaultTheme';
+import { darkTheme, DEFAULT_SERIES_ACCENT, lightTheme } from './theme/defaultTheme';
 import { ChartContext } from './context';
+import {
+  DEFAULT_INTERACTION_HIT_RADIUS_PX,
+  ScatterHitRadiusRegistryContext,
+} from './scatterHitRadiusRegistry';
 
 export type ChartProps = {
   width: number;
@@ -120,6 +125,29 @@ export function Chart(props: ChartProps) {
 
   const [hiddenSeriesIds, setHiddenSeriesIds] = React.useState<string[]>([]);
   const [focusedSeriesId, setFocusedSeriesId] = React.useState<string | null>(null);
+  const [scatterHitRadiusById, setScatterHitRadiusById] = React.useState<
+    Record<string, number>
+  >({});
+
+  const registerScatterHitRadius = React.useCallback(
+    (seriesId: string, radiusPx: number | undefined) => {
+      setScatterHitRadiusById((prev) => {
+        const next = { ...prev };
+        if (radiusPx === undefined) {
+          delete next[seriesId];
+        } else {
+          next[seriesId] = radiusPx;
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const scatterHitRadiusRegistryValue = React.useMemo(
+    () => ({ register: registerScatterHitRadius }),
+    [registerScatterHitRadius]
+  );
   const hiddenSeriesIdSet = React.useMemo(
     () => new Set(hiddenSeriesIds),
     [hiddenSeriesIds]
@@ -142,7 +170,7 @@ export function Chart(props: ChartProps) {
   const seriesForPlan = visibleSeries.length > 0 ? visibleSeries : props.series;
 
   const legendLayout = React.useMemo<LegendLayoutResult>(() => {
-    const fallbackLegendColor = '#2563EB';
+    const fallbackLegendColor = DEFAULT_SERIES_ACCENT;
     const resolveLegendColor = (index: number, inputColor?: string) =>
       inputColor ??
       theme.series.palette[index % theme.series.palette.length] ??
@@ -182,7 +210,7 @@ export function Chart(props: ChartProps) {
    *   overlays visually consistent.
    */
   const seriesColorById = React.useMemo(() => {
-    const fallbackLegendColor = '#2563EB';
+    const fallbackLegendColor = DEFAULT_SERIES_ACCENT;
     const legendColorById = new Map(
       legendLayout.items.map((item) => [item.id, item.color] as const)
     );
@@ -444,7 +472,7 @@ export function Chart(props: ChartProps) {
   }, [props.annotations?.markers, plan.scales, plan.layout.plot]);
 
   const interactiveSeriesPoints = React.useMemo(() => {
-    const fallbackColor = '#2563EB';
+    const fallbackColor = DEFAULT_SERIES_ACCENT;
     const points: InteractivePoint[] = [];
     const sourceSeriesIndexById = new Map(
       props.series.map((series, index) => [series.id, index] as const)
@@ -466,6 +494,11 @@ export function Chart(props: ChartProps) {
         if (!Number.isFinite(px) || !Number.isFinite(py)) return;
         if (!isPointInRect(px, py, plan.layout.plot)) return;
 
+        const hitRadiusPx = Math.max(
+          1,
+          scatterHitRadiusById[series.id] ?? DEFAULT_INTERACTION_HIT_RADIUS_PX
+        );
+
         points.push({
           seriesId: series.id,
           seriesIndex,
@@ -481,6 +514,7 @@ export function Chart(props: ChartProps) {
           color,
           xLabel: formatInteractiveXLabel(datum.x, props.formatX),
           yLabel: formatInteractiveYLabel(datum.y, props.formatY),
+          hitRadiusPx,
         });
       });
     });
@@ -498,7 +532,17 @@ export function Chart(props: ChartProps) {
     orientation,
     projection.valueYToX,
     projection.categoryXToY,
+    scatterHitRadiusById,
   ]);
+
+  const maxInteractionHitRadiusPx = React.useMemo(
+    () =>
+      interactiveSeriesPoints.reduce(
+        (max, point) => Math.max(max, point.hitRadiusPx),
+        DEFAULT_INTERACTION_HIT_RADIUS_PX
+      ),
+    [interactiveSeriesPoints]
+  );
 
   const indexedAnchors = React.useMemo(() => {
     const anchors = new Set<number>();
@@ -528,8 +572,12 @@ export function Chart(props: ChartProps) {
   }, [interactiveSeriesPoints]);
 
   const scatterIndex = React.useMemo(
-    () => buildScatterSpatialIndex(interactiveSeriesPoints, 44),
-    [interactiveSeriesPoints]
+    () =>
+      buildScatterSpatialIndex(
+        interactiveSeriesPoints,
+        Math.max(DEFAULT_INTERACTION_HIT_RADIUS_PX, maxInteractionHitRadiusPx)
+      ),
+    [interactiveSeriesPoints, maxInteractionHitRadiusPx]
   );
 
   const [interactionState, setInteractionState] =
@@ -658,9 +706,14 @@ export function Chart(props: ChartProps) {
         return;
       }
 
-      const nearest =
+      const candidate =
         findNearestPointInScatterIndex(scatterIndex, clampedX, clampedY) ??
         findNearestPoint(interactiveSeriesPoints, clampedX, clampedY);
+      const nearest = applyInteractiveHitRadius(
+        candidate,
+        clampedX,
+        clampedY
+      );
       if (!nearest) {
         setInteractionState(null);
         return;
@@ -766,9 +819,13 @@ export function Chart(props: ChartProps) {
             height: plan.layout.plot.height,
           }}
         >
-          <ChartContext.Provider value={ctxValue}>
-            {props.children}
-          </ChartContext.Provider>
+          <ScatterHitRadiusRegistryContext.Provider
+            value={scatterHitRadiusRegistryValue}
+          >
+            <ChartContext.Provider value={ctxValue}>
+              {props.children}
+            </ChartContext.Provider>
+          </ScatterHitRadiusRegistryContext.Provider>
           {annotationMarkers.length > 0
             ? renderAnnotationMarkers({
                 markers: annotationMarkers,
@@ -968,6 +1025,8 @@ type InteractivePoint = {
   color: string;
   xLabel: string;
   yLabel: string;
+  /** Screen-space hit radius (px) for touch / scrub queries. */
+  hitRadiusPx: number;
 };
 type InteractionState = {
   crosshairX: number;
@@ -1748,11 +1807,17 @@ function renderTooltip(input: {
   const x = clamp(preferredX, 4, input.chartWidth - tooltipWidth - 4);
   const y = clamp(preferredY, 4, input.chartHeight - tooltipHeight - 4);
 
+  /** iOS-style tooltip materials: light frosted card, dark elevated popover. */
   const backgroundColor =
-    input.colorScheme === 'dark' ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.96)';
+    input.colorScheme === 'dark'
+      ? 'rgba(28,28,30,0.94)'
+      : 'rgba(255,255,255,0.96)';
   const strokeColor =
-    input.colorScheme === 'dark' ? 'rgba(148,163,184,0.55)' : 'rgba(75,85,99,0.28)';
-  const textColor = input.colorScheme === 'dark' ? '#E5E7EB' : '#111827';
+    input.colorScheme === 'dark'
+      ? 'rgba(255,255,255,0.14)'
+      : 'rgba(60,60,67,0.18)';
+  const textColor =
+    input.colorScheme === 'dark' ? 'rgba(235,235,245,0.96)' : '#1C1C1E';
 
   const titleBaselineY = y + padding + baselineOffsetFromTop(headerFont.size);
   const dividerY = y + padding + titleMeasure.height + 2;

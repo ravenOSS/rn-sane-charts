@@ -3,6 +3,7 @@ import { Path, Skia } from '@shopify/react-native-skia';
 import type { Series } from '@rn-sane-charts/core';
 import { buildAreaPath, buildPoints } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
+import { DEFAULT_SERIES_ACCENT } from '../theme/defaultTheme';
 import { MarkerGlyph, type MarkerStyle } from './markerSymbol';
 
 export type AreaSeriesProps = {
@@ -56,7 +57,7 @@ export function AreaSeries(props: AreaSeriesProps) {
     props.fillColor ??
     seriesColorById.get(props.series.id) ??
     theme.series.palette[0] ??
-    '#2563EB';
+    DEFAULT_SERIES_ACCENT;
   const fillOpacity = clampOpacity(props.fillOpacity ?? 0.18);
   const strokeColor = props.strokeColor ?? fillColor;
   const strokeWidth = props.strokeWidth ?? theme.series.strokeWidth;

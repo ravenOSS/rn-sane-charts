@@ -60,7 +60,7 @@ export function createExampleChartTheme(
         line: { stroke: 'rgba(235,235,245,0.34)', strokeWidth: 1 },
       },
       series: {
-        // Keep palette order aligned with Revenue -> Forecast -> Target mapping.
+        // Keep palette order aligned with East -> Central -> West (multi-series line).
         palette: ['#5CA8ED', '#E5AC63', '#61BE88', '#8C88E8', '#E07A96', '#7EC9E8'],
         strokeWidth: 2.3,
       },
@@ -89,7 +89,7 @@ export function createExampleChartTheme(
       line: { stroke: 'rgba(60,60,67,0.34)', strokeWidth: 1 },
     },
     series: {
-      // Keep palette order aligned with Revenue -> Forecast -> Target mapping.
+      // Keep palette order aligned with East -> Central -> West (multi-series line).
       palette: ['#3A8DDE', '#D79A4A', '#53B67A', '#7D79DA', '#CF6B87', '#68B8DA'],
       strokeWidth: 2.2,
     },
@@ -113,10 +113,11 @@ export function createExampleChartTheme(
 /**
  * Keep series colors centralized so multi-line charts stay consistent.
  */
+/** Line / grouped-bar series colors (East / Central / West in sample datasets). */
 export const exampleSeriesColors = {
-  revenue: '#3A8DDE',
-  forecast: '#D79A4A',
-  target: '#53B67A',
+  east: '#3A8DDE',
+  central: '#D79A4A',
+  west: '#53B67A',
 } as const;
 
 /**
@@ -164,18 +165,18 @@ export const exampleChartTypeConfig = {
   line: {
     strokeWidth: 2.4,
     colors: [
-      exampleSeriesColors.revenue,
-      exampleSeriesColors.forecast,
-      exampleSeriesColors.target,
+      exampleSeriesColors.east,
+      exampleSeriesColors.central,
+      exampleSeriesColors.west,
     ],
   },
   area: {
     fillOpacity: 0.16,
     strokeWidth: 2.2,
     colors: [
-      exampleSeriesColors.revenue,
-      exampleSeriesColors.forecast,
-      exampleSeriesColors.target,
+      exampleSeriesColors.east,
+      exampleSeriesColors.central,
+      exampleSeriesColors.west,
     ],
     baselineY: 0,
   },
@@ -184,9 +185,9 @@ export const exampleChartTypeConfig = {
   },
   groupedBar: {
     colors: [
-      exampleSeriesColors.revenue,
-      exampleSeriesColors.forecast,
-      exampleSeriesColors.target,
+      exampleSeriesColors.east,
+      exampleSeriesColors.central,
+      exampleSeriesColors.west,
     ],
   },
   stackedBar: {

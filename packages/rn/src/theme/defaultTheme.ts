@@ -1,18 +1,45 @@
 import type { SaneChartTheme } from '../types';
 
 /**
- * Light preset used as the baseline chart look.
+ * Apple-native–inspired chart presets (light / dark).
+ *
+ * Rationale:
+ * - Surfaces align with iOS **system grouped backgrounds** and **elevated**
+ *   materials (`#F2F2F7` light, `#1C1C1E` dark chart fill) rather than generic
+ *   slate/blue-gray web palettes.
+ * - Chrome uses **label / separator opacities** on `rgb(60,60,67)` (light) and
+ *   `rgb(235,235,245)` (dark), similar to SF-style secondary labels and
+ *   hairlines—not Tailwind slate.
+ * - Series colors follow **system accent hues** (blue, green, orange, red,
+ *   purple, amber) at moderate saturation so charts stay readable and calm on
+ *   mobile, matching the examples app’s DESIGN_GUIDE direction.
+ *
+ * Consumers can still override any token via `theme` on `Chart`.
+ */
+
+/** Primary fallback when no palette slot applies (aligned with `palette[0]`). */
+export const DEFAULT_SERIES_ACCENT = '#3A8DDE';
+
+/**
+ * Light preset: grouped background, quiet grid, SF-like axis labels.
  */
 export const lightTheme: SaneChartTheme = {
-  background: '#F6F8FB',
-  frame: { stroke: 'rgba(15,23,42,0.16)', strokeWidth: 1 },
-  grid: { stroke: 'rgba(15,23,42,0.10)', strokeWidth: 1 },
+  background: '#F2F2F7',
+  frame: { stroke: 'rgba(60,60,67,0.12)', strokeWidth: 1 },
+  grid: { stroke: 'rgba(60,60,67,0.08)', strokeWidth: 1 },
   axis: {
-    tick: { color: 'rgba(15,23,42,0.84)' },
-    line: { stroke: 'rgba(15,23,42,0.36)', strokeWidth: 1 },
+    tick: { color: 'rgba(60,60,67,0.88)' },
+    line: { stroke: 'rgba(60,60,67,0.29)', strokeWidth: 1 },
   },
   series: {
-    palette: ['#2563EB', '#0D9488', '#16A34A', '#EA580C', '#4F46E5', '#DC2626'],
+    palette: [
+      '#3A8DDE',
+      '#34B15C',
+      '#E6863A',
+      '#E05252',
+      '#9B7ED9',
+      '#D9A83A',
+    ],
     strokeWidth: 2.2,
   },
   state: {
@@ -32,18 +59,25 @@ export const lightTheme: SaneChartTheme = {
 };
 
 /**
- * Dark preset tuned for contrast on non-black surfaces.
+ * Dark preset: elevated surface (not pure black), softer grid, readable labels.
  */
 export const darkTheme: SaneChartTheme = {
-  background: '#0B1220',
-  frame: { stroke: 'rgba(148,163,184,0.28)', strokeWidth: 1 },
-  grid: { stroke: 'rgba(148,163,184,0.18)', strokeWidth: 1 },
+  background: '#1C1C1E',
+  frame: { stroke: 'rgba(235,235,245,0.14)', strokeWidth: 1 },
+  grid: { stroke: 'rgba(235,235,245,0.10)', strokeWidth: 1 },
   axis: {
-    tick: { color: 'rgba(226,232,240,0.94)' },
-    line: { stroke: 'rgba(148,163,184,0.62)', strokeWidth: 1 },
+    tick: { color: 'rgba(235,235,245,0.90)' },
+    line: { stroke: 'rgba(235,235,245,0.32)', strokeWidth: 1 },
   },
   series: {
-    palette: ['#60A5FA', '#2DD4BF', '#34D399', '#FB923C', '#A78BFA', '#F87171'],
+    palette: [
+      '#5AC8FA',
+      '#32D74B',
+      '#FF9F0A',
+      '#FF453A',
+      '#BF5AF2',
+      '#FFD60A',
+    ],
     strokeWidth: 2.4,
   },
   state: {

@@ -108,8 +108,8 @@ Current implementation note:
 
 ### Default palette strategy (Apple-like)
 
-**Default categorical palette (current presets: 5 colors)**  
-Current built-in light/dark presets ship 5 calm-but-saturated categorical colors.
+**Default categorical palette (current presets: 6 colors)**  
+Built-in light/dark presets ship six calm-but-saturated categorical colors (iOS-style accent hues, tuned for chart readability).
 Recommended working range remains 2-6 visible series for readability.
 
 **Extended palette (up to 8)**  
@@ -173,8 +173,9 @@ Current shipped surface:
 
 Design target (not fully implemented yet):
 
-- consolidated `scaffolding`
-- first-class `state.focus` and `state.muted`
+- consolidated `scaffolding` token (grid + axis chrome as one override surface)
+
+`state.focus` and `state.muted` are shipped (see “Current implementation note” above).
 
 This supports “sane defaults for speed” while keeping overrides straightforward and coherent.
 
@@ -202,7 +203,6 @@ If you’re looking for “how do I wire this up,” start here:
 
 ## References
 
-<!-- markdownlint-disable MD033 -->
 <details>
 <summary>Sources used to inform this guide (for further reading)</summary>
 
@@ -218,4 +218,3 @@ If you’re looking for “how do I wire this up,” start here:
   <https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast.html>
 
 </details>
-<!-- markdownlint-enable MD033 -->

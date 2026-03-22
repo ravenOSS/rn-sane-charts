@@ -112,7 +112,7 @@ Pure functions that reshape or derive data.
 
 - Stack series (area, bar)
 - Histogram binning
-- Downsampling (future)
+- Downsampling (`downsampleSeries` in `transforms/`)
 
 #### `layout/`
 

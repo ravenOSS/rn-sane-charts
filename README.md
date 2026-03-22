@@ -33,6 +33,11 @@ Choose the path that matches your experience level:
 - `@rn-sane-charts/rn` focuses on Skia rendering and touch interaction.
 - Result: teams can add many chart types quickly, with shared planning logic and minimal repeated setup per chart.
 
+### Package consumers
+
+- `@rn-sane-charts/rn` ships compiled JS under `lib/module/` (see package `exports`).
+- `@rn-sane-charts/core` resolves `main` / `types` to TypeScript sources under `src/` for TypeScript consumers and typical bundlers. If you consume core from plain Node without transpilation, point your toolchain at the published build or compile from source.
+
 ## Easy Overrides (Customize Without API Bloat)
 
 You can override only what you need:
@@ -95,7 +100,7 @@ export function RevenueChart({ fonts }: { fonts: any }) {
       fonts={fonts}
       colorScheme="light"
     >
-      <LineSeries series={revenue} color="#2563EB" strokeWidth={2.4} />
+      <LineSeries series={revenue} color="#3A8DDE" strokeWidth={2.4} />
     </ResponsiveChart>
   );
 }
@@ -107,9 +112,9 @@ For setup flow, troubleshooting, and first-success checkpoints, use:
 
 ## Current Status
 
-- MVP in progress.
+- MVP feature set is implemented; remaining work is release hardening and npm publish (see [ROADMAP.md](docs/ROADMAP.md)).
 - Implemented: line, area (single + stacked), bar/grouped/stacked, scatter, histogram, marker annotations.
-- Planned: deeper perf harnessing and additional interaction/perf optimizations.
+- Ongoing: perf harness / baseline refresh as the codebase evolves; interaction refinements stay within the small API in [PRD.md](docs/PRD.md).
 
 ## Docs By Intent
 

@@ -43,24 +43,26 @@ function buildDateAtOffset(days: number): Date {
 
 /**
  * Line chart fixture (multi-series time-series).
+ *
+ * Series are generic regional trends for gallery demos — not FP&A actuals/forecasts.
  */
 export const sampleLineSeries: [Series, Series, Series] = [
   {
-    id: "Revenue",
+    id: "East",
     data: Array.from({ length: POINT_COUNT }, (_, i) => ({
       x: buildDateAtOffset(i),
       y: 20 + Math.sin(i / 5) * 6 + i * 0.1,
     })),
   },
   {
-    id: "Forecast",
+    id: "Central",
     data: Array.from({ length: POINT_COUNT }, (_, i) => ({
       x: buildDateAtOffset(i),
       y: 19 + Math.sin((i + 3) / 6) * 5 + i * 0.12,
     })),
   },
   {
-    id: "Target",
+    id: "West",
     data: Array.from({ length: POINT_COUNT }, (_, i) => ({
       x: buildDateAtOffset(i),
       y: 22 + Math.sin((i - 4) / 7) * 3 + i * 0.08,
@@ -130,10 +132,10 @@ export const sampleBarData: CategoryDatum[] = [
  * "values" keys are series ids; each category keeps a side-by-side group.
  */
 export const sampleGroupedBarData: GroupedBarDatum[] = [
-  { category: "Q1", values: { Revenue: 120, Forecast: 110, Target: 115 } },
-  { category: "Q2", values: { Revenue: 135, Forecast: 130, Target: 140 } },
-  { category: "Q3", values: { Revenue: 128, Forecast: 134, Target: 138 } },
-  { category: "Q4", values: { Revenue: 150, Forecast: 145, Target: 152 } },
+  { category: "Q1", values: { East: 120, Central: 110, West: 115 } },
+  { category: "Q2", values: { East: 135, Central: 130, West: 140 } },
+  { category: "Q3", values: { East: 128, Central: 134, West: 138 } },
+  { category: "Q4", values: { East: 150, Central: 145, West: 152 } },
 ];
 
 /**
@@ -151,20 +153,45 @@ export const sampleStackedBarData: StackedBarDatum[] = [
 /**
  * Scatter fixture.
  *
- * Radius variation is intentionally subtle so point-size scaling can be tested.
+ * `x` is sample index (0..63); `y` is a synthetic measurement. Radius variation
+ * is intentionally subtle for glyph-size exercises.
  */
 export const sampleScatterData: ScatterDatum[] = Array.from(
   { length: 64 },
   (_, i) => {
-    const x = i % 16;
     const y = Math.sin(i / 4) * 8 + (i % 8) + 12;
     return {
-      x,
+      x: i,
       y: Number(y.toFixed(2)),
       r: 3 + (i % 4),
     };
   }
 );
+
+/** Length of the linked-metrics demo (shared x domain for two charts). */
+const LINKED_METRIC_DAYS = 42;
+
+/**
+ * Paired daily metrics for **linked chart** demos (separate y-axes, same dates).
+ *
+ * Use with `LinkedChartPair`: match `xTickValues` / `xTickDomainMode` on both charts.
+ * Revenue is synthetic currency units; margin is synthetic percent (0–100 scale).
+ */
+export const sampleLinkedRevenueSeries: Series = {
+  id: 'Revenue',
+  data: Array.from({ length: LINKED_METRIC_DAYS }, (_, i) => ({
+    x: buildDateAtOffset(i),
+    y: 52 + Math.sin(i / 5) * 8 + i * 0.35,
+  })),
+};
+
+export const sampleLinkedMarginSeries: Series = {
+  id: 'Gross margin',
+  data: Array.from({ length: LINKED_METRIC_DAYS }, (_, i) => ({
+    x: buildDateAtOffset(i),
+    y: 32 + Math.sin(i / 7) * 3 + (i % 6) * 0.12,
+  })),
+};
 
 /**
  * Histogram fixture (raw values; binning done by chart/core layer).

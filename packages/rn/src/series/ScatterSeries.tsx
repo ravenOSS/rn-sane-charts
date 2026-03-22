@@ -2,6 +2,11 @@ import React from 'react';
 import type { Series } from '@rn-sane-charts/core';
 import { buildPoints } from '@rn-sane-charts/core';
 import { useChartContext } from '../context';
+import {
+  DEFAULT_INTERACTION_HIT_RADIUS_PX,
+  useScatterHitRadiusRegistration,
+} from '../scatterHitRadiusRegistry';
+import { DEFAULT_SERIES_ACCENT } from '../theme/defaultTheme';
 import { MarkerGlyph, type MarkerStyle, type MarkerSymbol } from './markerSymbol';
 
 export type ScatterSeriesProps = {
@@ -12,6 +17,10 @@ export type ScatterSeriesProps = {
   strokeWidth?: number;
   filled?: boolean;
   opacity?: number;
+  /**
+   * Screen-space hit radius (px) for scrubbing / tooltip selection.
+   * Defaults to 44px; forwarded to `Chart` interaction via an internal registry.
+   */
   hitRadiusPx?: number;
 };
 
@@ -30,14 +39,27 @@ export function ScatterSeries(props: ScatterSeriesProps) {
     seriesColorById,
     resolveSeriesEmphasis,
   } = useChartContext();
-  if (hiddenSeriesIds.has(props.series.id)) return null;
+  const registerScatterHitRadius = useScatterHitRadiusRegistration();
+
+  const hitRadiusPx = props.hitRadiusPx ?? DEFAULT_INTERACTION_HIT_RADIUS_PX;
+  const isHidden = hiddenSeriesIds.has(props.series.id);
+  React.useLayoutEffect(() => {
+    if (isHidden) {
+      registerScatterHitRadius(props.series.id, undefined);
+      return () => registerScatterHitRadius(props.series.id, undefined);
+    }
+    registerScatterHitRadius(props.series.id, hitRadiusPx);
+    return () => registerScatterHitRadius(props.series.id, undefined);
+  }, [props.series.id, hitRadiusPx, registerScatterHitRadius, isHidden]);
+
+  if (isHidden) return null;
 
   const points = React.useMemo(
     () => buildPoints(props.series, scales),
     [props.series, scales]
   );
 
-  const fallbackColor = '#2563EB';
+  const fallbackColor = DEFAULT_SERIES_ACCENT;
   const color =
     props.color ??
     seriesColorById.get(props.series.id) ??

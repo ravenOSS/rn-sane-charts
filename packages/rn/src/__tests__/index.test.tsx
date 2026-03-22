@@ -169,7 +169,9 @@ describe('rn smoke tests', () => {
         show: true,
         items: [{ id: 'Revenue', label: 'Revenue', color: customLegendColor }],
       },
-      interaction: { enabled: true, snap: 'nearest' },
+      // `index` snap avoids nearest-point hit-radius gating; this test only
+      // asserts legend color wiring on interaction payload.
+      interaction: { enabled: true, snap: 'index' },
       children: null,
     });
 

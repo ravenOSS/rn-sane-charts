@@ -41,6 +41,8 @@ pnpm --filter @rn-sane-charts/rn pack
 
 9. Create fresh app in a separate folder and install tarballs:
 
+Tarball filenames include the package version from `pnpm pack` (for example `rn-sane-charts-core-0.1.0.tgz`). Use the paths printed by your pack step, not a hard-coded version, if the version has changed.
+
 ```bash
 npx create-expo-app@latest sane-charts-tarball-test
 cd sane-charts-tarball-test

@@ -139,7 +139,8 @@ Behavior:
 - Design policy note: prefer focus + de-emphasis for comparison tasks; use
   hide/reveal interaction modes as fallback for exceptional clutter.
 - `interaction` enables touch crosshair + tooltip behavior:
-  - `snap: "nearest"` focuses the nearest data point.
+  - `snap: "nearest"` focuses the nearest data point within that point’s hit radius
+    (default **44px**; scatter series can override via `ScatterSeries` `hitRadiusPx`).
   - `snap: "index"` snaps to the nearest x-slot and shows all series values at that slot.
   - `crosshair` controls whether x-only or x/y crosshair lines are shown.
 - `xTickValues` can pin ticks to explicit x positions (useful for category-like
@@ -167,6 +168,29 @@ Behavior:
 - Preserves proportions using `aspectRatio` (`width / height`).
 - Applies explicit `width` / `height` overrides when provided.
 - Supports optional `minHeight` / `maxHeight` clamps for responsive layouts.
+
+### `LinkedChartPair` (Implemented)
+
+Layout helper for **two stacked charts** when metrics must not share one y-axis (avoid dual-axis distortion). Each child is usually a `ResponsiveChart` or `Chart` with its own `yAxisTitle` and `formatY`.
+
+```ts
+type LinkedChartPairProps = {
+  top: React.ReactNode;
+  bottom: React.ReactNode;
+  gap?: number;
+  caption?: string;
+  captionStyle?: StyleProp<TextStyle>;
+  style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
+};
+```
+
+Axis labeling (recommended):
+- **Different `yAxisTitle` + `formatY` on each chart** (e.g. currency vs percent).
+- **Shared x domain:** pass the same `xTickValues` and `xTickDomainMode` to both charts.
+- **Single `xAxisTitle`** on the bottom chart is often enough; repeat on the top if your layout hides the lower axis.
+
+This component does not synchronize gestures; apps can layer that later if needed.
 
 ### `SaneChartFonts` (Implemented)
 
@@ -198,6 +222,20 @@ type SaneChartTheme = {
     palette: string[];
     strokeWidth: number;
   };
+  state: {
+    focus: {
+      seriesOpacity: number;
+      strokeWidthMultiplier: number;
+      markerSizeMultiplier: number;
+      legendOpacity: number;
+    };
+    muted: {
+      seriesOpacity: number;
+      strokeWidthMultiplier: number;
+      markerSizeMultiplier: number;
+      legendOpacity: number;
+    };
+  };
 };
 ```
 
@@ -205,6 +243,8 @@ Theme presets exported by `@rn-sane-charts/rn`:
 - `lightTheme`
 - `darkTheme`
 - `defaultTheme` (alias of `lightTheme`)
+
+Partial theme overrides merge nested `state.focus` / `state.muted` with the active preset (unspecified tokens keep preset values).
 
 ## Chart Types
 
@@ -334,6 +374,8 @@ Notes:
 - `"inside"` places labels near the top interior of each bar/segment.
 - Label font size is auto-fitted per bar and hidden when constraints are too tight.
 - `sort` defaults to `"none"` and preserves input category order.
+- When `sort` is `"asc"` or `"desc"`, `sortBy` defaults to `"value"` (explicit
+  `sortBy: "label"` orders by category key).
 - `sortBy: "value"` orders by bar value (single series) or per-category aggregate
   (`GroupedBarSeries`/`StackedBarSeries` use `sortMetric`).
 - `sortBy: "label"` orders by category key (`x`) using deterministic stable sort.
@@ -370,7 +412,10 @@ type ScatterSeriesProps = {
 ```
 
 Notes:
-- `hitRadiusPx` is currently reserved and not wired into interaction hit-testing.
+- `hitRadiusPx` sets the screen-space hit radius (px) for nearest-point
+  interaction when `interaction.snap` is `"nearest"`. It defaults to **44px**
+  (touch-target-friendly). Values apply after `ScatterSeries` registers with
+  `Chart` on layout.
 
 ---
 

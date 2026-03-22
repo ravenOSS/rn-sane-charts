@@ -1,6 +1,8 @@
 // packages/rn/src/index.ts
 export { Chart } from './Chart';
 export { ResponsiveChart } from './ResponsiveChart';
+export { LinkedChartPair } from './LinkedChartPair';
+export type { LinkedChartPairProps } from './LinkedChartPair';
 export { LineSeries } from './series/LineSeries';
 export { AreaSeries } from './series/AreaSeries';
 export { StackedAreaSeries } from './series/StackedAreaSeries';
@@ -15,7 +17,12 @@ export type {
   BarDataLabelsConfig,
 } from './series/dataLabels';
 
-export { darkTheme, defaultTheme, lightTheme } from './theme/defaultTheme';
+export {
+  darkTheme,
+  defaultTheme,
+  DEFAULT_SERIES_ACCENT,
+  lightTheme,
+} from './theme/defaultTheme';
 
 export type {
   ChartColorScheme,

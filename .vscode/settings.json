@@ -1,0 +1,4 @@
+{
+  "specstory.cloudSync.enabled": "never",
+  "markdownlint.configFile": ".markdownlint.yml"
+}

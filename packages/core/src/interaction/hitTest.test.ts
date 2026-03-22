@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { isPointInRect } from "./hitTestBars";
-import { collectPointsAtAnchorX, findNearestPoint } from "./hitTestLine";
+import {
+  applyInteractiveHitRadius,
+  collectPointsAtAnchorX,
+  findNearestPoint,
+} from "./hitTestLine";
 import {
   buildScatterSpatialIndex,
   findNearestNumericValue,
@@ -8,6 +12,16 @@ import {
 } from "./hitTestScatter";
 
 describe("interaction hit-test helpers", () => {
+  it("applyInteractiveHitRadius accepts points inside the hit radius", () => {
+    const point = { x: 10, y: 10, hitRadiusPx: 20 };
+    expect(applyInteractiveHitRadius(point, 12, 12)).toBe(point);
+  });
+
+  it("applyInteractiveHitRadius rejects points outside the hit radius", () => {
+    const point = { x: 10, y: 10, hitRadiusPx: 5 };
+    expect(applyInteractiveHitRadius(point, 50, 50)).toBeNull();
+  });
+
   it("finds nearest 2D point", () => {
     const nearest = findNearestPoint(
       [
