@@ -122,6 +122,12 @@ A contribution is considered complete when:
 
 ---
 
+## Releases and npm (maintainers)
+
+Publishing packages to npm (including **alpha** dist-tags and CI) is documented in:
+
+* [docs/PUBLISHING.md](docs/PUBLISHING.md)
+
 ## Questions?
 
 If you are unsure whether something fits the philosophy or scope, open a discussion before investing time.

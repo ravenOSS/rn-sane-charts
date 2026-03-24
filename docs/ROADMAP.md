@@ -101,40 +101,18 @@ These are intentionally deferred to protect MVP scope:
 
 ## Publish Readiness Checklist
 
-Use this as a strict go/no-go gate before publishing to npm.
+**Canonical maintainer steps, commands, and consumer install lines** live in:
 
-1. Versioning and changelog
+- [PUBLISHING.md](PUBLISHING.md)
 
-   - Package versions are set intentionally (`core` and `rn`), not placeholder values.
-   - Changelog/release notes summarize shipped behavior and known limitations.
+Summary go/no-go gates:
 
-2. Package artifact integrity
-
-   - `main`, `module`, `types`, and `exports` resolve correctly from built output.
-   - `npm pack`/`pnpm pack` tarballs include required runtime files only.
-
-3. Dependency and peer contract
-
-   - Runtime dependencies are fully declared (no hidden workspace-only imports).
-   - `peerDependencies` are accurate for consumer React Native projects.
-
-4. External consumer validation
-
-   - Fresh project (outside monorepo) can install packaged artifacts.
-   - TypeScript compile succeeds in consumer setup.
-   - iOS simulator build succeeds.
-   - Android build succeeds.
-
-5. Monorepo quality gate
-
-   - `pnpm -r typecheck` passes.
-   - `pnpm -r test` passes.
-   - Examples app launches and basic interactions are verified.
-
-6. Publish workflow dry-run
-
-   - Release command path is documented and reproducible.
-   - At least one dry-run publish flow is executed before real publish.
+1. Versioning and changelog (both packages aligned).
+2. `pnpm pack` / `pnpm publish` dry-run; artifacts include `dist/` (core) and `lib/` (rn).
+3. `workspace:*` resolved on publish; peers and runtime deps declared.
+4. External consumer validation (fresh app, TypeScript, iOS/Android).
+5. `pnpm -r typecheck` / `pnpm -r test`; examples app smoke check.
+6. GitHub Actions publish workflow tested with `NPM_TOKEN` (optional but recommended).
 
 ## Risks To Monitor
 

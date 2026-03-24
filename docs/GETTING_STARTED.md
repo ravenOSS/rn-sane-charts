@@ -65,9 +65,19 @@ Project folder contains `package.json`, `app.json`, and `App.tsx`.
 
 ## 5. Install Chart Dependencies
 
+**Recommended for alpha / MVP testers:** install **from npm** with the same **dist-tag** on both packages (e.g. `alpha` once published). That avoids monorepo layout and matches what external apps will use.
+
+```bash
+pnpm add @rn-sane-charts/rn@alpha @rn-sane-charts/core@alpha @shopify/react-native-skia
+```
+
+If you are consuming **published `latest`** (or a specific semver), omit the tag:
+
 ```bash
 pnpm add @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
 ```
+
+Maintainer publish steps: [PUBLISHING.md](PUBLISHING.md).
 
 ### Checkpoint: Dependencies Installed
 

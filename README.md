@@ -35,8 +35,16 @@ Choose the path that matches your experience level:
 
 ### Package consumers
 
-- `@rn-sane-charts/rn` ships compiled JS under `lib/module/` (see package `exports`).
-- `@rn-sane-charts/core` resolves `main` / `types` to TypeScript sources under `src/` for TypeScript consumers and typical bundlers. If you consume core from plain Node without transpilation, point your toolchain at the published build or compile from source.
+- **`@rn-sane-charts/rn`** ships compiled JS under `lib/` (see package `exports`).
+- **`@rn-sane-charts/core`** ships **built** `dist/` (`main` / `module` / `types`) for Node and bundlers. The **`react-native`** export still points at `src/` for Metro. For **alpha / MVP testing**, install from npm with a **dist-tag** (default `alpha`)—see [docs/PUBLISHING.md](docs/PUBLISHING.md).
+
+### Install (alpha from npm)
+
+```bash
+pnpm add @rn-sane-charts/rn@alpha @rn-sane-charts/core@alpha @shopify/react-native-skia
+```
+
+Use the same tag on both packages until `latest` is promoted. Maintainer steps: [docs/PUBLISHING.md](docs/PUBLISHING.md).
 
 ## Easy Overrides (Customize Without API Bloat)
 
@@ -63,7 +71,7 @@ You can override only what you need:
 
 ## Quick Usage
 
-Install packages:
+Install packages (use `@alpha` while pre-1.0; see [PUBLISHING.md](docs/PUBLISHING.md)):
 
 ```bash
 pnpm add @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
@@ -126,6 +134,7 @@ For setup flow, troubleshooting, and first-success checkpoints, use:
 - Internal architecture: [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - Product scope and goals: [PRD.md](docs/PRD.md)
 - Delivery status and release path: [ROADMAP.md](docs/ROADMAP.md)
+- npm publish (maintainers): [PUBLISHING.md](docs/PUBLISHING.md)
 
 ## Contributing
 

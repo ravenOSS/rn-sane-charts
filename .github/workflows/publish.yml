@@ -1,0 +1,51 @@
+# Maintainer-only: publish @rn-sane-charts/core and @rn-sane-charts/rn to npm.
+# Requires repository secret NPM_TOKEN (automation granular token on npmjs.com).
+# See docs/PUBLISHING.md
+
+name: Publish npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      dist_tag:
+        description: 'npm dist-tag (e.g. alpha, next, latest)'
+        required: true
+        default: 'alpha'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - name: Build @rn-sane-charts/core
+        run: pnpm -r --filter @rn-sane-charts/core build
+
+      - name: Build @rn-sane-charts/rn (bob)
+        run: pnpm --filter @rn-sane-charts/rn run prepare
+
+      - name: Publish @rn-sane-charts/core
+        run: pnpm publish --filter @rn-sane-charts/core --access public --tag ${{ inputs.dist_tag }} --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @rn-sane-charts/rn
+        run: pnpm publish --filter @rn-sane-charts/rn --access public --tag ${{ inputs.dist_tag }} --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

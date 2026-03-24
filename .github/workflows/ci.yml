@@ -23,3 +23,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test
+      - name: Verify npm pack
+        run: |
+          pnpm pack --filter @rn-sane-charts/core
+          pnpm pack --filter @rn-sane-charts/rn

@@ -57,6 +57,7 @@
   },
   "homepage": "https://github.com/ravenOSS/rn-sane-charts#readme",
   "publishConfig": {
+    "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
