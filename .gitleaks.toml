@@ -1,0 +1,5 @@
+[allowlist]
+description = "Ignore generated local session artifacts that were previously committed and are no longer tracked."
+paths = [
+  '''^\.specstory/'''
+]
