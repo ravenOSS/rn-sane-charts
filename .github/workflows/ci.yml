@@ -27,3 +27,41 @@ jobs:
         run: |
           pnpm pack --filter @rn-sane-charts/core
           pnpm pack --filter @rn-sane-charts/rn
+
+  examples-compat:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10.28.1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+      - name: Check Expo-managed dependency alignment
+        run: pnpm --dir packages/examples exec expo install --check
+      - name: Run Expo Doctor
+        run: pnpm --dir packages/examples dlx expo-doctor@latest
+
+  examples-runtime-smoke:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10.28.1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+      - name: Prebuild Expo examples app
+        env:
+          CI: '1'
+        run: pnpm --dir packages/examples exec expo prebuild --platform ios --no-install

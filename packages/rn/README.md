@@ -24,7 +24,7 @@ This is likely not a fit if you need:
 ## Installation
 
 ```sh
-npm install @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
+pnpm add @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
 ```
 
 ## Data Shape First
