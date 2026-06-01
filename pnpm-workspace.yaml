@@ -1,5 +1,6 @@
 packages:
   - packages/*
+  - packages/rn/example
 
 ignoredBuiltDependencies:
   - lefthook

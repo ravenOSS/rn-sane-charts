@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@rn-sane-charts/rn": "workspace:*",
     "@expo/metro-runtime": "~6.1.2",
     "expo": "~54.0.32",
     "expo-status-bar": "~3.0.9",
@@ -19,7 +20,6 @@
   },
   "private": true,
   "devDependencies": {
-    "react-native-builder-bob": "^0.40.17",
-    "react-native-monorepo-config": "^0.3.1"
+    "react-native-builder-bob": "^0.40.17"
   }
 }
