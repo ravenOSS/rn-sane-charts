@@ -34,5 +34,3 @@ export type {
 } from './types';
 
 export { makeSkiaMeasureText } from './skia/measureTextAdaptor';
-
-export { multiply } from './multiply';

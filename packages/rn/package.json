@@ -147,17 +147,6 @@
       }
     }
   },
-  "create-react-native-library": {
-    "type": "library",
-    "languages": "js",
-    "tools": [
-      "eslint",
-      "jest",
-      "lefthook",
-      "release-it"
-    ],
-    "version": "0.57.0"
-  },
   "dependencies": {
     "@rn-sane-charts/core": "workspace:*",
     "@shopify/react-native-skia": "~2.4.14"

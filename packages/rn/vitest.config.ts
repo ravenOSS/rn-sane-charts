@@ -1,7 +1,10 @@
 import { resolve } from 'node:path';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  test: {
+    exclude: [...configDefaults.exclude, 'lib/**'],
+  },
   resolve: {
     alias: {
       '@rn-sane-charts/core': resolve(__dirname, '../core/src/index.ts'),
