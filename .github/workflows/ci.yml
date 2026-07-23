@@ -25,8 +25,8 @@ jobs:
       - run: pnpm test
       - name: Verify npm pack
         run: |
-          pnpm pack --filter @rn-sane-charts/core
-          pnpm pack --filter @rn-sane-charts/rn
+          pnpm pack --filter @rn-sane-viz/core
+          pnpm pack --filter @rn-sane-viz/rn
 
   examples-compat:
     runs-on: ubuntu-latest

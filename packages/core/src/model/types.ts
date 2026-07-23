@@ -1,7 +1,7 @@
 // packages/core/src/model/types.ts
 
 /**
- * Canonical shared types for rn-sane-charts core.
+ * Canonical shared types for rn-sane-viz core.
  *
  * Keep these types stable and minimal:
  * - They form the contract between "core" and renderer integrations.

@@ -1,8 +1,8 @@
-# AGENTS.md — rn-sane-charts
+# AGENTS.md — rn-sane-viz
 
 ## Purpose
 
-**rn-sane-charts** is a **React Native-first**, **Skia-rendered** charting library delivering the **5 core business chart types** with **opinionated, readable, professional defaults** inspired by the philosophy of MetricsGraphics.
+**rn-sane-viz** is a **React Native-first**, **Skia-rendered** charting library delivering the **5 core business chart types** with **opinionated, readable, professional defaults** inspired by the philosophy of MetricsGraphics.
 
 Primary promise:
 
@@ -38,7 +38,7 @@ This project **requires high-quality inline documentation**.
 
 ### Why
 
-rn-sane-charts is an OSS library. Contributors must be able to:
+rn-sane-viz is an OSS library. Contributors must be able to:
 
 * Understand design intent
 * Safely extend behavior
@@ -118,7 +118,7 @@ Code without documentation for layout, geometry, or heuristics is considered **i
 
 ## Architecture
 
-### `@rn-sane-charts/core`
+### `@rn-sane-viz/core`
 
 Pure logic:
 
@@ -131,7 +131,7 @@ Pure logic:
 
 Must remain deterministic, testable, and UI-framework-agnostic.
 
-### `@rn-sane-charts/rn`
+### `@rn-sane-viz/rn`
 
 React Native layer:
 

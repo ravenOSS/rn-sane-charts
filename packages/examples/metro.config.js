@@ -26,10 +26,10 @@ config.resolver.nodeModulesPaths = Array.from(
  */
 const defaultResolveRequest = config.resolver.resolveRequest
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (moduleName === '@rn-sane-charts/rn') {
+  if (moduleName === '@rn-sane-viz/rn') {
     return { type: 'sourceFile', filePath: rnSourceEntry }
   }
-  if (moduleName === '@rn-sane-charts/core') {
+  if (moduleName === '@rn-sane-viz/core') {
     return { type: 'sourceFile', filePath: coreSourceEntry }
   }
 

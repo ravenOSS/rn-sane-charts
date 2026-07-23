@@ -74,7 +74,7 @@ pnpm lint
 To fix formatting errors, run the following:
 
 ```sh
-pnpm --filter @rn-sane-charts/rn exec eslint "**/*.{js,ts,tsx}" --fix
+pnpm --filter @rn-sane-viz/rn exec eslint "**/*.{js,ts,tsx}" --fix
 ```
 
 Remember to add tests for your change if possible. Run the unit tests by:
@@ -105,7 +105,7 @@ We use [release-it](https://github.com/release-it/release-it) to make it easier 
 To publish new versions, run the following:
 
 ```sh
-pnpm --filter @rn-sane-charts/rn release
+pnpm --filter @rn-sane-viz/rn release
 ```
 
 

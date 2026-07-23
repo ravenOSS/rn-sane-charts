@@ -1,4 +1,4 @@
-import type { FontSpec, MeasureTextFn } from '@rn-sane-charts/core';
+import type { FontSpec, MeasureTextFn } from '@rn-sane-viz/core';
 
 export type ChartColorScheme = 'light' | 'dark' | 'system';
 export type ChartOrientation = 'vertical' | 'horizontal';

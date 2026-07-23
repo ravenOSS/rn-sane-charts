@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LayoutResult } from '@rn-sane-charts/core';
+import type { LayoutResult } from '@rn-sane-viz/core';
 import type {
   ChartOrientation,
   LegendInteractionMode,
@@ -34,7 +34,7 @@ export const ChartContext = React.createContext<ChartContextValue | null>(null);
 export function useChartContext(): ChartContextValue {
   const ctx = React.useContext(ChartContext);
   if (!ctx) {
-    throw new Error('rn-sane-charts: <Series> must be used inside <Chart>.');
+    throw new Error('rn-sane-viz: <Series> must be used inside <Chart>.');
   }
   return ctx;
 }

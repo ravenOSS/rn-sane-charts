@@ -239,7 +239,7 @@ type SaneChartTheme = {
 };
 ```
 
-Theme presets exported by `@rn-sane-charts/rn`:
+Theme presets exported by `@rn-sane-viz/rn`:
 - `lightTheme`
 - `darkTheme`
 - `defaultTheme` (alias of `lightTheme`)
@@ -440,12 +440,12 @@ type HistogramSeriesProps = {
 ```
 
 Typical flow:
-1. Build bins with `binHistogram(values, options)` from `@rn-sane-charts/core`.
+1. Build bins with `binHistogram(values, options)` from `@rn-sane-viz/core`.
 2. Pass resulting bins into `HistogramSeries`.
 
 ## Data Ingestion Boundary
 
-`rn-sane-charts` consumes in-memory data only.
+`rn-sane-viz` consumes in-memory data only.
 
 Out of scope for chart API:
 - Fetching data

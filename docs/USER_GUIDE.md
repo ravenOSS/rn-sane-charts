@@ -2,7 +2,7 @@
 
 ## What This Library Is
 
-`rn-sane-charts` is a React Native-first charting library for professional-looking business charts with minimal setup.
+`rn-sane-viz` is a React Native-first charting library for professional-looking business charts with minimal setup.
 
 Best fit:
 
@@ -12,7 +12,7 @@ Best fit:
 
 ## Design Guide (Chart Selection + Visual Defaults)
 
-rn-sane-charts ships “sane defaults,” but many teams (especially small ones) need the library to also help them make good design decisions.
+rn-sane-viz ships “sane defaults,” but many teams (especially small ones) need the library to also help them make good design decisions.
 
 - For **which chart to use**, **series limits**, **color roles**, and **light/dark parity**, see: [DESIGN_GUIDE.md](DESIGN_GUIDE.md).
 
@@ -54,8 +54,8 @@ Notes:
 import React from "react";
 import { Platform, View } from "react-native";
 import { matchFont } from "@shopify/react-native-skia";
-import { Chart, LineSeries, makeSkiaMeasureText } from "@rn-sane-charts/rn";
-import type { Series } from "@rn-sane-charts/core";
+import { Chart, LineSeries, makeSkiaMeasureText } from "@rn-sane-viz/rn";
+import type { Series } from "@rn-sane-viz/core";
 
 const series: Series[] = [
   {
@@ -286,7 +286,7 @@ example gallery tabs.
 
 For **two metrics with incompatible units** (e.g. revenue vs margin %), prefer **two stacked charts** with aligned x domains instead of one chart with two y-axes.
 
-- Use `LinkedChartPair` from `@rn-sane-charts/rn` to stack a top and bottom `ResponsiveChart`.
+- Use `LinkedChartPair` from `@rn-sane-viz/rn` to stack a top and bottom `ResponsiveChart`.
 - Match **`xTickValues`** and **`xTickDomainMode`** on both charts.
 - Set **`yAxisTitle`** and **`formatY`** per chart so units are explicit.
 - Put the shared time/category label on **`xAxisTitle`** (often on the bottom chart only).
@@ -357,7 +357,7 @@ Dynamic (changes at runtime):
 
 ## JSON And Streaming Data
 
-`rn-sane-charts` does not fetch or stream data itself. Keep ingestion in your app.
+`rn-sane-viz` does not fetch or stream data itself. Keep ingestion in your app.
 
 Recommended pipeline:
 
@@ -379,5 +379,5 @@ If visual updates do not appear:
 1. Clear Metro cache: `pnpm start -- --clear` from `packages/examples`.
 2. Ensure workspace package aliasing is active in `packages/examples/metro.config.js`.
 3. Re-run type checks for changed packages:
-   - `pnpm --filter @rn-sane-charts/core typecheck`
-   - `pnpm --filter @rn-sane-charts/rn typecheck`
+   - `pnpm --filter @rn-sane-viz/core typecheck`
+   - `pnpm --filter @rn-sane-viz/rn typecheck`

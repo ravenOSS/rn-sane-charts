@@ -1,7 +1,7 @@
 {
-  "name": "@rn-sane-charts/core",
+  "name": "@rn-sane-viz/core",
   "version": "0.1.0",
-  "description": "Deterministic chart math, scales, and layout for @rn-sane-charts/rn",
+  "description": "Deterministic chart math, scales, and layout for @rn-sane-viz/rn",
   "react-native": "./src/index.ts",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -26,13 +26,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ravenOSS/rn-sane-charts.git",
+    "url": "git+https://github.com/ravenOSS/rn-sane-viz.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/ravenOSS/rn-sane-charts/issues"
+    "url": "https://github.com/ravenOSS/rn-sane-viz/issues"
   },
-  "homepage": "https://github.com/ravenOSS/rn-sane-charts/tree/main/packages/core",
+  "homepage": "https://github.com/ravenOSS/rn-sane-viz/tree/main/packages/core",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -45,6 +45,7 @@
     "@types/node": "^25.3.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
+    "vite": "7.3.2",
     "vitest": "^4.1.0"
   },
   "dependencies": {

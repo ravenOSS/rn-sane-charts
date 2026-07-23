@@ -1,13 +1,13 @@
 # EXAMPLES_TARBALL_TESTING.md
 
-This guide is for junior developers testing `rn-sane-charts` with:
+This guide is for junior developers testing `rn-sane-viz` with:
 
 - the examples code in this repository
 - local tarball packages (`.tgz`) instead of npm registry installs
 
 Use this when packages are not yet published to npm.
 
-This guide intentionally excludes Expo Go. `rn-sane-charts` depends on native modules (including Skia), so testing should use development builds (`expo run:ios` / `expo run:android`) for reliable results.
+This guide intentionally excludes Expo Go. `rn-sane-viz` depends on native modules (including Skia), so testing should use development builds (`expo run:ios` / `expo run:android`) for reliable results.
 
 ## Mac Quick Path (Fastest Route)
 
@@ -19,11 +19,11 @@ If you are on macOS and want first success quickly:
 4. In that Cursor terminal, clone this repository into a new local folder:
 
 ```bash
-git clone https://github.com/ravenOSS/rn-sane-charts.git rn-sane-charts
-cd rn-sane-charts
+git clone https://github.com/ravenOSS/rn-sane-viz.git rn-sane-viz
+cd rn-sane-viz
 ```
 
-5. In Cursor, select `File -> Open Folder` and open the cloned `rn-sane-charts` folder so files are visible in the sidebar.
+5. In Cursor, select `File -> Open Folder` and open the cloned `rn-sane-viz` folder so files are visible in the sidebar.
 6. In Cursor terminal, run:
 
 ```bash
@@ -35,18 +35,18 @@ pnpm --dir packages/examples ios
 8. From repo root, build tarballs:
 
 ```bash
-pnpm --filter @rn-sane-charts/core pack
-pnpm --filter @rn-sane-charts/rn pack
+pnpm --filter @rn-sane-viz/core pack
+pnpm --filter @rn-sane-viz/rn pack
 ```
 
 9. Create fresh app in a separate folder and install tarballs:
 
-Tarball filenames include the package version from `pnpm pack` (for example `rn-sane-charts-core-0.1.0.tgz`). Use the paths printed by your pack step, not a hard-coded version, if the version has changed.
+Tarball filenames include the package version from `pnpm pack` (for example `rn-sane-viz-core-0.1.0.tgz`). Use the paths printed by your pack step, not a hard-coded version, if the version has changed.
 
 ```bash
-npx create-expo-app@latest sane-charts-tarball-test
-cd sane-charts-tarball-test
-pnpm add /ABSOLUTE/PATH/rn-sane-charts-core-0.1.0.tgz /ABSOLUTE/PATH/rn-sane-charts-rn-0.1.0.tgz
+npx create-expo-app@latest sane-viz-tarball-test
+cd sane-viz-tarball-test
+pnpm add /ABSOLUTE/PATH/rn-sane-viz-core-0.1.0.tgz /ABSOLUTE/PATH/rn-sane-viz-rn-0.1.0.tgz
 pnpm add @shopify/react-native-skia
 ```
 
@@ -65,7 +65,7 @@ You will:
 1. Install required tools (including Cursor).
 2. Run the examples app from this repo.
 3. Create a fresh Expo app.
-4. Install `rn-sane-charts` from `.tgz` files.
+4. Install `rn-sane-viz` from `.tgz` files.
 5. Confirm the fresh app builds and renders a chart.
 
 ## 2. Install Required Tools
@@ -164,12 +164,12 @@ sdk.dir=/Users/<your-user>/Library/Android/sdk
 3. In that Cursor terminal, clone the repository into a new local folder:
 
 ```bash
-git clone https://github.com/ravenOSS/rn-sane-charts.git rn-sane-charts
-cd rn-sane-charts
+git clone https://github.com/ravenOSS/rn-sane-viz.git rn-sane-viz
+cd rn-sane-viz
 ```
 
 4. In Cursor, select `File -> Open Folder`.
-5. Open the `rn-sane-charts` repository root so files appear in the left sidebar.
+5. Open the `rn-sane-viz` repository root so files appear in the left sidebar.
 6. Use Cursor terminal for all remaining commands in this guide.
 
 Checkpoint:
@@ -226,22 +226,22 @@ Checkpoint:
 Important:
 
 - The examples app does not need `.tgz` tarballs.
-- It runs directly from workspace packages (`@rn-sane-charts/core` and `@rn-sane-charts/rn`).
+- It runs directly from workspace packages (`@rn-sane-viz/core` and `@rn-sane-viz/rn`).
 
 ## 8. Prepare Tarball Files
 
 From repo root:
 
 ```bash
-pnpm --filter @rn-sane-charts/core pack
-pnpm --filter @rn-sane-charts/rn pack
-ls -lh rn-sane-charts-core-*.tgz rn-sane-charts-rn-*.tgz
+pnpm --filter @rn-sane-viz/core pack
+pnpm --filter @rn-sane-viz/rn pack
+ls -lh rn-sane-viz-core-*.tgz rn-sane-viz-rn-*.tgz
 ```
 
 Expected output includes:
 
-- `rn-sane-charts-core-0.1.0.tgz`
-- `rn-sane-charts-rn-0.1.0.tgz`
+- `rn-sane-viz-core-0.1.0.tgz`
+- `rn-sane-viz-rn-0.1.0.tgz`
 
 Alternative to local pack:
 
@@ -253,8 +253,8 @@ Alternative to local pack:
 From any parent folder (not inside this repo). This must be a separate new folder:
 
 ```bash
-npx create-expo-app@latest sane-charts-tarball-test
-cd sane-charts-tarball-test
+npx create-expo-app@latest sane-viz-tarball-test
+cd sane-viz-tarball-test
 ```
 
 Use default TypeScript template.
@@ -264,20 +264,20 @@ Use default TypeScript template.
 Install from absolute paths to the two `.tgz` files:
 
 ```bash
-pnpm add /ABSOLUTE/PATH/rn-sane-charts-core-0.1.0.tgz /ABSOLUTE/PATH/rn-sane-charts-rn-0.1.0.tgz
+pnpm add /ABSOLUTE/PATH/rn-sane-viz-core-0.1.0.tgz /ABSOLUTE/PATH/rn-sane-viz-rn-0.1.0.tgz
 pnpm add @shopify/react-native-skia
 ```
 
 Example path on macOS:
 
 ```bash
-pnpm add /Users/<you>/projects/rn-sane-charts/rn-sane-charts-core-0.1.0.tgz /Users/<you>/projects/rn-sane-charts/rn-sane-charts-rn-0.1.0.tgz
+pnpm add /Users/<you>/projects/rn-sane-viz/rn-sane-viz-core-0.1.0.tgz /Users/<you>/projects/rn-sane-viz/rn-sane-viz-rn-0.1.0.tgz
 ```
 
 Checkpoint:
 
 ```bash
-pnpm list @rn-sane-charts/core @rn-sane-charts/rn @shopify/react-native-skia
+pnpm list @rn-sane-viz/core @rn-sane-viz/rn @shopify/react-native-skia
 ```
 
 All three packages should appear.
@@ -290,8 +290,8 @@ Replace `App.tsx` with:
 import React from 'react';
 import { Platform, View } from 'react-native';
 import { matchFont } from '@shopify/react-native-skia';
-import { Chart, LineSeries, makeSkiaMeasureText } from '@rn-sane-charts/rn';
-import type { Series } from '@rn-sane-charts/core';
+import { Chart, LineSeries, makeSkiaMeasureText } from '@rn-sane-viz/rn';
+import type { Series } from '@rn-sane-viz/core';
 
 const revenue: Series = {
   id: 'Revenue',

@@ -3,7 +3,7 @@ import {
   findNearestNumericValue,
   findNearestPoint,
   findNearestPointInScatterIndex,
-} from "@rn-sane-charts/core";
+} from "@rn-sane-viz/core";
 
 export type PerfRunResult = {
   scenario: string;

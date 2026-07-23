@@ -1,4 +1,4 @@
-# Contributing to rn-sane-charts
+# Contributing to rn-sane-viz
 
 Thank you for contributing! This project aims to be a **high-quality, readable, and maintainable** React Native charting library. Please read this guide before submitting changes.
 
@@ -6,7 +6,7 @@ Thank you for contributing! This project aims to be a **high-quality, readable, 
 
 ## Project Philosophy
 
-rn-sane-charts values:
+rn-sane-viz values:
 
 * Simplicity over flexibility
 * Opinionated defaults over configuration overload
@@ -72,7 +72,9 @@ If you’d like to propose a future feature, open a discussion first.
 ## Development Workflow
 
 1. Fork the repo and create a feature branch
-2. Make focused changes (small PRs are preferred)
+2. Keep each pull request small and focused. Large or multi-purpose pull
+   requests will not be accepted; split them into independently reviewable
+   changes.
 3. Ensure:
 
    * Tests pass
@@ -132,4 +134,4 @@ Publishing packages to npm (including **alpha** dist-tags and CI) is documented 
 
 If you are unsure whether something fits the philosophy or scope, open a discussion before investing time.
 
-We appreciate your help making rn-sane-charts a dependable and approachable OSS project.
+We appreciate your help making rn-sane-viz a dependable and approachable OSS project.

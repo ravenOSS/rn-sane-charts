@@ -1,6 +1,6 @@
 import React from 'react';
-import type { Series } from '@rn-sane-charts/core';
-import { buildPoints } from '@rn-sane-charts/core';
+import type { Series } from '@rn-sane-viz/core';
+import { buildPoints } from '@rn-sane-viz/core';
 import { useChartContext } from '../context';
 import {
   DEFAULT_INTERACTION_HIT_RADIUS_PX,

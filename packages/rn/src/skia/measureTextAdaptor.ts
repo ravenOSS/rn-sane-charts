@@ -5,7 +5,7 @@ import type {
   MeasureTextFn,
   TextMeasureInput,
   TextMeasureResult,
-} from '@rn-sane-charts/core';
+} from '@rn-sane-viz/core';
 
 /**
  * Create a core-compatible `measureText` function using Skia text metrics.

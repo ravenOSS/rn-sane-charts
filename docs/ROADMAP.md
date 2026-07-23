@@ -1,4 +1,4 @@
-# rn-sane-charts Roadmap
+# rn-sane-viz Roadmap
 
 Last updated: 2026-02-24
 
@@ -18,7 +18,7 @@ Ship a solid MVP baseline with:
 - Completed: core chart set (line, area/stacked area, bar/grouped/stacked, scatter, histogram renderer), responsive chart wrapper, legend layout/hit testing, stack/downsample transforms, scatter spatial index, perf harness + baseline docs.
 - Completed: visual correctness fixes (x-label anchor alignment, multi-series palette progression, gridline rendering from `theme.grid`).
 - Completed: RN smoke tests under Vitest (chart render scaffolding + interaction responder path).
-- Completed: package/dependency hygiene for `@rn-sane-charts/rn` (workspace dependency declaration + pnpm-aligned package metadata).
+- Completed: package/dependency hygiene for `@rn-sane-viz/rn` (workspace dependency declaration + pnpm-aligned package metadata).
 - Completed: examples interaction parity across gallery chart views.
 - Completed: design-target theming evolution (`theme.state.focus` / `theme.state.muted`) and focus-first legend interaction (`focus` default, `toggle`/`isolate` optional).
 - Completed: examples gallery redesign to reflect DESIGN_GUIDE aesthetic across chart demos.
@@ -52,7 +52,7 @@ This push is focused on making MVP feel production-safe without expanding scope.
 4. Release hardening
 
    - Completed: added RN smoke tests (render + interaction path) under Vitest.
-   - Completed: resolved package/dependency hygiene items in `@rn-sane-charts/rn`.
+   - Completed: resolved package/dependency hygiene items in `@rn-sane-viz/rn`.
    - Completed: validated deterministic local workflow (`pnpm -r typecheck`, `pnpm -r test`, examples iOS launch/install).
 
 ### Exit Criteria

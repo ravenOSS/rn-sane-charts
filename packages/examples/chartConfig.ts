@@ -1,5 +1,5 @@
-import type { MeasureTextFn } from '@rn-sane-charts/core';
-import type { SaneChartFonts, SaneChartTheme } from '@rn-sane-charts/rn';
+import type { MeasureTextFn } from '@rn-sane-viz/core';
+import type { SaneChartFonts, SaneChartTheme } from '@rn-sane-viz/rn';
 
 /**
  * Examples app surface tokens.

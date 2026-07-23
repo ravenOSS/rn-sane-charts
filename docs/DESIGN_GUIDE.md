@@ -1,6 +1,6 @@
 # DESIGN_GUIDE.md
 
-rn-sane-charts is intentionally opinionated. This guide documents the design decisions behind the library’s defaults and provides practical UX rules that help a developer (often the designer in small teams) ship charts that look modern and remain readable on mobile.
+rn-sane-viz is intentionally opinionated. This guide documents the design decisions behind the library’s defaults and provides practical UX rules that help a developer (often the designer in small teams) ship charts that look modern and remain readable on mobile.
 
 > This guide is **policy + rationale**. For hands-on usage (first render, props, theming overrides, interaction wiring, streaming inputs), see: [USER_GUIDE.md](USER_GUIDE.md).
 
@@ -60,7 +60,7 @@ For most business/product dashboards, the “basic” charts win because they’
    - small multiples (split into several small charts)
    - secondary encodings (markers/dashes) as a backup channel
 
-### rn-sane-charts mapping
+### rn-sane-viz mapping
 
 - **Line**: default for time-series trends and “what changed?”
 - **Bar**: default for categorical comparisons and ranking

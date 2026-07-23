@@ -13,7 +13,7 @@ import type {
   LegendItem as CoreLegendItem,
   LegendLayoutResult,
   Series,
-} from '@rn-sane-charts/core';
+} from '@rn-sane-viz/core';
 import {
   buildTimeSeriesPlan,
   buildScatterSpatialIndex,
@@ -25,7 +25,7 @@ import {
   findNearestPoint,
   applyInteractiveHitRadius,
   isPointInRect,
-} from '@rn-sane-charts/core';
+} from '@rn-sane-viz/core';
 import type {
   ChartColorScheme,
   ChartOrientation,

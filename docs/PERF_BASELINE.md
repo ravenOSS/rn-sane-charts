@@ -1,4 +1,4 @@
-# rn-sane-charts Performance Baseline
+# rn-sane-viz Performance Baseline
 
 Last updated: 2026-02-16
 
@@ -11,7 +11,7 @@ pnpm --filter examples perf:harness
 ```
 
 What it runs:
-- Builds `@rn-sane-charts/core`
+- Builds `@rn-sane-viz/core`
 - Executes deterministic interaction scenarios in `packages/examples/scripts/perf-harness.mjs`
 
 ## Scenarios

@@ -1,4 +1,4 @@
-import type { Datum, FontSpec, MeasureTextFn } from '@rn-sane-charts/core';
+import type { Datum, FontSpec, MeasureTextFn } from '@rn-sane-viz/core';
 
 export type BarDataLabelPosition = 'outside' | 'inside' | 'none';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import type { Series } from '@rn-sane-charts/core';
+import type { Series } from '@rn-sane-viz/core';
 
 const series: Series[] = [
   {

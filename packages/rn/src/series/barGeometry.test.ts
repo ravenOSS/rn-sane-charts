@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Series } from '@rn-sane-charts/core';
+import type { Series } from '@rn-sane-viz/core';
 import {
   computeBarDensity,
   resolveAutoBarWidthPx,

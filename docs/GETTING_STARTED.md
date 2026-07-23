@@ -1,12 +1,12 @@
 # GETTING_STARTED.md
 
-This guide is for developers getting familiar with using `rn-sane-charts` in a fresh React Native project.
+This guide is for developers getting familiar with using `rn-sane-viz` in a fresh React Native project.
 
 This guide intentionally does **not** use Expo Go as the primary path.
 
 Why:
 
-- `rn-sane-charts` relies on native modules (including Skia).
+- `rn-sane-viz` relies on native modules (including Skia).
 - Expo Go can be limiting for native-library testing.
 - A development build gives predictable behavior and fewer support surprises.
 
@@ -15,7 +15,7 @@ Why:
 By the end, you will:
 
 1. Create a fresh Expo project.
-2. Install `rn-sane-charts` + Skia.
+2. Install `rn-sane-viz` + Skia.
 3. Run on iOS Simulator or Android Emulator (or physical device).
 4. Confirm chart rendering and interaction.
 
@@ -53,8 +53,8 @@ Expected: all commands return a version, not “command not found”.
 ## 4. Create a Fresh Project
 
 ```bash
-npx create-expo-app@latest sane-charts-demo
-cd sane-charts-demo
+npx create-expo-app@latest sane-viz-demo
+cd sane-viz-demo
 ```
 
 Choose the default TypeScript template (recommended).
@@ -68,13 +68,13 @@ Project folder contains `package.json`, `app.json`, and `App.tsx`.
 **Recommended for alpha / MVP testers:** install **from npm** with the same **dist-tag** on both packages (e.g. `alpha` once published). That avoids monorepo layout and matches what external apps will use.
 
 ```bash
-pnpm add @rn-sane-charts/rn@alpha @rn-sane-charts/core@alpha @shopify/react-native-skia
+pnpm add @rn-sane-viz/rn@alpha @rn-sane-viz/core@alpha @shopify/react-native-skia
 ```
 
 If you are consuming **published `latest`** (or a specific semver), omit the tag:
 
 ```bash
-pnpm add @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
+pnpm add @rn-sane-viz/rn @rn-sane-viz/core @shopify/react-native-skia
 ```
 
 Maintainer publish steps: [PUBLISHING.md](PUBLISHING.md).
@@ -84,7 +84,7 @@ Maintainer publish steps: [PUBLISHING.md](PUBLISHING.md).
 Run:
 
 ```bash
-pnpm list @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
+pnpm list @rn-sane-viz/rn @rn-sane-viz/core @shopify/react-native-skia
 ```
 
 Expected: all three packages appear.
@@ -97,8 +97,8 @@ Use this starter:
 import React from 'react';
 import { Platform, View } from 'react-native';
 import { matchFont } from '@shopify/react-native-skia';
-import { Chart, LineSeries, makeSkiaMeasureText } from '@rn-sane-charts/rn';
-import type { Series } from '@rn-sane-charts/core';
+import { Chart, LineSeries, makeSkiaMeasureText } from '@rn-sane-viz/rn';
+import type { Series } from '@rn-sane-viz/core';
 
 const series: Series[] = [
   {

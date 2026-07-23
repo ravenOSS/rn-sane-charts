@@ -1,7 +1,7 @@
 // packages/core/src/layout/measureTextTypes.ts
 
 /**
- * Text measurement contract for rn-sane-charts.
+ * Text measurement contract for rn-sane-viz.
  *
  * Why this exists:
  * - The core package must remain UI-framework agnostic (no Skia, no React).

@@ -1,6 +1,6 @@
-# Architecture — rn-sane-charts
+# Architecture — rn-sane-viz
 
-This document explains how **rn-sane-charts** is structured, why it is structured this way, and how data flows from user input to rendered pixels.
+This document explains how **rn-sane-viz** is structured, why it is structured this way, and how data flows from user input to rendered pixels.
 
 The goal is to make the system easy to understand, safe to extend, and predictable to maintain.
 
@@ -8,14 +8,14 @@ The goal is to make the system easy to understand, safe to extend, and predictab
 
 ## High-Level Overview
 
-rn-sane-charts is divided into **three primary layers**:
+rn-sane-viz is divided into **three primary layers**:
 
 ```md
 Application Code
         ↓
-@rn-sane-charts/rn   (React Native + Skia rendering)
+@rn-sane-viz/rn   (React Native + Skia rendering)
         ↓
-@rn-sane-charts/core (Pure math, layout, transforms)
+@rn-sane-viz/core (Pure math, layout, transforms)
         ↓
 Skia Engine (native rendering)
 ```
@@ -39,8 +39,8 @@ This repo is a pnpm workspace. The current top-level package layout is:
 
 ```md
 packages/
-  core/       (@rn-sane-charts/core — pure logic; no React/Skia)
-  rn/         (@rn-sane-charts/rn — RN + Skia renderer)
+  core/       (@rn-sane-viz/core — pure logic; no React/Skia)
+  rn/         (@rn-sane-viz/rn — RN + Skia renderer)
   examples/   (Expo app used for development + UX validation)
 ```
 
@@ -82,7 +82,7 @@ Each stage is deliberately separated so it can be:
 
 ---
 
-## Package: `@rn-sane-charts/core`
+## Package: `@rn-sane-viz/core`
 
 This package is framework-agnostic and contains deterministic logic.
 
@@ -148,7 +148,7 @@ No UI code here — only geometry logic.
 
 ---
 
-## Package: `@rn-sane-charts/rn`
+## Package: `@rn-sane-viz/rn`
 
 This is the React Native + Skia layer.
 
@@ -262,4 +262,4 @@ When in doubt, ask before adding abstraction.
 
 ---
 
-rn-sane-charts favors **clarity, predictability, and maintainability** over cleverness.
+rn-sane-viz favors **clarity, predictability, and maintainability** over cleverness.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Datum } from '@rn-sane-charts/core';
+import type { Datum } from '@rn-sane-viz/core';
 import {
   resolveHorizontalBarDataLabel,
   resolveVerticalBarDataLabel,

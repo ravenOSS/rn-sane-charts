@@ -16,8 +16,8 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
-import type { BarSortBy, BarSortDirection, Series } from '@rn-sane-charts/core';
-import { binHistogram, stackSeries } from '@rn-sane-charts/core';
+import type { BarSortBy, BarSortDirection, Series } from '@rn-sane-viz/core';
+import { binHistogram, stackSeries } from '@rn-sane-viz/core';
 import {
   AreaSeries,
   BarSeries,
@@ -31,8 +31,8 @@ import {
   StackedAreaSeries,
   StackedBarSeries,
   makeSkiaMeasureText,
-} from '@rn-sane-charts/rn';
-import type { ChartOrientation } from '@rn-sane-charts/rn';
+} from '@rn-sane-viz/rn';
+import type { ChartOrientation } from '@rn-sane-viz/rn';
 import {
   accessibilityPalette,
   createAccessibilityTheme,
@@ -542,7 +542,7 @@ function GalleryApp() {
             },
           ]}
         >
-          <Text style={[styles.title, { color: surface.heading }]}>rn-sane-charts</Text>
+          <Text style={[styles.title, { color: surface.heading }]}>rn-sane-viz</Text>
           <Text style={[styles.subtitle, { color: surface.body }]}>
             Modern default aesthetics, mobile-first interaction, and readable chart
             scaffolding.

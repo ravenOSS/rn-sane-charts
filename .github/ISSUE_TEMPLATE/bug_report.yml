@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a reproducible bug in rn-sane-charts
+description: Report a reproducible bug in rn-sane-viz
 labels: ["bug", "needs-triage"]
 body:
   - type: markdown
@@ -42,7 +42,7 @@ body:
       label: Environment
       description: Include versions and platform details.
       placeholder: |
-        - @rn-sane-charts/rn:
+        - @rn-sane-viz/rn:
         - @shopify/react-native-skia:
         - react-native:
         - expo:

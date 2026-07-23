@@ -1,4 +1,4 @@
-# @rn-sane-charts/rn
+# @rn-sane-viz/rn
 
 React Native-first business charts with sensible defaults, Skia rendering, and a small API.
 
@@ -10,7 +10,7 @@ Documentation:
 
 ## Is This A Fit?
 
-Use `rn-sane-charts` if you want:
+Use `rn-sane-viz` if you want:
 - Readable mobile charts with minimal setup
 - Deterministic axis/tick layout (including x-label rotation/skipping)
 - Skia-rendered performance and interaction headroom
@@ -24,7 +24,7 @@ This is likely not a fit if you need:
 ## Installation
 
 ```sh
-pnpm add @rn-sane-charts/rn @rn-sane-charts/core @shopify/react-native-skia
+pnpm add @rn-sane-viz/rn @rn-sane-viz/core @shopify/react-native-skia
 ```
 
 ## Data Shape First
@@ -64,7 +64,7 @@ const series = [
 import React from "react";
 import { Platform, View } from "react-native";
 import { matchFont } from "@shopify/react-native-skia";
-import { Chart, LineSeries, makeSkiaMeasureText } from "@rn-sane-charts/rn";
+import { Chart, LineSeries, makeSkiaMeasureText } from "@rn-sane-viz/rn";
 
 const series = [
   {
@@ -116,7 +116,7 @@ export default function App() {
 
 ## Streaming Data
 
-`rn-sane-charts` consumes in-memory arrays; it does not manage sockets or polling.
+`rn-sane-viz` consumes in-memory arrays; it does not manage sockets or polling.
 
 Recommended app-layer pattern:
 1. Receive JSON messages in your app.

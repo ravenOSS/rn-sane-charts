@@ -1,4 +1,4 @@
-# Maintainer-only: publish @rn-sane-charts/core and @rn-sane-charts/rn to npm.
+# Maintainer-only: publish @rn-sane-viz/core and @rn-sane-viz/rn to npm.
 # Requires repository secret NPM_TOKEN (automation granular token on npmjs.com).
 # See docs/PUBLISHING.md
 
@@ -36,18 +36,18 @@ jobs:
 
       - run: pnpm test
 
-      - name: Build @rn-sane-charts/core
-        run: pnpm -r --filter @rn-sane-charts/core build
+      - name: Build @rn-sane-viz/core
+        run: pnpm -r --filter @rn-sane-viz/core build
 
-      - name: Build @rn-sane-charts/rn (bob)
-        run: pnpm --filter @rn-sane-charts/rn run prepare
+      - name: Build @rn-sane-viz/rn (bob)
+        run: pnpm --filter @rn-sane-viz/rn run prepare
 
-      - name: Publish @rn-sane-charts/core
-        run: pnpm publish --filter @rn-sane-charts/core --access public --tag "$DIST_TAG" --no-git-checks
+      - name: Publish @rn-sane-viz/core
+        run: pnpm publish --filter @rn-sane-viz/core --access public --tag "$DIST_TAG" --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @rn-sane-charts/rn
-        run: pnpm publish --filter @rn-sane-charts/rn --access public --tag "$DIST_TAG" --no-git-checks
+      - name: Publish @rn-sane-viz/rn
+        run: pnpm publish --filter @rn-sane-viz/rn --access public --tag "$DIST_TAG" --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

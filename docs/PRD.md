@@ -1,8 +1,8 @@
-# PRD — rn-sane-charts
+# PRD — rn-sane-viz
 
 ## Overview
 
-**rn-sane-charts** is a React Native-first charting library designed to provide **clean, professional, readable business charts** with minimal configuration and strong performance.
+**rn-sane-viz** is a React Native-first charting library designed to provide **clean, professional, readable business charts** with minimal configuration and strong performance.
 
 The library prioritizes **clarity over flexibility**, making it easy for developers to produce high-quality visualizations without design expertise.
 
@@ -97,7 +97,7 @@ Current constraints:
 
 ## 📦 Data Input Model
 
-rn-sane-charts **does not fetch, parse, or stream data**.
+rn-sane-viz **does not fetch, parse, or stream data**.
 It consumes **in-memory JavaScript data structures** supplied by the host application.
 
 ### Time Series / Line / Area
@@ -155,7 +155,7 @@ Current implementation detail:
 
 ### Out of Scope for MVP
 
-These belong to the **application layer**, not rn-sane-charts:
+These belong to the **application layer**, not rn-sane-viz:
 
 | Concern                | Responsibility |
 | ---------------------- | -------------- |
@@ -165,7 +165,7 @@ These belong to the **application layer**, not rn-sane-charts:
 | File loading           | App            |
 | Data normalization     | App            |
 
-rn-sane-charts responds only to **data passed via props**.
+rn-sane-viz responds only to **data passed via props**.
 
 ---
 

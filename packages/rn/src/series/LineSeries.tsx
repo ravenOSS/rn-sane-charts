@@ -1,7 +1,7 @@
 import React from 'react';
 import { Path, Skia } from '@shopify/react-native-skia';
-import type { Series } from '@rn-sane-charts/core';
-import { buildLinePath, buildPoints } from '@rn-sane-charts/core';
+import type { Series } from '@rn-sane-viz/core';
+import { buildLinePath, buildPoints } from '@rn-sane-viz/core';
 import { useChartContext } from '../context';
 import { DEFAULT_SERIES_ACCENT } from '../theme/defaultTheme';
 import { MarkerGlyph, type MarkerStyle } from './markerSymbol';

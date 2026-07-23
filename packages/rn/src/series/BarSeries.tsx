@@ -5,7 +5,7 @@ import {
   type BarSortDirection,
   type BarSortBy,
   type Series,
-} from '@rn-sane-charts/core';
+} from '@rn-sane-viz/core';
 import { useChartContext } from '../context';
 import { DEFAULT_SERIES_ACCENT } from '../theme/defaultTheme';
 import {

@@ -12,11 +12,11 @@
     "web": "expo start --web",
     "run:ios": "expo run:ios",
     "run:android": "expo run:android",
-    "perf:harness": "pnpm --filter @rn-sane-charts/core build && node ./scripts/perf-harness.mjs"
+    "perf:harness": "pnpm --filter @rn-sane-viz/core build && node ./scripts/perf-harness.mjs"
   },
   "dependencies": {
-    "@rn-sane-charts/core": "workspace:*",
-    "@rn-sane-charts/rn": "workspace:*",
+    "@rn-sane-viz/core": "workspace:*",
+    "@rn-sane-viz/rn": "workspace:*",
     "@shopify/react-native-skia": "~2.4.14",
     "expo": "55.0.0-preview.9",
     "expo-build-properties": "~55.0.6",

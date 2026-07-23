@@ -4,8 +4,8 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@rn-sane-charts/rn": ["../rn/src/index.ts"],
-      "@rn-sane-charts/core": ["../core/src/index.ts"]
+      "@rn-sane-viz/rn": ["../rn/src/index.ts"],
+      "@rn-sane-viz/core": ["../core/src/index.ts"]
     }
   },
   "include": [

@@ -101,7 +101,7 @@ function nowMs() {
 }
 
 const results = runPerfHarness();
-console.log("rn-sane-charts perf harness");
+console.log("rn-sane-viz perf harness");
 console.table(
   results.map((result) => ({
     scenario: result.scenario,

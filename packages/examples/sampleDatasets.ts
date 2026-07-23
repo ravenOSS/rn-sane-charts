@@ -1,4 +1,4 @@
-import type { Series } from "@rn-sane-charts/core";
+import type { Series } from "@rn-sane-viz/core";
 
 /**
  * Sample datasets used to exercise current and planned chart types.
